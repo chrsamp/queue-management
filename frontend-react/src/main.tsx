@@ -11,6 +11,7 @@ import { AuthProvider } from '@/auth/AuthProvider'
 import { AuthService } from '@/auth/auth-service'
 import { loadRuntime } from '@/config/runtime-config'
 import { createAppQueryClient } from '@/query/query-client'
+import { RealtimeProvider } from '@/realtime/RealtimeProvider'
 
 import './index.css'
 import '@bcgov/bc-sans/css/BC_Sans.css'
@@ -34,12 +35,20 @@ async function start() {
         <AuthProvider authService={authService}>
           <ApiProvider client={apiClient}>
             <QueryClientProvider client={queryClient}>
-              <BrowserRouter>
-                <App
-                  queryClient={queryClient}
-                  supportUrl={runtime.config.VITE_Q_SUPPORT_URL}
-                />
-              </BrowserRouter>
+              <RealtimeProvider
+                config={{
+                  reconnectionDelayMax: runtime.config.VITE_Q_SOCKET_DELAY_MAX,
+                  timeout: runtime.config.VITE_Q_SOCKET_TIMEOUT,
+                  url: runtime.config.VITE_Q_SOCKET_URL,
+                }}
+              >
+                <BrowserRouter>
+                  <App
+                    queryClient={queryClient}
+                    supportUrl={runtime.config.VITE_Q_SUPPORT_URL}
+                  />
+                </BrowserRouter>
+              </RealtimeProvider>
             </QueryClientProvider>
           </ApiProvider>
         </AuthProvider>

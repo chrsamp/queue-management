@@ -6,6 +6,7 @@ import type { CsrMe, Office } from '@/api/schemas'
 import { getOffices, updateCsr } from '@/api/endpoints'
 import { ApiError } from '@/api/errors'
 import { useApiClient } from '@/api/use-api-client'
+import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 import Button from './Button'
@@ -43,7 +44,7 @@ export default function OfficeSwitcher() {
   const officesQuery = useQuery({
     enabled: currentCsrId !== null,
     queryFn: ({ signal }) => getOffices(apiClient, signal),
-    queryKey: ['offices'],
+    queryKey: queryKeys.offices,
   })
 
   const officeItems = useMemo<OfficeSelectItem[]>(() => {
@@ -76,7 +77,7 @@ export default function OfficeSwitcher() {
     },
     onSuccess: (response) => {
       setCurrentCsr(response.csr)
-      queryClient.setQueryData<CsrMe>(['csrs', 'me'], (current) =>
+      queryClient.setQueryData<CsrMe>(queryKeys.csrs.me, (current) =>
         current ? { ...current, csr: response.csr } : current,
       )
       void queryClient.invalidateQueries({

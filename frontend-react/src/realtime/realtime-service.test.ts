@@ -1,0 +1,277 @@
+import { QueryClient } from '@tanstack/react-query'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+
+import type { Csr } from '@/api/schemas'
+import { queryKeys } from '@/query/query-keys'
+import { useWorkflowStore } from '@/store/workflow-store'
+
+import { RealtimeService } from './realtime-service'
+
+const socketMocks = vi.hoisted(() => ({
+  io: vi.fn(),
+  listeners: {} as Record<string, (...args: unknown[]) => void>,
+  managerListeners: {} as Record<string, (...args: unknown[]) => void>,
+}))
+
+vi.mock('socket.io-client', () => ({
+  io: socketMocks.io,
+}))
+
+const config = {
+  reconnectionDelayMax: 5000,
+  timeout: 20000,
+  url: 'http://localhost:5000',
+}
+
+const csr = {
+  counter: 1,
+  counter_id: 1,
+  csr_id: 42,
+  csr_state: {
+    csr_state_desc: null,
+    csr_state_id: 2,
+    csr_state_name: 'Login',
+  },
+  csr_state_id: 2,
+  finance_designate: null,
+  ita2_designate: null,
+  office: {
+    counters: [],
+    office_id: 1,
+    office_name: 'Downtown',
+    office_number: 101,
+    sb: null,
+    timeslots: [],
+    timezone: {
+      timezone_id: 1,
+      timezone_name: 'America/Vancouver',
+    },
+  },
+  office_id: 1,
+  pesticide_designate: null,
+  qt_xn_csr_ind: null,
+  receptionist_ind: null,
+  role: {
+    role_code: 'GA',
+    role_desc: null,
+    role_id: 1,
+  },
+  role_id: 1,
+  username: 'queue.user',
+} satisfies Csr
+
+function createMockSocket() {
+  const socket = {
+    close: vi.fn(),
+    connected: false,
+    emit: vi.fn((_eventName, _payload, ack?: () => void) => {
+      ack?.()
+    }),
+    io: {
+      on: vi.fn((eventName: string, listener: (...args: unknown[]) => void) => {
+        socketMocks.managerListeners[eventName] = listener
+      }),
+    },
+    on: vi.fn((eventName: string, listener: (...args: unknown[]) => void) => {
+      socketMocks.listeners[eventName] = listener
+      return socket
+    }),
+    open: vi.fn(),
+    removeAllListeners: vi.fn(),
+  }
+
+  socketMocks.io.mockReturnValue(socket)
+
+  return socket
+}
+
+function createService() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  })
+  const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries')
+
+  return {
+    invalidateQueries,
+    queryClient,
+    service: new RealtimeService({ config, queryClient }),
+  }
+}
+
+beforeEach(() => {
+  socketMocks.listeners = {}
+  socketMocks.managerListeners = {}
+  socketMocks.io.mockReset()
+  vi.spyOn(console, 'info').mockImplementation(() => undefined)
+  vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  useWorkflowStore.getState().setCurrentCsr(csr)
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+  useWorkflowStore.getState().clearWorkflow()
+  vi.restoreAllMocks()
+})
+
+describe('StaffSocketService', () => {
+  test('connects with the legacy staff socket options and registers all listeners', () => {
+    const socket = createMockSocket()
+    const { service } = createService()
+
+    service.connect()
+
+    expect(socketMocks.io).toHaveBeenCalledWith(config.url, {
+      autoConnect: false,
+      path: '/api/v1/socket.io',
+      reconnectionDelayMax: config.reconnectionDelayMax,
+      timeout: config.timeout,
+      transports: ['websocket'],
+      withCredentials: true,
+    })
+    expect(socket.open).toHaveBeenCalledTimes(1)
+    expect(Object.keys(socketMocks.listeners).sort()).toEqual(
+      [
+        'appointment_create',
+        'appointment_delete',
+        'appointment_update',
+        'clear_csr_cache',
+        'connect',
+        'csr_update',
+        'disconnect',
+        'get_Csr_State_IDs',
+        'joinRoomFail',
+        'joinRoomSuccess',
+        'reconnecting',
+        'update_active_citizen',
+        'update_customer_list',
+        'update_offices_cache',
+      ].sort(),
+    )
+    expect(Object.keys(socketMocks.managerListeners)).toEqual([
+      'reconnect_attempt',
+    ])
+  })
+
+  test('emits joinRoom after connecting', () => {
+    const socket = createMockSocket()
+    const { service } = createService()
+
+    service.connect()
+    socketMocks.listeners.connect()
+
+    expect(socket.emit).toHaveBeenCalledWith(
+      'joinRoom',
+      { count: 0 },
+      expect.any(Function),
+    )
+    expect(useWorkflowStore.getState().realtimeConnectionStatus).toBe(
+      'connected',
+    )
+  })
+
+  test('starts and clears the legacy manual reconnect loop', () => {
+    vi.useFakeTimers()
+    const socket = createMockSocket()
+    const { service } = createService()
+
+    service.connect()
+    socketMocks.listeners.disconnect()
+    vi.advanceTimersByTime(1000)
+
+    expect(socket.open).toHaveBeenCalledTimes(2)
+    expect(useWorkflowStore.getState().realtimeConnectionStatus).toBe(
+      'reconnecting',
+    )
+
+    service.close()
+    vi.advanceTimersByTime(1000)
+
+    expect(socket.open).toHaveBeenCalledTimes(2)
+    expect(socket.close).toHaveBeenCalledTimes(1)
+    expect(socket.removeAllListeners).toHaveBeenCalledTimes(1)
+  })
+
+  test('updates room status for joinRoomSuccess and joinRoomFail', () => {
+    createMockSocket()
+    const { service } = createService()
+
+    service.connect()
+    socketMocks.listeners.joinRoomSuccess({ sucess: true })
+
+    expect(useWorkflowStore.getState().realtimeRoomStatus).toBe('joined')
+    expect(useWorkflowStore.getState().realtimeLastError).toBeNull()
+
+    socketMocks.listeners.joinRoomFail({ success: false })
+
+    expect(useWorkflowStore.getState().realtimeRoomStatus).toBe('failed')
+    expect(useWorkflowStore.getState().realtimeLastError).toBe(
+      'Unable to join staff room',
+    )
+  })
+
+  test('invalidates handled reference, CSR, and office queries', () => {
+    const socket = createMockSocket()
+    const { invalidateQueries, service } = createService()
+
+    service.connect()
+    socketMocks.listeners.get_Csr_State_IDs()
+    socketMocks.listeners.csr_update({ csr_id: 42 })
+    socketMocks.listeners.update_offices_cache()
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.csrStates,
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.csrs.me,
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.csrs.all,
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.offices,
+    })
+    expect(socket.emit).toHaveBeenCalledWith('sync_offices_cache')
+  })
+
+  test('emits clear_csr_user_id when clear_csr_cache is received', () => {
+    const socket = createMockSocket()
+    const { service } = createService()
+
+    service.connect()
+    socketMocks.listeners.clear_csr_cache({ id: 42 })
+
+    expect(socket.emit).toHaveBeenCalledWith('clear_csr_user_id', 42)
+  })
+
+  test('logs deferred queue and appointment events while invalidating future keys', () => {
+    createMockSocket()
+    const { invalidateQueries, service } = createService()
+
+    service.connect()
+    socketMocks.listeners.update_customer_list({ success: true })
+    socketMocks.listeners.update_active_citizen({ citizen_id: 1 })
+    socketMocks.listeners.appointment_create({ appointment_id: 1 })
+    socketMocks.listeners.appointment_update({ appointment_id: 1 })
+    socketMocks.listeners.appointment_delete(1)
+
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('update_customer_list'),
+      { success: true },
+    )
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('update_active_citizen'),
+      { citizen_id: 1 },
+    )
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.citizens,
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.activeCitizen,
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.appointments,
+    })
+  })
+})

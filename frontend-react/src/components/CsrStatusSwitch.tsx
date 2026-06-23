@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getCsrStates, updateCsr } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
 import type { CsrMe, CsrState } from '@/api/schemas'
+import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 import Switch from './Switch'
@@ -26,7 +27,7 @@ export default function CsrStatusSwitch() {
   const csrStatesQuery = useQuery({
     enabled: currentCsrId !== null && currentCsrState !== null,
     queryFn: ({ signal }) => getCsrStates(apiClient, signal),
-    queryKey: ['csr-states'],
+    queryKey: queryKeys.csrStates,
     staleTime: Infinity,
   })
 
@@ -52,14 +53,14 @@ export default function CsrStatusSwitch() {
         setCurrentCsrState(variables.previousState)
       }
 
-      void queryClient.invalidateQueries({ queryKey: ['csrs', 'me'] })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.csrs.me })
     },
     onMutate: ({ targetState }) => {
       setCurrentCsrState(targetState)
     },
     onSuccess: (response, variables) => {
       setCurrentCsrState(response.csr.csr_state ?? variables.targetState)
-      queryClient.setQueryData<CsrMe>(['csrs', 'me'], (current) =>
+      queryClient.setQueryData<CsrMe>(queryKeys.csrs.me, (current) =>
         current ? { ...current, csr: response.csr } : current,
       )
     },

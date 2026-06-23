@@ -12,6 +12,7 @@ import CsrStatusSwitch from '@/components/CsrStatusSwitch'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import OfficeSwitcher from '@/components/OfficeSwitcher'
+import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 interface AppProps {
@@ -139,7 +140,7 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
 
   const currentCsrQuery = useQuery({
     queryFn: ({ signal }) => getCurrentCsr(apiClient, signal),
-    queryKey: ['csrs', 'me'],
+    queryKey: queryKeys.csrs.me,
     refetchOnMount: 'always',
     retry: false,
   })
@@ -147,7 +148,7 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
   useQuery({
     enabled: currentCsrQuery.isSuccess,
     queryFn: ({ signal }) => getOffices(apiClient, signal),
-    queryKey: ['offices'],
+    queryKey: queryKeys.offices,
   })
 
   useEffect(() => {
