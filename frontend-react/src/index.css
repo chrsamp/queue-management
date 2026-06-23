@@ -2,4 +2,38 @@
 
 @theme {
   --font-sans: 'BC Sans', 'Noto Sans', Verdana, Arial, sans-serif;
+
+  --color-bc-white: #ffffff;
+  --color-bc-light-gray: #faf9f8;
+  --color-bc-border: #d8d8d8;
+  --color-bc-border-dark: #353433;
+  --color-bc-gray-110: #252423;
+  --color-bc-gold-60: #fbd389;
+  --color-bc-primary: #2d2d2d;
+  --color-bc-secondary: #474543;
+  --color-bc-link: #255a90;
+
+  --container-bc-content: 68.75rem;
+
+  --spacing-bc-header-height: 4.0625rem;
+  --spacing-bc-logo-header: 8.0625rem;
+  --spacing-bc-logo-footer: 9.125rem;
+  --spacing-bc-footer-logo: 36rem;
+  --spacing-bc-footer-logo-min: 20.25rem;
+
+  --breakpoint-bc-mobile: 36rem;
+  --breakpoint-bc-tablet: 62rem;
+
+  --text-bc-small: 0.875rem;
+  --text-bc-small--line-height: 1.313rem;
+  --text-bc-body: 1rem;
+  --text-bc-body--line-height: 1.688rem;
+  --text-bc-h4: 1.5rem;
+  --text-bc-h4--line-height: 2.25rem;
+}
+
+@layer base {
+  body {
+    @apply text-bc-primary m-0 font-sans;
+  }
 }
