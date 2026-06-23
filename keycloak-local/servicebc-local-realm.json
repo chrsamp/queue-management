@@ -32,13 +32,15 @@
       "rootUrl": "http://localhost:8080",
       "baseUrl": "/",
       "redirectUris": [
-        "http://localhost:8080/*"
+        "http://localhost:8080/*",
+        "http://localhost:8000/*"
       ],
       "webOrigins": [
-        "http://localhost:8080"
+        "http://localhost:8080",
+        "http://localhost:8000"
       ],
       "attributes": {
-        "post.logout.redirect.uris": "http://localhost:8080/*",
+        "post.logout.redirect.uris": "+",
         "pkce.code.challenge.method": "S256"
       },
       "protocolMappers": [

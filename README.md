@@ -82,7 +82,8 @@ It also provisions project-local Python environments for both `api` and `notific
 - `5000`: queue management API
 - `5002`: notifications API
 - `5173`: appointment booking frontend (React)
-- `8080`: staff frontend
+- `8000`: staff frontend (React)
+- `8080`: staff frontend (Vue legacy)
 - `8081`: appointment frontend
 - `8085`: Keycloak auth server
 - `5432`: PostgreSQL

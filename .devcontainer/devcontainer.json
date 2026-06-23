@@ -72,7 +72,11 @@
       "onAutoForward": "silent"
     },
     "8080": {
-      "label": "Queue Management Frontend",
+      "label": "Queue Management Frontend (Vue legacy)",
+      "onAutoForward": "silent"
+    },
+    "8000": {
+      "label": "Queue Management Frontend (React)",
       "onAutoForward": "silent"
     },
     "8081": {

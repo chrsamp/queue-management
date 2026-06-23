@@ -1,4 +1,6 @@
 import importlib
+import json
+from pathlib import Path
 
 import pytest
 from sqlalchemy.engine import make_url
@@ -43,3 +45,23 @@ def test_development_config_encodes_database_password_special_characters():
         assert parsed.drivername == "postgresql+psycopg2"
 
     _reload_config_module()
+
+
+def test_local_react_frontend_origin_is_allowed_for_cors_and_keycloak():
+    config_module = _reload_config_module()
+
+    assert "http://localhost:8000" in config_module.LocalConfig.CORS_ALLOWED_ORIGINS
+
+    realm_path = Path(__file__).parents[3] / "keycloak-local" / "servicebc-local-realm.json"
+    realm = json.loads(realm_path.read_text())
+    frontend_client = next(
+        client
+        for client in realm["clients"]
+        if client["clientId"] == "theq-frontend"
+    )
+
+    assert "http://localhost:8080/*" in frontend_client["redirectUris"]
+    assert "http://localhost:8000/*" in frontend_client["redirectUris"]
+    assert "http://localhost:8080" in frontend_client["webOrigins"]
+    assert "http://localhost:8000" in frontend_client["webOrigins"]
+    assert frontend_client["attributes"]["post.logout.redirect.uris"] == "+"
