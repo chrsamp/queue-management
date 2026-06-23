@@ -1,4 +1,6 @@
 import type { ApiClient } from './client'
+import { z } from 'zod'
+
 import {
   csrMeResponseSchema,
   csrStatesResponseSchema,
@@ -14,6 +16,12 @@ export function getOffices(client: ApiClient, signal?: AbortSignal) {
 
 export function getCurrentCsr(client: ApiClient, signal?: AbortSignal) {
   return client.get('/csrs/me/', { schema: csrMeResponseSchema, signal })
+}
+
+export function loginAdminSession(client: ApiClient, signal?: AbortSignal) {
+  return client
+    .get('/login/', { schema: z.unknown(), signal })
+    .then(() => ({ authenticated: true }))
 }
 
 export function getCsrStates(client: ApiClient, signal?: AbortSignal) {

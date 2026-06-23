@@ -44,6 +44,9 @@ async function start() {
               >
                 <BrowserRouter>
                   <App
+                    adminBaseUrl={new URL(
+                      runtime.config.VITE_Q_SOCKET_URL,
+                    ).origin}
                     queryClient={queryClient}
                     supportUrl={runtime.config.VITE_Q_SUPPORT_URL}
                   />

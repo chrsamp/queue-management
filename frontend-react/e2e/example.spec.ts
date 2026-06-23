@@ -40,6 +40,32 @@ test('authentication smoke', async ({ page }) => {
   await expect(page.getByText('Queue workspace placeholder.')).toBeVisible()
   await expect(page.getByText('Office', { exact: true })).toBeVisible()
 
+  let adminLoginRequests = 0
+  await page.route('**/api/v1/login/', async (route) => {
+    adminLoginRequests += 1
+    await route.fulfill({
+      contentType: 'text/html',
+      status: 200,
+      body: '<!doctype html><title>Admin session</title>',
+    })
+  })
+  await page.route('**/admin/csrga/', async (route) => {
+    await route.fulfill({
+      contentType: 'text/html',
+      status: 200,
+      body: '<!doctype html><title>Admin</title>',
+    })
+  })
+
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('menuitem', { name: 'Admin' }).click()
+  await expect(page).toHaveURL(/\/admin/)
+  await expect(page.locator('iframe[title="Admin"]')).toHaveAttribute(
+    'src',
+    /\/admin\/csrga\/$/,
+  )
+  expect(adminLoginRequests).toBe(1)
+
   await page.unroute('**/api/v1/csrs/me/')
   await page.route('**/api/v1/csrs/me/', async (route) => {
     await route.fulfill({
@@ -53,6 +79,7 @@ test('authentication smoke', async ({ page }) => {
   await expect(page.getByText('Access unavailable')).toBeVisible()
   await expect(page.getByText('Queue workspace placeholder.')).toBeHidden()
 
-  await page.getByRole('button', { name: 'Logout' }).click()
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('menuitem', { name: 'Log out' }).click()
   await expect(page).toHaveURL(/\/$/)
 })
