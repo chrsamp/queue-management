@@ -815,3 +815,190 @@ REMINDER_RESPONSE_SCHEMA = object_schema(
         "appointments": {"type": "array", "items": REMINDER_APPOINTMENT_SCHEMA}
     },
 )
+
+# Frontend request contracts. These schemas intentionally describe the legacy
+# wire format, including request-only fields stripped before model loading.
+EMPTY_OBJECT_REQUEST_SCHEMA = object_schema(required=[], properties={})
+
+CITIZEN_CREATE_REQUEST_SCHEMA = object_schema(
+    required=[],
+    properties={
+        "citizen_name": nullable({"type": "string", "maxLength": 150}),
+        "citizen_comments": nullable({"type": "string", "maxLength": 1000}),
+        "priority": {"type": "integer"},
+        "notification_phone": nullable({"type": "string"}),
+        "notification_email": nullable({"type": "string"}),
+        "qt_xn_citizen_ind": {"type": "integer"},
+        "counter_id": nullable({"type": "integer"}),
+    },
+)
+
+CITIZEN_UPDATE_REQUEST_SCHEMA = object_schema(
+    required=[],
+    properties={
+        "citizen_name": nullable({"type": "string", "maxLength": 150}),
+        "citizen_comments": nullable({"type": "string", "maxLength": 1000}),
+        "priority": {"type": "integer"},
+        "notification_phone": nullable({"type": "string"}),
+        "notification_email": nullable({"type": "string"}),
+        "reminder_flag": nullable({"type": "integer"}),
+        "automatic_reminder_flag": nullable({"type": "integer"}),
+        "accurate_time_ind": {"type": "integer"},
+    },
+)
+
+SERVICE_REQUEST_CREATE_REQUEST_SCHEMA = object_schema(
+    required=["service_request"],
+    properties={
+        "service_request": object_schema(
+            required=["citizen_id", "service_id", "channel_id"],
+            properties={
+                "citizen_id": {"type": "integer"},
+                "service_id": {"type": "integer"},
+                "channel_id": {"type": "integer"},
+                "quantity": {"type": "integer"},
+                "sr_number": {"type": "integer"},
+            },
+        )
+    },
+)
+
+SERVICE_REQUEST_UPDATE_REQUEST_SCHEMA = object_schema(
+    required=[],
+    properties={
+        "service_id": {"type": "integer"},
+        "channel_id": {"type": "integer"},
+        "quantity": {"type": "integer"},
+        "sr_state_id": {"type": "integer"},
+    },
+)
+
+CSR_UPDATE_REQUEST_SCHEMA = object_schema(
+    required=[],
+    properties={
+        "office_id": {"type": "integer"},
+        "counter_id": nullable({"type": "integer"}),
+        "csr_state_id": {"type": "integer"},
+        "receptionist_ind": {"type": "integer"},
+        "qt_xn_csr_ind": {"type": "integer"},
+    },
+)
+
+APPOINTMENT_REQUEST_SCHEMA = object_schema(
+    required=["office_id", "start_time", "end_time", "citizen_name"],
+    properties={
+        "appointment_draft_id": {"type": "integer"},
+        "office_id": {"type": "integer"},
+        "stat_office_id": {"type": "integer"},
+        "service_id": nullable({"type": "integer"}),
+        "citizen_id": nullable({"type": "integer"}),
+        "start_time": ISO_DATETIME_SCHEMA,
+        "end_time": ISO_DATETIME_SCHEMA,
+        "checked_in_time": nullable(ISO_DATETIME_SCHEMA),
+        "comments": nullable({"type": "string", "maxLength": 255}),
+        "citizen_name": {"type": "string", "maxLength": 255},
+        "contact_information": nullable({"type": "string", "maxLength": 255}),
+        "blackout_flag": {"type": "string", "enum": ["Y", "N"]},
+        "recurring_uuid": nullable({"type": "string"}),
+        "online_flag": {"type": "boolean"},
+        "is_draft": {"type": "boolean"},
+        "stat_flag": {"type": "boolean"},
+    },
+)
+
+APPOINTMENT_UPDATE_REQUEST_SCHEMA = object_schema(
+    required=[],
+    properties=APPOINTMENT_REQUEST_SCHEMA["properties"],
+)
+
+BOOKING_REQUEST_SCHEMA = object_schema(
+    required=["start_time", "end_time"],
+    properties={
+        "booking_name": nullable({"type": "string", "maxLength": 150}),
+        "start_time": ISO_DATETIME_SCHEMA,
+        "end_time": ISO_DATETIME_SCHEMA,
+        "fees": nullable({"type": "string"}),
+        "room_id": nullable(
+            {"anyOf": [{"type": "integer"}, {"type": "string", "enum": ["_offsite"]}]}
+        ),
+        "office_id": nullable({"type": "integer"}),
+        "shadow_invigilator_id": nullable({"type": "integer"}),
+        "invigilator_id": {
+            "anyOf": [
+                {"type": "integer"},
+                {"type": "array", "items": {"type": "integer"}},
+                {"type": "null"},
+            ]
+        },
+        "sbc_staff_invigilated": {"anyOf": [{"type": "integer"}, {"type": "boolean"}]},
+        "booking_contact_information": nullable(
+            {"type": "string", "maxLength": 256}
+        ),
+        "blackout_flag": {"type": "string", "enum": ["Y", "N"]},
+        "blackout_notes": nullable({"type": "string", "maxLength": 255}),
+        "recurring_uuid": nullable({"type": "string"}),
+        "stat_flag": {"type": "boolean"},
+        "for_stat": {"type": "boolean"},
+    },
+)
+
+BOOKING_UPDATE_REQUEST_SCHEMA = object_schema(
+    required=[],
+    properties=BOOKING_REQUEST_SCHEMA["properties"],
+)
+
+EXAM_REQUEST_SCHEMA = object_schema(
+    required=["office_id", "exam_type_id", "exam_name", "exam_method"],
+    properties={
+        "booking_id": nullable({"type": "integer"}),
+        "exam_type_id": {"type": "integer"},
+        "office_id": {"type": "integer"},
+        "invigilator_id": nullable({"type": "integer"}),
+        "event_id": nullable({"type": "string", "maxLength": 25}),
+        "exam_name": {"type": "string", "maxLength": 50},
+        "examinee_name": nullable({"type": "string", "maxLength": 50}),
+        "examinee_email": nullable({"type": "string", "maxLength": 400}),
+        "examinee_phone": nullable({"type": "string", "maxLength": 400}),
+        "expiry_date": nullable(ISO_DATETIME_SCHEMA),
+        "notes": nullable({"type": "string", "maxLength": 400}),
+        "exam_received_date": nullable(ISO_DATETIME_SCHEMA),
+        "session_number": nullable({"type": "integer"}),
+        "number_of_students": nullable({"type": "integer"}),
+        "exam_method": {"type": "string", "maxLength": 15},
+        "exam_returned_date": nullable(ISO_DATETIME_SCHEMA),
+        "exam_returned_tracking_number": nullable({"type": "string"}),
+        "exam_written_ind": {"type": "integer"},
+        "offsite_location": nullable({"type": "string"}),
+        "upload_received_ind": nullable({"type": "integer"}),
+        "sbc_managed_ind": nullable({"type": "integer"}),
+        "receipt": nullable({"type": "string"}),
+        "payee_ind": nullable({"type": "integer"}),
+        "receipt_sent_ind": nullable({"type": "integer"}),
+        "payee_email": nullable({"type": "string"}),
+        "payee_name": nullable({"type": "string"}),
+        "payee_phone": nullable({"type": "string"}),
+        "candidates_list": nullable({"type": "object"}),
+        "is_pesticide": nullable({"type": "integer"}),
+        "bookdata": {},
+        "candidates": {"type": "array", "items": {"type": "object"}},
+        "fees": nullable({"type": "string"}),
+        "ind_or_group": {"type": "string"},
+        "receipt_number": nullable({"type": "string"}),
+        "sbc_managed": {"type": "string"},
+    },
+)
+
+EXAM_UPDATE_REQUEST_SCHEMA = object_schema(
+    required=[],
+    properties=EXAM_REQUEST_SCHEMA["properties"],
+)
+
+FEEDBACK_REQUEST_SCHEMA = object_schema(
+    required=[],
+    properties={
+        "feedback": nullable({"type": "string"}),
+        "email": nullable({"type": "string"}),
+        "page": nullable({"type": "string"}),
+    },
+    additional_properties=True,
+)
