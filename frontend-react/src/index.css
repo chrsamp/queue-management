@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'BC Sans', 'Noto Sans', Verdana, Arial, sans-serif;
+}
