@@ -25,7 +25,7 @@ export function getCsrStates(client: ApiClient, signal?: AbortSignal) {
 export function updateCsr(
   client: ApiClient,
   csrId: number,
-  payload: { csr_state_id: number },
+  payload: { csr_state_id?: number; office_id?: number },
   signal?: AbortSignal,
 ) {
   return client.request(`/csrs/${csrId}/`, {

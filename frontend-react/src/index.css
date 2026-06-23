@@ -13,6 +13,10 @@
   --color-bc-secondary: #474543;
   --color-bc-link: #255a90;
   --color-bc-focus: #2e5dd7;
+  --color-bc-overlay: rgb(0 0 0 / 0.45);
+  --color-bc-placeholder: #6f6d6b;
+  --color-bc-form-hover: #605e5c;
+  --color-bc-form-active: #255a90;
   --color-bc-button-primary: #013366;
   --color-bc-button-primary-hover: #1e5189;
   --color-bc-button-primary-pressed: #01264c;
@@ -45,10 +49,26 @@
   --text-bc-body--line-height: 1.688rem;
   --text-bc-h4: 1.5rem;
   --text-bc-h4--line-height: 2.25rem;
+
+  --shadow-bc-modal: 0 1.25rem 1.75rem rgb(0 0 0 / 0.24);
+  --shadow-bc-popover: 0 0.5rem 1rem rgb(0 0 0 / 0.18);
+
+  --animate-bc-modal-fade: bc-modal-fade 200ms ease-out;
+  --animate-bc-modal-fade-out: bc-modal-fade 150ms ease-in reverse;
 }
 
 @layer base {
   body {
     @apply text-bc-primary m-0 font-sans;
+  }
+}
+
+@keyframes bc-modal-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

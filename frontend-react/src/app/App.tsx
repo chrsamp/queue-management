@@ -11,6 +11,7 @@ import Button from '@/components/Button'
 import CsrStatusSwitch from '@/components/CsrStatusSwitch'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
+import OfficeSwitcher from '@/components/OfficeSwitcher'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 interface AppProps {
@@ -35,12 +36,15 @@ function App({ queryClient, supportUrl }: AppProps) {
         title="Service BC Queue Management"
         titleAs="h1"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-6">
           {auth.authenticated && <CsrStatusSwitch />}
           {auth.authenticated && auth.username && (
-            <span className="text-bc-small text-bc-secondary">
-              {auth.username}
-            </span>
+            <div className="flex min-w-0 flex-col items-end">
+              <span className="text-bc-small text-bc-secondary truncate">
+                {auth.username}
+              </span>
+              <OfficeSwitcher />
+            </div>
           )}
           {auth.authenticated ? (
             <Button onClick={handleLogout}>Logout</Button>
