@@ -35,7 +35,9 @@ function getRuntimeEnvOverrides(): Partial<RuntimeConfig> {
   return Object.fromEntries(
     Object.keys(runtimeConfigSchema.shape)
       .map((key) => [key, import.meta.env[key]])
-      .filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+      .filter(
+        (entry): entry is [string, string] => typeof entry[1] === 'string',
+      ),
   ) as Partial<RuntimeConfig>
 }
 

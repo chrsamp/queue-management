@@ -9,17 +9,16 @@ import { cx } from '@/lib/cx'
 
 export type SwitchLabelPosition = 'left' | 'right'
 
-export interface SwitchProps
-  extends Omit<
-    ReactAriaSwitchFieldProps,
-    | 'children'
-    | 'className'
-    | 'defaultSelected'
-    | 'isDisabled'
-    | 'isReadOnly'
-    | 'isSelected'
-    | 'onChange'
-  > {
+export interface SwitchProps extends Omit<
+  ReactAriaSwitchFieldProps,
+  | 'children'
+  | 'className'
+  | 'defaultSelected'
+  | 'isDisabled'
+  | 'isReadOnly'
+  | 'isSelected'
+  | 'onChange'
+> {
   checked?: boolean
   children?: ReactNode
   className?: string
@@ -44,7 +43,7 @@ export default function Switch({
   return (
     <ReactAriaSwitchField
       className={cx(
-        'inline-flex text-bc-small text-bc-secondary forced-color-adjust-none data-[disabled]:text-bc-disabled-text',
+        'text-bc-small text-bc-secondary data-[disabled]:text-bc-disabled-text inline-flex forced-color-adjust-none',
         className,
       )}
       defaultSelected={defaultChecked}
@@ -58,9 +57,9 @@ export default function Switch({
         {labelPosition === 'left' && children}
         <span
           aria-hidden="true"
-          className="flex h-bc-switch-thumb w-bc-switch-track shrink-0 items-center rounded-full bg-bc-disabled-surface transition-colors duration-200 group-data-[selected]:bg-bc-button-primary group-data-[hovered]:group-data-[selected]:bg-bc-button-primary-hover group-data-[focus-visible]:outline-2 group-data-[focus-visible]:outline-offset-2 group-data-[focus-visible]:outline-bc-focus group-data-[disabled]:bg-bc-disabled-surface motion-reduce:transition-none"
+          className="h-bc-switch-thumb w-bc-switch-track bg-bc-disabled-surface group-data-[selected]:bg-bc-button-primary group-data-[hovered]:group-data-[selected]:bg-bc-button-primary-hover group-data-[focus-visible]:outline-bc-focus group-data-[disabled]:bg-bc-disabled-surface flex shrink-0 items-center rounded-full transition-colors duration-200 group-data-[focus-visible]:outline-2 group-data-[focus-visible]:outline-offset-2 motion-reduce:transition-none"
         >
-          <span className="box-border block h-bc-switch-thumb w-bc-switch-thumb rounded-full border-2 border-bc-border bg-bc-white transition-transform duration-200 group-data-[hovered]:border-bc-border-dark group-data-[selected]:translate-x-bc-switch-thumb group-data-[selected]:border-bc-button-primary group-data-[hovered]:group-data-[selected]:border-bc-button-primary-hover group-data-[disabled]:border-bc-border group-data-[disabled]:bg-bc-light-gray motion-reduce:transition-none" />
+          <span className="h-bc-switch-thumb w-bc-switch-thumb border-bc-border bg-bc-white group-data-[hovered]:border-bc-border-dark group-data-[selected]:translate-x-bc-switch-thumb group-data-[selected]:border-bc-button-primary group-data-[hovered]:group-data-[selected]:border-bc-button-primary-hover group-data-[disabled]:border-bc-border group-data-[disabled]:bg-bc-light-gray box-border block rounded-full border-2 transition-transform duration-200 motion-reduce:transition-none" />
         </span>
         {labelPosition === 'right' && children}
       </ReactAriaSwitchButton>

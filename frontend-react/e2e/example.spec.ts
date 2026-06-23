@@ -26,7 +26,9 @@ test('authentication smoke', async ({ page }) => {
 
   await page.goto('/queue')
   await expect(
-    page.getByText('You must be signed in before accessing the staff application.'),
+    page.getByText(
+      'You must be signed in before accessing the staff application.',
+    ),
   ).toBeVisible()
 
   await page.getByRole('button', { name: 'Login' }).first().click()
