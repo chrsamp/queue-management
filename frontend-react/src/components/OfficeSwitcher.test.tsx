@@ -97,7 +97,7 @@ function renderOfficeSwitcher() {
   render(
     <ApiProvider client={{} as ApiClient}>
       <QueryClientProvider client={queryClient}>
-        <Header title="Service BC Queue Management">
+        <Header title="Queue Management">
           <div className="flex min-w-0 flex-col items-start">
             <span>{csr.username}</span>
             <OfficeSwitcher />

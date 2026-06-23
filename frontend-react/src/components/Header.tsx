@@ -45,7 +45,7 @@ export default function Header({
   return (
     <header
       className={cx(
-        'min-h-bc-header-height border-bc-border bg-bc-white box-border flex w-full items-center justify-around border-b px-4',
+        'min-h-bc-header-height border-bc-border bg-bc-white sticky top-0 z-40 box-border flex w-full shrink-0 items-center justify-around border-b px-4',
         className,
       )}
     >

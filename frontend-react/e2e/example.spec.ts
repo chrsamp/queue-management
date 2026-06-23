@@ -20,7 +20,7 @@ test('authentication smoke', async ({ page }) => {
 
   await expect(page).toHaveTitle('Queue Management')
   await expect(
-    page.getByRole('heading', { name: 'Service BC Queue Management' }),
+    page.getByRole('heading', { name: 'Queue Management' }),
   ).toBeVisible()
   expect(staffProfileRequests).toBe(0)
 
@@ -37,8 +37,9 @@ test('authentication smoke', async ({ page }) => {
   await page.locator('#kc-login').click()
 
   await expect(page).toHaveURL(/\/queue/)
-  await expect(page.getByText('Queue workspace placeholder.')).toBeVisible()
-  await expect(page.getByText('Office', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText(/Citizens (Waiting|on Hold):/).first(),
+  ).toBeVisible()
 
   let adminLoginRequests = 0
   await page.route('**/api/v1/login/', async (route) => {

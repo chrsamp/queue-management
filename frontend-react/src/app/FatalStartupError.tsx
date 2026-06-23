@@ -8,9 +8,7 @@ export default function FatalStartupError({ error }: { error: unknown }) {
         className="border-bc-border max-w-xl border bg-white p-6"
         role="alert"
       >
-        <h1 className="text-bc-h4 mb-3 font-bold">
-          Service BC Queue Management
-        </h1>
+        <h1 className="text-bc-h4 mb-3 font-bold">Error</h1>
         <p className="text-bc-body m-0">
           Unable to load the application configuration.
         </p>

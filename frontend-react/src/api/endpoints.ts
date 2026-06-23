@@ -5,6 +5,7 @@ import {
   csrMeResponseSchema,
   csrStatesResponseSchema,
   csrUpdateResponseSchema,
+  citizensResponseSchema,
   officesResponseSchema,
 } from './schemas'
 
@@ -28,6 +29,12 @@ export function getCsrStates(client: ApiClient, signal?: AbortSignal) {
   return client
     .get('/csr_states/', { schema: csrStatesResponseSchema, signal })
     .then((response) => response.csr_states)
+}
+
+export function getCitizens(client: ApiClient, signal?: AbortSignal) {
+  return client
+    .get('/citizens/', { schema: citizensResponseSchema, signal })
+    .then((response) => response.citizens)
 }
 
 export function updateCsr(

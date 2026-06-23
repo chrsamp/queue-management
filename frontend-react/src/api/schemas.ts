@@ -50,6 +50,7 @@ export const officeSchema = z
     sb: smartboardSchema.nullable().optional(),
     quick_list: z.array(z.unknown()).optional(),
     back_office_list: z.array(z.unknown()).optional(),
+    check_in_notification: z.number().nullable().optional(),
   })
   .passthrough()
 
@@ -106,7 +107,89 @@ export const csrUpdateResponseSchema = z
   })
   .passthrough()
 
+export const periodStateSchema = z
+  .object({
+    ps_name: z.string(),
+  })
+  .passthrough()
+
+export const periodCsrSchema = z
+  .object({
+    username: z.string(),
+    counter_id: z.number().nullable().optional(),
+    counter: z.number().nullable().optional(),
+  })
+  .passthrough()
+
+export const periodSchema = z
+  .object({
+    period_id: z.number(),
+    time_start: z.string().nullable().optional(),
+    time_end: z.string().nullable().optional(),
+    ps: periodStateSchema,
+    csr: periodCsrSchema,
+  })
+  .passthrough()
+
+export const serviceParentSchema = z
+  .object({
+    service_name: z.string(),
+  })
+  .passthrough()
+
+export const serviceRequestServiceSchema = z
+  .object({
+    service_name: z.string(),
+    parent: serviceParentSchema.nullable().optional(),
+    parent_id: z.number().nullable().optional(),
+  })
+  .passthrough()
+
+export const serviceRequestSchema = z
+  .object({
+    sr_id: z.number(),
+    citizen_id: z.number(),
+    periods: z.array(periodSchema),
+    service: serviceRequestServiceSchema,
+  })
+  .passthrough()
+
+export const citizenStateSchema = z
+  .object({
+    cs_state_name: z.string(),
+  })
+  .passthrough()
+
+export const citizenSchema = z
+  .object({
+    citizen_id: z.number(),
+    citizen_name: z.string().nullable().optional(),
+    office_id: z.number(),
+    ticket_number: z.string().nullable().optional(),
+    citizen_comments: z.string().nullable().optional(),
+    counter_id: z.number().nullable().optional(),
+    start_time: z.string().nullable().optional(),
+    service_reqs: z.array(serviceRequestSchema),
+    cs: citizenStateSchema,
+    priority: z.number().nullable().optional(),
+    notification_sent_time: z.string().nullable().optional(),
+    notification_phone: z.string().nullable().optional(),
+    notification_email: z.string().nullable().optional(),
+    reminder_flag: z.number().nullable().optional(),
+  })
+  .passthrough()
+
+export const citizensResponseSchema = z
+  .object({
+    citizens: z.array(citizenSchema),
+    errors: errorsSchema,
+  })
+  .passthrough()
+
 export type Office = z.infer<typeof officeSchema>
 export type Csr = z.infer<typeof csrSchema>
 export type CsrMe = z.infer<typeof csrMeResponseSchema>
 export type CsrState = z.infer<typeof csrStateSchema>
+export type Citizen = z.infer<typeof citizenSchema>
+export type ServiceRequest = z.infer<typeof serviceRequestSchema>
+export type Period = z.infer<typeof periodSchema>

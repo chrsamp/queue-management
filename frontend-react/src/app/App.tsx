@@ -3,7 +3,12 @@ import { Link, Navigate, Route, Routes, useLocation } from 'react-router'
 import type { QueryClient } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
 
-import { getCurrentCsr, getOffices, loginAdminSession } from '@/api/endpoints'
+import {
+  getCitizens,
+  getCurrentCsr,
+  getOffices,
+  loginAdminSession,
+} from '@/api/endpoints'
 import { ApiError } from '@/api/errors'
 import { useApiClient } from '@/api/use-api-client'
 import {
@@ -23,6 +28,7 @@ import HeaderNavigationMenu from '@/components/HeaderNavigationMenu'
 import OfficeSwitcher from '@/components/OfficeSwitcher'
 import Select from '@/components/Select'
 import { queryKeys } from '@/query/query-keys'
+import QueueWorkspace from '@/queue/QueueWorkspace'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 interface AppProps {
@@ -69,7 +75,7 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
     <div className="flex min-h-screen flex-col">
       <Header
         skipLinks={[{ href: '#main', label: 'Skip to main content' }]}
-        title="Service BC Queue Management"
+        title="Queue Management"
         titleAs="h1"
       >
         <div className="flex items-center gap-6">
@@ -92,7 +98,10 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
           )}
         </div>
       </Header>
-      <main className="flex-1" id="main">
+      <main
+        className="flex min-h-[calc(100vh-var(--spacing-bc-header-height))] flex-1 flex-col"
+        id="main"
+      >
         <Routes>
           <Route element={<HomePage />} path="/" />
           <Route
@@ -199,6 +208,12 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
     queryKey: queryKeys.offices,
   })
 
+  const citizensQuery = useQuery({
+    enabled: currentCsrQuery.isSuccess,
+    queryFn: ({ signal }) => getCitizens(apiClient, signal),
+    queryKey: queryKeys.citizens,
+  })
+
   useEffect(() => {
     if (currentCsrQuery.data) {
       setCurrentCsr(currentCsrQuery.data.csr)
@@ -215,7 +230,6 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
   if (currentCsrQuery.isPending) {
     return (
       <section className="mx-auto max-w-5xl p-6">
-        <h2 className="text-bc-h4 mt-0 mb-3 font-bold">Queue</h2>
         <p className="text-bc-body text-bc-secondary m-0">
           Loading your staff profile...
         </p>
@@ -236,24 +250,30 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
   const office = currentOffice ?? csr.office
 
   return (
-    <section className="mx-auto flex max-w-5xl flex-col gap-6 p-6">
-      <div>
-        <h2 className="text-bc-h4 mt-0 mb-3 font-bold">Queue</h2>
-        <p className="text-bc-body text-bc-secondary m-0">
-          Queue workspace placeholder.
-        </p>
-      </div>
-
-      <dl className="border-bc-border grid max-w-2xl grid-cols-[max-content_1fr] gap-x-4 gap-y-3 border p-4">
-        <dt className="font-bold">User</dt>
-        <dd className="m-0">{csr.username}</dd>
-        <dt className="font-bold">Role</dt>
-        <dd className="m-0">{csr.role.role_code}</dd>
-        <dt className="font-bold">Office</dt>
-        <dd className="m-0">{office.office_name}</dd>
-      </dl>
-    </section>
+    <QueueWorkspace
+      citizens={citizensQuery.data ?? []}
+      errorMessage={
+        citizensQuery.isError
+          ? getRouteErrorMessage(citizensQuery.error, 'Unable to load queue.')
+          : null
+      }
+      isLoading={citizensQuery.isPending}
+      office={office}
+      csrId={csr.csr_id}
+    />
   )
+}
+
+function getRouteErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof ApiError) {
+    return error.message
+  }
+
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return fallback
 }
 
 function AdminRoute({
