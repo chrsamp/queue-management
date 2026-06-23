@@ -1,3 +1,4 @@
 {
-    "VITE_Q_API_URL": "http://localhost:5000/api/v1"
+    "VITE_Q_API_URL": "http://localhost:5000/api/v1",
+    "VITE_Q_SUPPORT_URL": "mailto:sbcts@gov.bc.ca"
 }
