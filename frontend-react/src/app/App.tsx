@@ -8,6 +8,7 @@ import { ApiError } from '@/api/errors'
 import { useApiClient } from '@/api/use-api-client'
 import { useAuth } from '@/auth/use-auth'
 import Button from '@/components/Button'
+import CsrStatusSwitch from '@/components/CsrStatusSwitch'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -19,12 +20,10 @@ interface AppProps {
 
 function App({ queryClient, supportUrl }: AppProps) {
   const auth = useAuth()
-  const clearCurrentOffice = useWorkflowStore(
-    (state) => state.clearCurrentOffice,
-  )
+  const clearWorkflow = useWorkflowStore((state) => state.clearWorkflow)
 
   async function handleLogout() {
-    clearCurrentOffice()
+    clearWorkflow()
     queryClient.clear()
     await auth.logout()
   }
@@ -37,6 +36,7 @@ function App({ queryClient, supportUrl }: AppProps) {
         titleAs="h1"
       >
         <div className="flex items-center gap-3">
+          {auth.authenticated && <CsrStatusSwitch />}
           {auth.authenticated && auth.username && (
             <span className="text-bc-small text-bc-secondary">
               {auth.username}
@@ -129,8 +129,9 @@ function UnauthenticatedQueue() {
 
 function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
   const apiClient = useApiClient()
+  const clearWorkflow = useWorkflowStore((state) => state.clearWorkflow)
   const currentOffice = useWorkflowStore((state) => state.currentOffice)
-  const setCurrentOffice = useWorkflowStore((state) => state.setCurrentOffice)
+  const setCurrentCsr = useWorkflowStore((state) => state.setCurrentCsr)
 
   const currentCsrQuery = useQuery({
     queryFn: ({ signal }) => getCurrentCsr(apiClient, signal),
@@ -147,9 +148,16 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
 
   useEffect(() => {
     if (currentCsrQuery.data) {
-      setCurrentOffice(currentCsrQuery.data.csr.office)
+      setCurrentCsr(currentCsrQuery.data.csr)
+    } else if (currentCsrQuery.isError) {
+      clearWorkflow()
     }
-  }, [currentCsrQuery.data, setCurrentOffice])
+  }, [
+    clearWorkflow,
+    currentCsrQuery.data,
+    currentCsrQuery.isError,
+    setCurrentCsr,
+  ])
 
   if (currentCsrQuery.isPending) {
     return (

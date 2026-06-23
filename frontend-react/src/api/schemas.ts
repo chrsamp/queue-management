@@ -81,6 +81,13 @@ export const officesResponseSchema = z
   })
   .passthrough()
 
+export const csrStatesResponseSchema = z
+  .object({
+    csr_states: z.array(csrStateSchema),
+    errors: errorsSchema,
+  })
+  .passthrough()
+
 export const csrMeResponseSchema = z
   .object({
     csr: csrSchema,
@@ -92,6 +99,14 @@ export const csrMeResponseSchema = z
   })
   .passthrough()
 
+export const csrUpdateResponseSchema = z
+  .object({
+    csr: csrSchema,
+    errors: errorsSchema,
+  })
+  .passthrough()
+
 export type Office = z.infer<typeof officeSchema>
 export type Csr = z.infer<typeof csrSchema>
 export type CsrMe = z.infer<typeof csrMeResponseSchema>
+export type CsrState = z.infer<typeof csrStateSchema>

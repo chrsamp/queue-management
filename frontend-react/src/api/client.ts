@@ -12,6 +12,7 @@ export interface ApiClientOptions {
 
 export interface ApiRequestOptions<TSchema extends z.ZodType> {
   authenticated?: boolean
+  body?: unknown
   method?: string
   schema: TSchema
   signal?: AbortSignal
@@ -46,6 +47,7 @@ export class ApiClient {
     path: string,
     {
       authenticated = true,
+      body: requestBody,
       method = 'GET',
       schema,
       signal,
@@ -60,6 +62,12 @@ export class ApiClient {
 
     try {
       const headers = new Headers({ Accept: 'application/json' })
+      const requestPayload =
+        requestBody === undefined ? undefined : JSON.stringify(requestBody)
+
+      if (requestPayload !== undefined) {
+        headers.set('Content-Type', 'application/json')
+      }
 
       if (authenticated) {
         await this.authService.refreshToken()
@@ -78,23 +86,24 @@ export class ApiClient {
 
       const response = await fetch(this.buildUrl(path), {
         credentials: 'include',
+        body: requestPayload,
         headers,
         method,
         signal: controller.signal,
       })
 
-      const body = await this.readBody(response)
+      const responseBody = await this.readBody(response)
 
       if (!response.ok) {
         throw new ApiError({
-          details: body,
+          details: responseBody,
           kind: getApiErrorKind(response.status),
-          message: this.getErrorMessage(response.status, body),
+          message: this.getErrorMessage(response.status, responseBody),
           status: response.status,
         })
       }
 
-      const parsed = schema.safeParse(body)
+      const parsed = schema.safeParse(responseBody)
 
       if (!parsed.success) {
         throw new ApiError({
@@ -180,7 +189,9 @@ export class ApiClient {
       details: error,
       kind: 'unknown',
       message:
-        error instanceof Error ? error.message : 'An unknown API error occurred',
+        error instanceof Error
+          ? error.message
+          : 'An unknown API error occurred',
     })
   }
 }
