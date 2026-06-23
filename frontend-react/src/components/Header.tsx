@@ -1,5 +1,7 @@
 import type { ElementType, ReactNode } from 'react'
 
+import { cx } from '@/lib/cx'
+
 import BcLogo from './BcLogo'
 
 type HeaderTitleElement = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p'
@@ -19,10 +21,6 @@ export interface HeaderProps {
   children?: ReactNode
   className?: string
   containerClassName?: string
-}
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ')
 }
 
 export default function Header({

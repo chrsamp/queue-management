@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 
+import { cx } from '@/lib/cx'
+
 import BcLogo from './BcLogo'
 
 export interface FooterLink {
@@ -20,10 +22,6 @@ export interface FooterProps {
   copyright?: ReactNode | null
   className?: string
   containerClassName?: string
-}
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ')
 }
 
 const defaultAcknowledgement = (

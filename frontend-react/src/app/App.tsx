@@ -7,6 +7,7 @@ import { getCurrentCsr, getOffices } from '@/api/endpoints'
 import { ApiError } from '@/api/errors'
 import { useApiClient } from '@/api/use-api-client'
 import { useAuth } from '@/auth/use-auth'
+import Button from '@/components/Button'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -14,33 +15,6 @@ import { useWorkflowStore } from '@/store/workflow-store'
 interface AppProps {
   queryClient: QueryClient
   supportUrl: string
-}
-
-function cx(...classes: Array<string | false | null | undefined>) {
-  return classes.filter(Boolean).join(' ')
-}
-
-function Button({
-  children,
-  className,
-  onClick,
-}: {
-  children: string
-  className?: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      className={cx(
-        'bg-bc-link focus-visible:outline-bc-link rounded-sm px-4 py-2 font-bold text-white hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2',
-        className,
-      )}
-      onClick={onClick}
-      type="button"
-    >
-      {children}
-    </button>
-  )
 }
 
 function App({ queryClient, supportUrl }: AppProps) {

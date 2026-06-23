@@ -12,6 +12,19 @@
   --color-bc-primary: #2d2d2d;
   --color-bc-secondary: #474543;
   --color-bc-link: #255a90;
+  --color-bc-focus: #2e5dd7;
+  --color-bc-button-primary: #013366;
+  --color-bc-button-primary-hover: #1e5189;
+  --color-bc-button-primary-pressed: #01264c;
+  --color-bc-button-secondary-hover: #edebe9;
+  --color-bc-button-secondary-pressed: #e0dedc;
+  --color-bc-button-tertiary-hover: #eceae8;
+  --color-bc-button-tertiary-pressed: #e0dedc;
+  --color-bc-disabled-surface: #edebe9;
+  --color-bc-disabled-text: #9f9d9c;
+  --color-bc-danger: #ce3e39;
+  --color-bc-danger-hover: #a2312d;
+  --color-bc-danger-surface: #f4e1e2;
 
   --container-bc-content: 68.75rem;
 
