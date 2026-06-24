@@ -10,18 +10,25 @@ import {
 import { useNavigate } from 'react-router'
 
 import { isAdminRole } from '@/app/admin'
+import type { Office } from '@/api/schemas'
 import { cx } from '@/lib/cx'
+import { useWorkflowStore } from '@/store/workflow-store'
 
 interface HeaderNavigationMenuProps {
+  currentOffice: Office | null
   currentRoleCode: string | null
   onLogout: () => void | Promise<void>
 }
 
 export default function HeaderNavigationMenu({
+  currentOffice,
   currentRoleCode,
   onLogout,
 }: HeaderNavigationMenuProps) {
   const navigate = useNavigate()
+  const showDayAgenda = useWorkflowStore((state) => state.showDayAgenda)
+  const setShowDayAgenda = useWorkflowStore((state) => state.setShowDayAgenda)
+  const appointmentsEnabled = currentOffice?.appointments_enabled_ind === 1
 
   function handleAction(key: Key) {
     switch (key) {
@@ -30,6 +37,12 @@ export default function HeaderNavigationMenu({
         return
       case 'admin':
         void navigate('/admin')
+        return
+      case 'appointments':
+        void navigate('/appointments')
+        return
+      case 'day-agenda':
+        setShowDayAgenda(!showDayAgenda)
         return
       case 'logout':
         void onLogout()
@@ -58,6 +71,24 @@ export default function HeaderNavigationMenu({
           <MenuItem className={menuItemClassName} id="queue" textValue="Queue">
             Queue
           </MenuItem>
+          {appointmentsEnabled && (
+            <MenuItem
+              className={menuItemClassName}
+              id="appointments"
+              textValue="Appointments"
+            >
+              Appointments
+            </MenuItem>
+          )}
+          {appointmentsEnabled && (
+            <MenuItem
+              className={menuItemClassName}
+              id="day-agenda"
+              textValue="Show Day Agenda"
+            >
+              {showDayAgenda ? 'Hide Day Agenda' : 'Show Day Agenda'}
+            </MenuItem>
+          )}
           {isAdminRole(currentRoleCode) && (
             <MenuItem
               className={menuItemClassName}

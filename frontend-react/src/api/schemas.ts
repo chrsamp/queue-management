@@ -62,6 +62,17 @@ export const officeSchema = z
   })
   .passthrough()
 
+export const appointmentOfficeSchema = z
+  .object({
+    appointments_enabled_ind: z.number().nullable().optional(),
+    appointment_duration: z.number().nullable().optional(),
+    office_id: z.number(),
+    office_name: z.string(),
+    office_number: z.number(),
+    timezone: timezoneSchema,
+  })
+  .passthrough()
+
 export const csrSchema = z
   .object({
     csr_id: z.number(),
@@ -234,12 +245,74 @@ export const channelSchema = z
 export const serviceSchema = z
   .object({
     actual_service_ind: z.number().nullable().optional(),
+    css_colour: z.string().nullable().optional(),
     display_dashboard_ind: z.number().nullable().optional(),
     parent: serviceParentSchema.nullable().optional(),
     parent_id: z.number().nullable().optional(),
     service_desc: z.string().nullable().optional(),
     service_id: z.number(),
     service_name: z.string(),
+    timeslot_duration: z.number().nullable().optional(),
+  })
+  .passthrough()
+
+export const appointmentSchema = z
+  .object({
+    appointment_id: z.number(),
+    blackout_flag: z.string().nullable().optional(),
+    checked_in_time: z.string().nullable().optional(),
+    citizen_id: z.number().nullable().optional(),
+    citizen_name: z.string().nullable().optional(),
+    comments: z.string().nullable().optional(),
+    contact_information: z.string().nullable().optional(),
+    end_time: z.string(),
+    is_draft: z.boolean().nullable().optional(),
+    office: appointmentOfficeSchema,
+    office_id: z.number(),
+    online_flag: z.boolean().nullable().optional(),
+    recurring_uuid: z.string().nullable().optional(),
+    service: serviceSchema.nullable().optional(),
+    service_id: z.number().nullable().optional(),
+    start_time: z.string(),
+    stat_flag: z.boolean().nullable().optional(),
+  })
+  .passthrough()
+
+export const appointmentsResponseSchema = z
+  .object({
+    appointments: z.array(appointmentSchema),
+    errors: z.unknown().optional(),
+  })
+  .passthrough()
+
+export const appointmentResponseSchema = z
+  .object({
+    appointment: appointmentSchema,
+    errors: z.unknown().optional(),
+    warning: z.unknown().optional(),
+  })
+  .passthrough()
+
+export const roomSchema = z
+  .object({
+    color: z.string().nullable().optional(),
+    deleted: z.string().nullable().optional(),
+    room_id: z.number(),
+    room_name: z.string(),
+  })
+  .passthrough()
+
+export const roomsResponseSchema = z
+  .object({
+    rooms: z.array(roomSchema),
+    errors: z.unknown().optional(),
+  })
+  .passthrough()
+
+export const bookingResponseSchema = z
+  .object({
+    booking: z.unknown().optional(),
+    errors: z.unknown().optional(),
   })
   .passthrough()
 
@@ -285,3 +358,5 @@ export type QuickService = z.infer<typeof quickServiceSchema>
 export type Category = z.infer<typeof categorySchema>
 export type Channel = z.infer<typeof channelSchema>
 export type Service = z.infer<typeof serviceSchema>
+export type Appointment = z.infer<typeof appointmentSchema>
+export type Room = z.infer<typeof roomSchema>

@@ -3,6 +3,9 @@ import { z } from 'zod'
 
 import {
   addCitizenResponseSchema,
+  appointmentResponseSchema,
+  appointmentsResponseSchema,
+  bookingResponseSchema,
   categoriesResponseSchema,
   channelsResponseSchema,
   csrMeResponseSchema,
@@ -11,6 +14,7 @@ import {
   csrsResponseSchema,
   citizensResponseSchema,
   officesResponseSchema,
+  roomsResponseSchema,
   serviceRequestResponseSchema,
   servicesResponseSchema,
 } from './schemas'
@@ -92,11 +96,13 @@ export function addCitizen(
 
 export interface UpdateCitizenPayload {
   accurate_time_ind?: number | null
+  citizen_name?: string
   citizen_comments?: string
   counter_id?: number | null
   notification_email?: string
   notification_phone?: string
   priority?: number
+  start_time?: string
   walkin_unique_id?: string
 }
 
@@ -269,6 +275,187 @@ export function sendWalkinLineReminder(
     body: { previous_citizen_id: citizenId },
     method: 'POST',
     schema: serviceRequestResponseSchema,
+    signal,
+  })
+}
+
+export interface AppointmentPayload {
+  appointment_id?: number
+  appointment_draft_id?: number
+  blackout_flag?: string
+  checked_in_time?: string
+  citizen_name?: string | null
+  comments?: string | null
+  contact_information?: string | null
+  end_time?: string
+  office_id?: number
+  recurring_uuid?: string | null
+  service_id?: number | null
+  start_time?: string
+  stat_flag?: boolean
+}
+
+export function getAppointments(client: ApiClient, signal?: AbortSignal) {
+  return client
+    .get('/appointments/', { schema: appointmentsResponseSchema, signal })
+    .then((response) =>
+      response.appointments.filter((appointment) => !appointment.checked_in_time),
+    )
+}
+
+export function createAppointment(
+  client: ApiClient,
+  payload: AppointmentPayload,
+  signal?: AbortSignal,
+) {
+  return client
+    .request('/appointments/', {
+      body: payload,
+      method: 'POST',
+      schema: appointmentResponseSchema,
+      signal,
+    })
+    .then((response) => response.appointment)
+}
+
+export function updateAppointment(
+  client: ApiClient,
+  appointmentId: number,
+  payload: AppointmentPayload,
+  signal?: AbortSignal,
+) {
+  return client
+    .request(`/appointments/${appointmentId}/`, {
+      body: payload,
+      method: 'PUT',
+      schema: appointmentResponseSchema,
+      signal,
+    })
+    .then((response) => response.appointment)
+}
+
+export function deleteAppointment(
+  client: ApiClient,
+  appointmentId: number,
+  signal?: AbortSignal,
+) {
+  return client.request(`/appointments/${appointmentId}/`, {
+    method: 'DELETE',
+    schema: z.unknown(),
+    signal,
+  })
+}
+
+export function createDraftAppointment(
+  client: ApiClient,
+  payload: AppointmentPayload,
+  signal?: AbortSignal,
+) {
+  return client
+    .request('/appointments/draft', {
+      authenticated: false,
+      body: payload,
+      method: 'POST',
+      schema: appointmentResponseSchema,
+      signal,
+    })
+    .then((response) => response.appointment)
+}
+
+export function deleteDraftAppointment(
+  client: ApiClient,
+  appointmentId: number,
+  signal?: AbortSignal,
+) {
+  return client.request(`/appointments/draft/${appointmentId}/`, {
+    authenticated: false,
+    method: 'DELETE',
+    schema: z.unknown(),
+    signal,
+  })
+}
+
+export function updateRecurringAppointment(
+  client: ApiClient,
+  recurringUuid: string,
+  payload: AppointmentPayload,
+  signal?: AbortSignal,
+) {
+  return client.request(`/appointments/recurring/${recurringUuid}`, {
+    body: payload,
+    method: 'PUT',
+    schema: appointmentsResponseSchema,
+    signal,
+  })
+}
+
+export function deleteRecurringAppointments(
+  client: ApiClient,
+  recurringUuid: string,
+  signal?: AbortSignal,
+) {
+  return client.request(`/appointments/recurring/${recurringUuid}`, {
+    method: 'DELETE',
+    schema: z.unknown(),
+    signal,
+  })
+}
+
+export function deleteAllStatAppointments(
+  client: ApiClient,
+  recurringUuid: string,
+  signal?: AbortSignal,
+) {
+  return client.request(`/appointments/all-stat/${recurringUuid}`, {
+    method: 'DELETE',
+    schema: z.unknown(),
+    signal,
+  })
+}
+
+export function getRooms(
+  client: ApiClient,
+  officeId: number,
+  signal?: AbortSignal,
+) {
+  return client
+    .get(`/rooms/?office_id=${officeId}`, { schema: roomsResponseSchema, signal })
+    .then((response) => response.rooms)
+}
+
+export function createBooking(
+  client: ApiClient,
+  payload: Record<string, unknown>,
+  signal?: AbortSignal,
+) {
+  return client.request('/bookings/', {
+    body: payload,
+    method: 'POST',
+    schema: bookingResponseSchema,
+    signal,
+  })
+}
+
+export function deleteRecurringStatBookingsForCurrentOffice(
+  client: ApiClient,
+  recurringUuid: string,
+  signal?: AbortSignal,
+) {
+  return client.request(`/bookings/recurring/current-office/${recurringUuid}`, {
+    method: 'DELETE',
+    schema: z.unknown(),
+    signal,
+  })
+}
+
+export function deleteRecurringStatBookingsForAllOffices(
+  client: ApiClient,
+  recurringUuid: string,
+  signal?: AbortSignal,
+) {
+  return client.request(`/bookings/recurring/stat/${recurringUuid}`, {
+    method: 'DELETE',
+    schema: z.unknown(),
     signal,
   })
 }

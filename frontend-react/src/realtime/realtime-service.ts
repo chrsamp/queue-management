@@ -175,21 +175,21 @@ export class RealtimeService {
     socket.on('appointment_create', (payload: unknown) => {
       this.recordDeferredEvent('appointment_create', payload)
       void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.appointments,
+        queryKey: queryKeys.appointments.all,
       })
     })
 
     socket.on('appointment_update', (payload: unknown) => {
       this.recordDeferredEvent('appointment_update', payload)
       void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.appointments,
+        queryKey: queryKeys.appointments.all,
       })
     })
 
     socket.on('appointment_delete', (payload: unknown) => {
       this.recordDeferredEvent('appointment_delete', payload)
       void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.appointments,
+        queryKey: queryKeys.appointments.all,
       })
     })
   }

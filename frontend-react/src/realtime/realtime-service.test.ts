@@ -340,7 +340,7 @@ describe('StaffSocketService', () => {
       queryKey: queryKeys.citizens,
     })
     expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: queryKeys.appointments,
+      queryKey: queryKeys.appointments.all,
     })
   })
 

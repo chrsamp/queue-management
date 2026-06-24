@@ -30,6 +30,7 @@ import HeaderNavigationMenu from '@/components/HeaderNavigationMenu'
 import OfficeSwitcher from '@/components/OfficeSwitcher'
 import Select from '@/components/Select'
 import { queryKeys } from '@/query/query-keys'
+import AppointmentsWorkspace from '@/appointments/AppointmentsWorkspace'
 import QueueWorkspace from '@/queue/QueueWorkspace'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -44,6 +45,7 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
   const apiClient = useApiClient()
   const clearWorkflow = useWorkflowStore((state) => state.clearWorkflow)
   const currentRoleCode = useWorkflowStore((state) => state.currentRoleCode)
+  const currentOffice = useWorkflowStore((state) => state.currentOffice)
   const setCurrentCsr = useWorkflowStore((state) => state.setCurrentCsr)
 
   const currentCsrQuery = useQuery({
@@ -93,6 +95,7 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
           )}
           {auth.authenticated ? (
             <HeaderNavigationMenu
+              currentOffice={currentOffice}
               currentRoleCode={currentRoleCode}
               onLogout={handleLogout}
             />
@@ -111,6 +114,10 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
           <Route
             element={<QueueRoute supportUrl={supportUrl} />}
             path="/queue"
+          />
+          <Route
+            element={<AppointmentsRoute supportUrl={supportUrl} />}
+            path="/appointments"
           />
           <Route
             element={
@@ -175,6 +182,17 @@ function QueueRoute({ supportUrl }: { supportUrl: string }) {
 
 function UnauthenticatedQueue() {
   return <UnauthenticatedStaffRoute title="Queue" />
+}
+
+function AppointmentsRoute({ supportUrl }: { supportUrl: string }) {
+  const auth = useAuth()
+  const location = useLocation()
+
+  if (!auth.authenticated) {
+    return <UnauthenticatedStaffRoute title="Appointments" />
+  }
+
+  return <AuthenticatedAppointments key={location.key} supportUrl={supportUrl} />
 }
 
 function UnauthenticatedStaffRoute({ title }: { title: string }) {
@@ -264,6 +282,64 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
       isLoading={citizensQuery.isPending}
       office={office}
       csrId={csr.csr_id}
+    />
+  )
+}
+
+function AuthenticatedAppointments({ supportUrl }: { supportUrl: string }) {
+  const apiClient = useApiClient()
+  const clearWorkflow = useWorkflowStore((state) => state.clearWorkflow)
+  const currentOffice = useWorkflowStore((state) => state.currentOffice)
+  const setCurrentCsr = useWorkflowStore((state) => state.setCurrentCsr)
+
+  const currentCsrQuery = useQuery({
+    queryFn: ({ signal }) => getCurrentCsr(apiClient, signal),
+    queryKey: queryKeys.csrs.me,
+    refetchOnMount: 'always',
+    retry: false,
+  })
+
+  useEffect(() => {
+    if (currentCsrQuery.data) {
+      setCurrentCsr(currentCsrQuery.data.csr)
+    } else if (currentCsrQuery.isError) {
+      clearWorkflow()
+    }
+  }, [
+    clearWorkflow,
+    currentCsrQuery.data,
+    currentCsrQuery.isError,
+    setCurrentCsr,
+  ])
+
+  if (currentCsrQuery.isPending) {
+    return (
+      <section className="mx-auto max-w-5xl p-6">
+        <p className="text-bc-body text-bc-secondary m-0">
+          Loading your staff profile...
+        </p>
+      </section>
+    )
+  }
+
+  if (currentCsrQuery.isError) {
+    return (
+      <UserNotConfigured
+        error={currentCsrQuery.error}
+        supportUrl={supportUrl}
+      />
+    )
+  }
+
+  const csr = currentCsrQuery.data.csr
+  const office = currentOffice ?? csr.office
+
+  return (
+    <AppointmentsWorkspace
+      office={office}
+      recurringFeatureFlag={currentCsrQuery.data.recurring_feature_flag}
+      roleCode={csr.role.role_code}
+      username={csr.username}
     />
   )
 }

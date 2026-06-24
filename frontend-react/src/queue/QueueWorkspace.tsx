@@ -17,6 +17,8 @@ import { beginCitizenService, inviteCitizen } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
+import DayAgendaPanel from '@/appointments/DayAgendaPanel'
+import { appointmentsEnabled } from '@/appointments/appointment-utils'
 
 import QueueActions from './QueueActions'
 import QueueTable from './QueueTable'
@@ -83,6 +85,7 @@ export default function QueueWorkspace({
   const setActiveServiceCitizen = useWorkflowStore(
     (state) => state.setActiveServiceCitizen,
   )
+  const showDayAgenda = useWorkflowStore((state) => state.showDayAgenda)
   const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
   const terminalClearedCitizenId = useWorkflowStore(
     (state) => state.terminalClearedCitizenId,
@@ -341,6 +344,8 @@ export default function QueueWorkspace({
           {queueAlert}
         </p>
       )}
+      <div className="flex min-h-0 flex-1 gap-4">
+        <div className="flex min-w-0 flex-1 flex-col">
       {isLoading ? (
         <QueueStatusMessage message="Loading queue..." />
       ) : errorMessage ? (
@@ -417,6 +422,11 @@ export default function QueueWorkspace({
           />
         </QueuePanel>
       )}
+        </div>
+        {showDayAgenda && appointmentsEnabled(office) && (
+          <DayAgendaPanel office={office} />
+        )}
+      </div>
       <ServeCitizenModal
         citizen={activeCitizen}
         citizens={citizens}

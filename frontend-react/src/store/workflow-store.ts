@@ -45,6 +45,7 @@ interface WorkflowState {
   serveModalAlert: string | null
   serviceBegun: boolean
   showServiceModal: boolean
+  showDayAgenda: boolean
   showTimeTrackingIcon: boolean
   terminalClearedCitizenId: number | null
   clearWorkflow: () => void
@@ -73,6 +74,7 @@ interface WorkflowState {
   setRealtimeEvent: (eventName: string) => void
   setRealtimeRoomStatus: (status: RealtimeRoomStatus) => void
   setServeModalAlert: (message: string | null) => void
+  setShowDayAgenda: (show: boolean) => void
   setShowTimeTrackingIcon: (show: boolean) => void
 }
 
@@ -95,6 +97,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   serveModalAlert: null,
   serviceBegun: false,
   showServiceModal: false,
+  showDayAgenda: false,
   showTimeTrackingIcon: false,
   terminalClearedCitizenId: null,
   clearWorkflow: () =>
@@ -117,6 +120,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       serveModalAlert: null,
       serviceBegun: false,
       showServiceModal: false,
+      showDayAgenda: false,
       showTimeTrackingIcon: false,
       terminalClearedCitizenId: null,
     }),
@@ -183,5 +187,6 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   setRealtimeEvent: (eventName) => set({ realtimeLastEvent: eventName }),
   setRealtimeRoomStatus: (status) => set({ realtimeRoomStatus: status }),
   setServeModalAlert: (message) => set({ serveModalAlert: message }),
+  setShowDayAgenda: (show) => set({ showDayAgenda: show }),
   setShowTimeTrackingIcon: (show) => set({ showTimeTrackingIcon: show }),
 }))
