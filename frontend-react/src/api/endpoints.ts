@@ -5,6 +5,7 @@ import {
   addCitizenResponseSchema,
   appointmentResponseSchema,
   appointmentsResponseSchema,
+  bookingsResponseSchema,
   bookingResponseSchema,
   categoriesResponseSchema,
   channelsResponseSchema,
@@ -13,6 +14,9 @@ import {
   csrUpdateResponseSchema,
   csrsResponseSchema,
   citizensResponseSchema,
+  examResponseSchema,
+  examsResponseSchema,
+  invigilatorsResponseSchema,
   officesResponseSchema,
   roomsResponseSchema,
   serviceRequestResponseSchema,
@@ -423,15 +427,95 @@ export function getRooms(
     .then((response) => response.rooms)
 }
 
+export function getBookings(client: ApiClient, signal?: AbortSignal) {
+  return client
+    .get('/bookings/', { schema: bookingsResponseSchema, signal })
+    .then((response) => response.bookings)
+}
+
+export interface BookingPayload {
+  blackout_flag?: string | null
+  blackout_notes?: string | null
+  booking_contact_information?: string | null
+  booking_name?: string | null
+  end_time?: string
+  fees?: string | null
+  for_stat?: boolean
+  invigilator_id?: number | number[] | null
+  office_id?: number
+  recurring_uuid?: string | null
+  room_id?: number | string | null
+  sbc_staff_invigilated?: boolean | number | null
+  shadow_invigilator_id?: number | null
+  start_time?: string
+  stat_flag?: boolean
+}
+
 export function createBooking(
   client: ApiClient,
-  payload: Record<string, unknown>,
+  payload: BookingPayload,
   signal?: AbortSignal,
 ) {
-  return client.request('/bookings/', {
+  return client
+    .request('/bookings/', {
+      body: payload,
+      method: 'POST',
+      schema: bookingResponseSchema,
+      signal,
+    })
+    .then((response) => response.booking)
+}
+
+export function updateBooking(
+  client: ApiClient,
+  bookingId: number,
+  payload: BookingPayload,
+  signal?: AbortSignal,
+) {
+  return client
+    .request(`/bookings/${bookingId}/`, {
+      body: payload,
+      method: 'PUT',
+      schema: bookingResponseSchema,
+      signal,
+    })
+    .then((response) => response.booking)
+}
+
+export function deleteBooking(
+  client: ApiClient,
+  bookingId: number,
+  signal?: AbortSignal,
+) {
+  return client.request(`/bookings/${bookingId}/`, {
+    method: 'DELETE',
+    schema: z.unknown(),
+    signal,
+  })
+}
+
+export function updateRecurringBooking(
+  client: ApiClient,
+  recurringUuid: string,
+  payload: BookingPayload,
+  signal?: AbortSignal,
+) {
+  return client.request(`/bookings/recurring/${recurringUuid}`, {
     body: payload,
-    method: 'POST',
-    schema: bookingResponseSchema,
+    method: 'PUT',
+    schema: bookingsResponseSchema,
+    signal,
+  })
+}
+
+export function deleteRecurringBooking(
+  client: ApiClient,
+  recurringUuid: string,
+  signal?: AbortSignal,
+) {
+  return client.request(`/bookings/recurring/${recurringUuid}`, {
+    method: 'DELETE',
+    schema: z.unknown(),
     signal,
   })
 }
@@ -458,6 +542,34 @@ export function deleteRecurringStatBookingsForAllOffices(
     schema: z.unknown(),
     signal,
   })
+}
+
+export function getInvigilators(client: ApiClient, signal?: AbortSignal) {
+  return client
+    .get('/invigilators/', { schema: invigilatorsResponseSchema, signal })
+    .then((response) => response.invigilators)
+}
+
+export function getExams(client: ApiClient, signal?: AbortSignal) {
+  return client
+    .get('/exams/', { schema: examsResponseSchema, signal })
+    .then((response) => response.exams)
+}
+
+export function updateExamBooking(
+  client: ApiClient,
+  examId: number,
+  bookingId: number | null,
+  signal?: AbortSignal,
+) {
+  return client
+    .request(`/exams/${examId}/`, {
+      body: { booking_id: bookingId },
+      method: 'PUT',
+      schema: examResponseSchema,
+      signal,
+    })
+    .then((response) => response.exam)
 }
 
 export function updateCsr(

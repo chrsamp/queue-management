@@ -192,6 +192,27 @@ export class RealtimeService {
         queryKey: queryKeys.appointments.all,
       })
     })
+
+    socket.on('booking_create', (payload: unknown) => {
+      this.recordDeferredEvent('booking_create', payload)
+      void this.queryClient.invalidateQueries({
+        queryKey: queryKeys.bookings.all,
+      })
+    })
+
+    socket.on('booking_update', (payload: unknown) => {
+      this.recordDeferredEvent('booking_update', payload)
+      void this.queryClient.invalidateQueries({
+        queryKey: queryKeys.bookings.all,
+      })
+    })
+
+    socket.on('booking_delete', (payload: unknown) => {
+      this.recordDeferredEvent('booking_delete', payload)
+      void this.queryClient.invalidateQueries({
+        queryKey: queryKeys.bookings.all,
+      })
+    })
   }
 
   private join() {

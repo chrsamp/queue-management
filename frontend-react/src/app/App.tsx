@@ -20,6 +20,7 @@ import {
   type AdminView,
 } from '@/app/admin'
 import { useAuth } from '@/auth/use-auth'
+import BookingsWorkspace from '@/bookings/BookingsWorkspace'
 import Button from '@/components/Button'
 import CounterSwitcher from '@/components/CounterSwitcher'
 import CsrStatusSwitch from '@/components/CsrStatusSwitch'
@@ -120,6 +121,10 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
             path="/appointments"
           />
           <Route
+            element={<BookingsRoute supportUrl={supportUrl} />}
+            path="/booking"
+          />
+          <Route
             element={
               <AdminRoute adminBaseUrl={adminBaseUrl} supportUrl={supportUrl} />
             }
@@ -193,6 +198,17 @@ function AppointmentsRoute({ supportUrl }: { supportUrl: string }) {
   }
 
   return <AuthenticatedAppointments key={location.key} supportUrl={supportUrl} />
+}
+
+function BookingsRoute({ supportUrl }: { supportUrl: string }) {
+  const auth = useAuth()
+  const location = useLocation()
+
+  if (!auth.authenticated) {
+    return <UnauthenticatedStaffRoute title="Room Bookings" />
+  }
+
+  return <AuthenticatedBookings key={location.key} supportUrl={supportUrl} />
 }
 
 function UnauthenticatedStaffRoute({ title }: { title: string }) {
@@ -336,6 +352,78 @@ function AuthenticatedAppointments({ supportUrl }: { supportUrl: string }) {
 
   return (
     <AppointmentsWorkspace
+      office={office}
+      recurringFeatureFlag={currentCsrQuery.data.recurring_feature_flag}
+      roleCode={csr.role.role_code}
+      username={csr.username}
+    />
+  )
+}
+
+function AuthenticatedBookings({ supportUrl }: { supportUrl: string }) {
+  const apiClient = useApiClient()
+  const clearWorkflow = useWorkflowStore((state) => state.clearWorkflow)
+  const currentOffice = useWorkflowStore((state) => state.currentOffice)
+  const setCurrentCsr = useWorkflowStore((state) => state.setCurrentCsr)
+
+  const currentCsrQuery = useQuery({
+    queryFn: ({ signal }) => getCurrentCsr(apiClient, signal),
+    queryKey: queryKeys.csrs.me,
+    refetchOnMount: 'always',
+    retry: false,
+  })
+
+  useEffect(() => {
+    if (currentCsrQuery.data) {
+      setCurrentCsr(currentCsrQuery.data.csr)
+    } else if (currentCsrQuery.isError) {
+      clearWorkflow()
+    }
+  }, [
+    clearWorkflow,
+    currentCsrQuery.data,
+    currentCsrQuery.isError,
+    setCurrentCsr,
+  ])
+
+  if (currentCsrQuery.isPending) {
+    return (
+      <section className="mx-auto max-w-5xl p-6">
+        <p className="text-bc-body text-bc-secondary m-0">
+          Loading your staff profile...
+        </p>
+      </section>
+    )
+  }
+
+  if (currentCsrQuery.isError) {
+    return (
+      <UserNotConfigured
+        error={currentCsrQuery.error}
+        supportUrl={supportUrl}
+      />
+    )
+  }
+
+  const csr = currentCsrQuery.data.csr
+  const office = currentOffice ?? csr.office
+
+  if (office.exams_enabled_ind !== 1) {
+    return (
+      <section
+        className="mx-auto flex max-w-5xl flex-col gap-4 p-6"
+        role="alert"
+      >
+        <h2 className="text-bc-h4 mt-0 mb-0 font-bold">Access unavailable</h2>
+        <p className="text-bc-body text-bc-secondary m-0">
+          Room bookings are not enabled for this office.
+        </p>
+      </section>
+    )
+  }
+
+  return (
+    <BookingsWorkspace
       office={office}
       recurringFeatureFlag={currentCsrQuery.data.recurring_feature_flag}
       roleCode={csr.role.role_code}

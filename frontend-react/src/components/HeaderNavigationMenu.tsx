@@ -29,6 +29,7 @@ export default function HeaderNavigationMenu({
   const showDayAgenda = useWorkflowStore((state) => state.showDayAgenda)
   const setShowDayAgenda = useWorkflowStore((state) => state.setShowDayAgenda)
   const appointmentsEnabled = currentOffice?.appointments_enabled_ind === 1
+  const examsEnabled = currentOffice?.exams_enabled_ind === 1
 
   function handleAction(key: Key) {
     switch (key) {
@@ -40,6 +41,9 @@ export default function HeaderNavigationMenu({
         return
       case 'appointments':
         void navigate('/appointments')
+        return
+      case 'booking':
+        void navigate('/booking')
         return
       case 'day-agenda':
         setShowDayAgenda(!showDayAgenda)
@@ -78,6 +82,15 @@ export default function HeaderNavigationMenu({
               textValue="Appointments"
             >
               Appointments
+            </MenuItem>
+          )}
+          {examsEnabled && (
+            <MenuItem
+              className={menuItemClassName}
+              id="booking"
+              textValue="Room Bookings"
+            >
+              Room Bookings
             </MenuItem>
           )}
           {appointmentsEnabled && (

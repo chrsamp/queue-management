@@ -49,6 +49,8 @@ export const csrStateSchema = z
 
 export const officeSchema = z
   .object({
+    appointments_enabled_ind: z.number().nullable().optional(),
+    exams_enabled_ind: z.number().nullable().optional(),
     office_id: z.number(),
     office_name: z.string(),
     office_number: z.number(),
@@ -295,8 +297,10 @@ export const appointmentResponseSchema = z
 
 export const roomSchema = z
   .object({
+    capacity: z.number().nullable().optional(),
     color: z.string().nullable().optional(),
     deleted: z.string().nullable().optional(),
+    office_id: z.number().nullable().optional(),
     room_id: z.number(),
     room_name: z.string(),
   })
@@ -309,9 +313,99 @@ export const roomsResponseSchema = z
   })
   .passthrough()
 
+export const invigilatorSchema = z
+  .object({
+    contact_email: z.string().nullable().optional(),
+    contact_phone: z.string().nullable().optional(),
+    invigilator_id: z.number(),
+    invigilator_name: z.string(),
+    invigilator_notes: z.string().nullable().optional(),
+    shadow_count: z.number().nullable().optional(),
+  })
+  .passthrough()
+
+export const invigilatorsResponseSchema = z
+  .object({
+    invigilators: z.array(invigilatorSchema),
+    errors: z.unknown().optional(),
+  })
+  .passthrough()
+
+export const bookingOfficeSchema = appointmentOfficeSchema
+
+export const bookingSchema = z
+  .object({
+    blackout_flag: z.string().nullable().optional(),
+    blackout_notes: z.string().nullable().optional(),
+    booking_contact_information: z.string().nullable().optional(),
+    booking_id: z.number(),
+    booking_name: z.string().nullable().optional(),
+    end_time: z.string(),
+    fees: z.string().nullable().optional(),
+    invigilators: z.array(invigilatorSchema).optional(),
+    office: bookingOfficeSchema,
+    office_id: z.number(),
+    recurring_uuid: z.string().nullable().optional(),
+    room: roomSchema.nullable().optional(),
+    room_id: z.number().nullable().optional(),
+    sbc_staff_invigilated: z.number().nullable().optional(),
+    shadow_invigilator_id: z.number().nullable().optional(),
+    start_time: z.string(),
+    stat_flag: z.boolean().nullable().optional(),
+  })
+  .passthrough()
+
+export const bookingsResponseSchema = z
+  .object({
+    bookings: z.array(bookingSchema),
+    errors: z.unknown().optional(),
+  })
+  .passthrough()
+
 export const bookingResponseSchema = z
   .object({
-    booking: z.unknown().optional(),
+    booking: bookingSchema.optional(),
+    errors: z.unknown().optional(),
+  })
+  .passthrough()
+
+export const examTypeSchema = z
+  .object({
+    exam_type_id: z.number(),
+    exam_type_name: z.string().nullable().optional(),
+    group_exam_ind: z.number().nullable().optional(),
+    number_of_hours: z.number().nullable().optional(),
+    number_of_minutes: z.number().nullable().optional(),
+  })
+  .passthrough()
+
+export const examSchema = z
+  .object({
+    booking: bookingSchema.nullable().optional(),
+    booking_id: z.number().nullable().optional(),
+    event_id: z.string().nullable().optional(),
+    exam_id: z.number(),
+    exam_method: z.string().nullable().optional(),
+    exam_name: z.string().nullable().optional(),
+    exam_type: examTypeSchema,
+    exam_type_id: z.number().nullable().optional(),
+    examinee_name: z.string().nullable().optional(),
+    expiry_date: z.string().nullable().optional(),
+    number_of_students: z.number().nullable().optional(),
+    office_id: z.number().nullable().optional(),
+  })
+  .passthrough()
+
+export const examsResponseSchema = z
+  .object({
+    exams: z.array(examSchema),
+    errors: z.unknown().optional(),
+  })
+  .passthrough()
+
+export const examResponseSchema = z
+  .object({
+    exam: examSchema,
     errors: z.unknown().optional(),
   })
   .passthrough()
@@ -360,3 +454,7 @@ export type Channel = z.infer<typeof channelSchema>
 export type Service = z.infer<typeof serviceSchema>
 export type Appointment = z.infer<typeof appointmentSchema>
 export type Room = z.infer<typeof roomSchema>
+export type Invigilator = z.infer<typeof invigilatorSchema>
+export type Booking = z.infer<typeof bookingSchema>
+export type Exam = z.infer<typeof examSchema>
+export type ExamType = z.infer<typeof examTypeSchema>

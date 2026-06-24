@@ -4,6 +4,10 @@ export const queryKeys = {
     all: ['appointments'] as const,
     office: (officeId: number) => ['appointments', officeId] as const,
   },
+  bookings: {
+    all: ['bookings'] as const,
+    office: (officeId: number) => ['bookings', officeId] as const,
+  },
   categories: ['categories'] as const,
   channels: ['channels'] as const,
   citizens: ['citizens'] as const,
@@ -13,5 +17,8 @@ export const queryKeys = {
     me: ['csrs', 'me'] as const,
   },
   offices: ['offices'] as const,
+  exams: ['exams'] as const,
+  invigilators: ['invigilators'] as const,
+  rooms: (officeId: number) => ['rooms', officeId] as const,
   services: (officeId: number) => ['services', officeId] as const,
 }
