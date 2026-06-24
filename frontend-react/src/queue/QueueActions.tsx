@@ -27,6 +27,7 @@ import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 import AddCitizenModal from './AddCitizenModal'
+import GaPanel from './GaPanel'
 import {
   createAddCitizenModalState,
   type AddCitizenModalState,
@@ -36,7 +37,11 @@ import {
   getAvailableQuickItems,
   getDefaultChannelId,
 } from './add-citizen-utils'
-import { getActiveService, getWaitingCitizens, isReceptionOffice } from './queue-utils'
+import {
+  getActiveService,
+  getWaitingCitizens,
+  isReceptionOffice,
+} from './queue-utils'
 
 interface QueueActionsProps {
   citizens: Citizen[]
@@ -54,6 +59,7 @@ export default function QueueActions({
   const currentReceptionist = useWorkflowStore(
     (state) => state.currentReceptionist,
   )
+  const currentRoleCode = useWorkflowStore((state) => state.currentRoleCode)
   const clearServeCitizen = useWorkflowStore((state) => state.clearServeCitizen)
   const currentCounterId = useWorkflowStore((state) => state.currentCounterId)
   const openServiceModal = useWorkflowStore((state) => state.openServiceModal)
@@ -64,6 +70,7 @@ export default function QueueActions({
   const [modalState, setModalState] = useState<AddCitizenModalState | null>(
     null,
   )
+  const [isGaPanelOpen, setIsGaPanelOpen] = useState(false)
   const [isPerformingAction, setIsPerformingAction] = useState(false)
   const [actionAlert, setActionAlert] = useState<string | null>(null)
 
@@ -89,6 +96,8 @@ export default function QueueActions({
     servicesQuery.isPending
   const canOpenPrefilledModal =
     currentReceptionist === true && isReceptionOffice(office)
+  const canOpenGaPanel =
+    currentRoleCode === 'GA' || currentRoleCode === 'SUPPORT'
 
   async function ensureReferenceData() {
     const [categories, channels, services] = await Promise.all([
@@ -280,6 +289,15 @@ export default function QueueActions({
             Invite
           </Button>
         )}
+        {canOpenGaPanel && (
+          <Button
+            disabled={isBusy}
+            onClick={() => setIsGaPanelOpen(true)}
+            variant="secondary"
+          >
+            GA Panel
+          </Button>
+        )}
         <Button
           className={cx(
             hasActiveServiceCitizen &&
@@ -322,6 +340,14 @@ export default function QueueActions({
         services={servicesQuery.data ?? []}
         state={modalState}
       />
+      {canOpenGaPanel && (
+        <GaPanel
+          citizens={citizens}
+          isOpen={isGaPanelOpen}
+          office={office}
+          onClose={() => setIsGaPanelOpen(false)}
+        />
+      )}
     </>
   )
 }

@@ -24,6 +24,7 @@ import Button from '@/components/Button'
 import CounterSwitcher from '@/components/CounterSwitcher'
 import CsrStatusSwitch from '@/components/CsrStatusSwitch'
 import Footer from '@/components/Footer'
+import GlobalAlertRegion from '@/components/GlobalAlertRegion'
 import Header from '@/components/Header'
 import HeaderNavigationMenu from '@/components/HeaderNavigationMenu'
 import OfficeSwitcher from '@/components/OfficeSwitcher'
@@ -100,6 +101,7 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
           )}
         </div>
       </Header>
+      <GlobalAlertRegion />
       <main
         className="flex min-h-[calc(100vh-var(--spacing-bc-header-height))] flex-1 flex-col"
         id="main"

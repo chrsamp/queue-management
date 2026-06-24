@@ -5,6 +5,7 @@ const defaultSocketDelayMax = 5000
 
 const runtimeConfigInputSchema = z.object({
   VITE_Q_API_URL: z.string().url(),
+  VITE_Q_E2E_AUTH_ENABLED: z.coerce.boolean().optional(),
   VITE_Q_SUPPORT_URL: z.string().url(),
   VITE_Q_SOCKET_DELAY_MAX: z.coerce.number().int().positive().optional(),
   VITE_Q_SOCKET_TIMEOUT: z.coerce.number().int().positive().optional(),
@@ -14,6 +15,8 @@ const runtimeConfigInputSchema = z.object({
 export const runtimeConfigSchema = runtimeConfigInputSchema.transform(
   (config) => ({
     ...config,
+    VITE_Q_E2E_AUTH_ENABLED:
+      config.VITE_Q_E2E_AUTH_ENABLED === true && import.meta.env.DEV,
     VITE_Q_SOCKET_DELAY_MAX:
       config.VITE_Q_SOCKET_DELAY_MAX ?? defaultSocketDelayMax,
     VITE_Q_SOCKET_TIMEOUT: config.VITE_Q_SOCKET_TIMEOUT ?? defaultSocketTimeout,

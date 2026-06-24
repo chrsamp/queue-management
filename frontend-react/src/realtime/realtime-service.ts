@@ -1,7 +1,9 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { io, type Socket } from 'socket.io-client'
 
+import { citizenSchema, type Citizen } from '@/api/schemas'
 import { queryKeys } from '@/query/query-keys'
+import { getActiveCitizenForCsr } from '@/queue/queue-utils'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 export interface RealtimeConfig {
@@ -137,11 +139,7 @@ export class RealtimeService {
     })
 
     socket.on('update_active_citizen', (payload: unknown) => {
-      this.recordDeferredEvent('update_active_citizen', payload)
-      void this.queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
-      void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.activeCitizen,
-      })
+      this.handleUpdateActiveCitizen(payload)
     })
 
     socket.on('csr_update', (payload: unknown) => {
@@ -149,11 +147,14 @@ export class RealtimeService {
       console.info('socket received: "csr_update"', payload)
       void this.queryClient.invalidateQueries({ queryKey: queryKeys.csrs.me })
 
-      if (useWorkflowStore.getState().currentRoleCode === 'GA') {
-        console.info(
-          'socket received: "csr_update"; GA CSR list refresh is deferred until the GA screen is implemented',
+      if (
+        ['GA', 'SUPPORT'].includes(
+          useWorkflowStore.getState().currentRoleCode ?? '',
         )
-        void this.queryClient.invalidateQueries({ queryKey: queryKeys.csrs.all })
+      ) {
+        void this.queryClient.invalidateQueries({
+          queryKey: queryKeys.csrs.all,
+        })
       }
     })
 
@@ -203,6 +204,80 @@ export class RealtimeService {
     this.recordEvent(eventName)
     console.info('socket reconnecting')
     useWorkflowStore.getState().setRealtimeConnectionStatus('reconnecting')
+  }
+
+  private handleUpdateActiveCitizen(payload: unknown) {
+    this.recordEvent('update_active_citizen')
+    console.info('socket received: "update_active_citizen"', payload)
+
+    const parsed = citizenSchema.safeParse(payload)
+
+    if (!parsed.success) {
+      console.warn(
+        'socket received invalid "update_active_citizen" payload',
+        parsed.error,
+      )
+      this.refreshCitizenQueries()
+      return
+    }
+
+    const citizen = parsed.data
+    this.upsertCitizen(citizen)
+    this.syncActiveCitizenWorkflow(citizen)
+    this.refreshCitizenQueries()
+  }
+
+  private upsertCitizen(citizen: Citizen) {
+    this.queryClient.setQueryData<Citizen[]>(
+      queryKeys.citizens,
+      (current = []) => {
+        const existingIndex = current.findIndex(
+          (item) => item.citizen_id === citizen.citizen_id,
+        )
+
+        if (existingIndex === -1) {
+          return [...current, citizen]
+        }
+
+        return current.map((item, index) =>
+          index === existingIndex ? citizen : item,
+        )
+      },
+    )
+  }
+
+  private syncActiveCitizenWorkflow(citizen: Citizen) {
+    const workflow = useWorkflowStore.getState()
+    const activeCitizen = getActiveCitizenForCsr({
+      citizens: [citizen],
+      csrId: workflow.currentCsrId,
+      username: workflow.currentUsername,
+    })
+
+    if (activeCitizen) {
+      workflow.setActiveServiceCitizen(
+        citizen.citizen_id,
+        activeCitizen.serviceRequest.sr_id,
+        activeCitizen.serviceBegun,
+      )
+
+      if (window.location.pathname === '/queue') {
+        workflow.openServiceModal()
+      }
+
+      return
+    }
+
+    if (workflow.activeCitizenId === citizen.citizen_id) {
+      workflow.clearServeCitizen()
+    }
+  }
+
+  private refreshCitizenQueries() {
+    void this.queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+    void this.queryClient.invalidateQueries({
+      queryKey: queryKeys.activeCitizen,
+    })
   }
 
   private recordDeferredEvent(eventName: string, payload: unknown) {

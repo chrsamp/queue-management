@@ -8,6 +8,7 @@ import {
   csrMeResponseSchema,
   csrStatesResponseSchema,
   csrUpdateResponseSchema,
+  csrsResponseSchema,
   citizensResponseSchema,
   officesResponseSchema,
   serviceRequestResponseSchema,
@@ -22,6 +23,12 @@ export function getOffices(client: ApiClient, signal?: AbortSignal) {
 
 export function getCurrentCsr(client: ApiClient, signal?: AbortSignal) {
   return client.get('/csrs/me/', { schema: csrMeResponseSchema, signal })
+}
+
+export function getCsrs(client: ApiClient, signal?: AbortSignal) {
+  return client
+    .get('/csrs/', { schema: csrsResponseSchema, signal })
+    .then((response) => response.csrs)
 }
 
 export function loginAdminSession(client: ApiClient, signal?: AbortSignal) {

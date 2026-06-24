@@ -83,6 +83,8 @@ export const csrSchema = z
   })
   .passthrough()
 
+export const csrListItemSchema = csrSchema.omit({ office: true })
+
 export const officesResponseSchema = z
   .object({
     offices: z.array(officeSchema),
@@ -104,6 +106,13 @@ export const csrMeResponseSchema = z
     active_citizens: z.array(z.unknown()),
     back_office_display: z.unknown(),
     recurring_feature_flag: z.unknown(),
+    errors: errorsSchema,
+  })
+  .passthrough()
+
+export const csrsResponseSchema = z
+  .object({
+    csrs: z.array(csrListItemSchema),
     errors: errorsSchema,
   })
   .passthrough()
@@ -266,6 +275,7 @@ export const serviceRequestResponseSchema = z.unknown()
 
 export type Office = z.infer<typeof officeSchema>
 export type Csr = z.infer<typeof csrSchema>
+export type CsrListItem = z.infer<typeof csrListItemSchema>
 export type CsrMe = z.infer<typeof csrMeResponseSchema>
 export type CsrState = z.infer<typeof csrStateSchema>
 export type Citizen = z.infer<typeof citizenSchema>

@@ -11,6 +11,7 @@ import {
   getCategories,
   getChannels,
   getCitizens,
+  getCsrs,
   getServices,
   inviteCitizen,
   inviteNextCitizen,
@@ -104,6 +105,46 @@ describe('getCitizens', () => {
 
     await expect(getCitizens(client)).resolves.toEqual(citizens)
     expect(client.get).toHaveBeenCalledWith('/citizens/', {
+      schema: expect.anything(),
+      signal: undefined,
+    })
+  })
+})
+
+describe('getCsrs', () => {
+  test('returns parsed CSR list items without requiring nested office data', async () => {
+    const csrs = [
+      {
+        counter: 1,
+        counter_id: 1,
+        csr_id: 42,
+        csr_state: {
+          csr_state_desc: null,
+          csr_state_id: 2,
+          csr_state_name: 'Login',
+        },
+        csr_state_id: 2,
+        finance_designate: null,
+        ita2_designate: null,
+        office_id: 1,
+        pesticide_designate: null,
+        qt_xn_csr_ind: null,
+        receptionist_ind: null,
+        role: {
+          role_code: 'GA',
+          role_desc: null,
+          role_id: 1,
+        },
+        role_id: 1,
+        username: 'queue.user',
+      },
+    ]
+    const client = {
+      get: vi.fn().mockResolvedValue({ csrs, errors: {} }),
+    } as unknown as ApiClient
+
+    await expect(getCsrs(client)).resolves.toEqual(csrs)
+    expect(client.get).toHaveBeenCalledWith('/csrs/', {
       schema: expect.anything(),
       signal: undefined,
     })
@@ -278,16 +319,12 @@ describe('add citizen endpoints', () => {
       schema: expect.anything(),
       signal: undefined,
     })
-    expect(client.request).toHaveBeenNthCalledWith(
-      8,
-      '/citizens/5/invite/',
-      {
-        body: { counter_id: 3 },
-        method: 'POST',
-        schema: expect.anything(),
-        signal: undefined,
-      },
-    )
+    expect(client.request).toHaveBeenNthCalledWith(8, '/citizens/5/invite/', {
+      body: { counter_id: 3 },
+      method: 'POST',
+      schema: expect.anything(),
+      signal: undefined,
+    })
     expect(client.request).toHaveBeenNthCalledWith(
       9,
       '/citizens/5/place_on_hold/',
@@ -306,16 +343,20 @@ describe('add citizen endpoints', () => {
         signal: undefined,
       },
     )
-    expect(client.request).toHaveBeenNthCalledWith(11, '/service_requests/11/', {
-      body: {
-        channel_id: 7,
-        quantity: 2,
-        service_id: 9,
+    expect(client.request).toHaveBeenNthCalledWith(
+      11,
+      '/service_requests/11/',
+      {
+        body: {
+          channel_id: 7,
+          quantity: 2,
+          service_id: 9,
+        },
+        method: 'PUT',
+        schema: expect.anything(),
+        signal: undefined,
       },
-      method: 'PUT',
-      schema: expect.anything(),
-      signal: undefined,
-    })
+    )
     expect(client.request).toHaveBeenNthCalledWith(
       12,
       '/service_requests/11/activate/',

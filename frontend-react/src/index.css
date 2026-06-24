@@ -13,6 +13,7 @@
   --color-bc-secondary: #474543;
   --color-bc-link: #255a90;
   --color-bc-focus: #2e5dd7;
+  --color-bc-info: #053662;
   --color-bc-overlay: rgb(0 0 0 / 0.45);
   --color-bc-placeholder: #6f6d6b;
   --color-bc-form-hover: #605e5c;
@@ -29,6 +30,8 @@
   --color-bc-danger: #ce3e39;
   --color-bc-danger-hover: #a2312d;
   --color-bc-danger-surface: #f4e1e2;
+  --color-bc-success: #42814a;
+  --color-bc-warning: #f8bb47;
 
   --container-bc-content: 68.75rem;
 

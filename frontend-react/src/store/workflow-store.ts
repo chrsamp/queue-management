@@ -2,6 +2,21 @@ import { create } from 'zustand'
 
 import type { Csr, CsrState, Office } from '@/api/schemas'
 
+export type GlobalAlertVariant =
+  | 'black'
+  | 'danger'
+  | 'info'
+  | 'success'
+  | 'warning'
+
+export interface GlobalAlert {
+  id: string
+  isCloseable?: boolean
+  message: string
+  role?: 'alert' | 'status'
+  variant?: GlobalAlertVariant
+}
+
 export type RealtimeConnectionStatus =
   | 'connected'
   | 'connecting'
@@ -19,6 +34,7 @@ interface WorkflowState {
   currentCsrId: number | null
   currentRoleCode: string | null
   currentUsername: string | null
+  globalAlert: GlobalAlert | null
   currentCsrState: CsrState | null
   currentOffice: Office | null
   currentReceptionist: boolean | null
@@ -32,6 +48,7 @@ interface WorkflowState {
   showTimeTrackingIcon: boolean
   terminalClearedCitizenId: number | null
   clearWorkflow: () => void
+  clearGlobalAlert: () => void
   clearCurrentOffice: () => void
   clearServeCitizen: () => void
   clearTerminalServeCitizen: (citizenId: number) => void
@@ -50,6 +67,7 @@ interface WorkflowState {
   setCurrentCsr: (csr: Csr) => void
   setCurrentCsrState: (csrState: CsrState) => void
   setCurrentOffice: (office: Office) => void
+  setGlobalAlert: (alert: GlobalAlert) => void
   setRealtimeConnectionStatus: (status: RealtimeConnectionStatus) => void
   setRealtimeError: (message: string | null) => void
   setRealtimeEvent: (eventName: string) => void
@@ -66,6 +84,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   currentCsrId: null,
   currentRoleCode: null,
   currentUsername: null,
+  globalAlert: null,
   currentCsrState: null,
   currentOffice: null,
   currentReceptionist: null,
@@ -87,6 +106,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       currentCsrId: null,
       currentRoleCode: null,
       currentUsername: null,
+      globalAlert: null,
       currentCsrState: null,
       currentOffice: null,
       currentReceptionist: null,
@@ -101,6 +121,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       terminalClearedCitizenId: null,
     }),
   clearCurrentOffice: () => set({ currentOffice: null }),
+  clearGlobalAlert: () => set({ globalAlert: null }),
   clearServeCitizen: () =>
     set({
       activeCitizenId: null,
@@ -155,6 +176,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
     }),
   setCurrentCsrState: (csrState) => set({ currentCsrState: csrState }),
   setCurrentOffice: (office) => set({ currentOffice: office }),
+  setGlobalAlert: (alert) => set({ globalAlert: alert }),
   setRealtimeConnectionStatus: (status) =>
     set({ realtimeConnectionStatus: status }),
   setRealtimeError: (message) => set({ realtimeLastError: message }),

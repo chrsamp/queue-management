@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import type { Csr } from '@/api/schemas'
+import type { Citizen, Csr, ServiceRequest } from '@/api/schemas'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -59,6 +59,62 @@ const csr = {
   role_id: 1,
   username: 'queue.user',
 } satisfies Csr
+
+function serviceRequest(
+  periodName: string,
+  overrides: Partial<ServiceRequest> = {},
+) {
+  return {
+    citizen_id: 1,
+    periods: [
+      {
+        csr: {
+          counter: 1,
+          counter_id: 1,
+          username: 'queue.user',
+        },
+        csr_id: 42,
+        period_id: 100,
+        ps: {
+          ps_name: periodName,
+        },
+        time_end: null,
+        time_start: '2026-06-23T16:00:00Z',
+      },
+    ],
+    service: {
+      parent: {
+        service_name: 'Licensing',
+      },
+      parent_id: 1,
+      service_name: 'Driver licence',
+    },
+    sr_id: 20,
+    ...overrides,
+  } satisfies ServiceRequest
+}
+
+function citizen(
+  id: number,
+  periodName: string,
+  overrides: Partial<Citizen> = {},
+) {
+  return {
+    citizen_comments: 'Bring ID',
+    citizen_id: id,
+    citizen_name: null,
+    counter_id: 1,
+    cs: {
+      cs_state_name: 'Active',
+    },
+    office_id: 1,
+    priority: 2,
+    service_reqs: [serviceRequest(periodName)],
+    start_time: '2026-06-23T16:00:00Z',
+    ticket_number: `A${id}`,
+    ...overrides,
+  } satisfies Citizen
+}
 
 function createMockSocket() {
   const socket = {
@@ -235,6 +291,27 @@ describe('StaffSocketService', () => {
     expect(socket.emit).toHaveBeenCalledWith('sync_offices_cache')
   })
 
+  test('invalidates the CSR list for SUPPORT users on csr_update', () => {
+    createMockSocket()
+    useWorkflowStore.getState().setCurrentCsr({
+      ...csr,
+      role: {
+        role_code: 'SUPPORT',
+        role_desc: null,
+        role_id: 2,
+      },
+      role_id: 2,
+    })
+    const { invalidateQueries, service } = createService()
+
+    service.connect()
+    socketMocks.listeners.csr_update({ csr_id: 42 })
+
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.csrs.all,
+    })
+  })
+
   test('emits clear_csr_user_id when clear_csr_cache is received', () => {
     const socket = createMockSocket()
     const { service } = createService()
@@ -251,7 +328,6 @@ describe('StaffSocketService', () => {
 
     service.connect()
     socketMocks.listeners.update_customer_list({ success: true })
-    socketMocks.listeners.update_active_citizen({ citizen_id: 1 })
     socketMocks.listeners.appointment_create({ appointment_id: 1 })
     socketMocks.listeners.appointment_update({ appointment_id: 1 })
     socketMocks.listeners.appointment_delete(1)
@@ -260,18 +336,103 @@ describe('StaffSocketService', () => {
       expect.stringContaining('update_customer_list'),
       { success: true },
     )
-    expect(console.info).toHaveBeenCalledWith(
-      expect.stringContaining('update_active_citizen'),
-      { citizen_id: 1 },
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.citizens,
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.appointments,
+    })
+  })
+
+  test('upserts update_active_citizen payloads into the citizen cache', () => {
+    createMockSocket()
+    const { queryClient, service } = createService()
+    queryClient.setQueryData<Citizen[]>(queryKeys.citizens, [
+      citizen(1, 'Waiting'),
+    ])
+
+    service.connect()
+    socketMocks.listeners.update_active_citizen(citizen(2, 'Waiting'))
+
+    expect(queryClient.getQueryData<Citizen[]>(queryKeys.citizens)).toEqual([
+      citizen(1, 'Waiting'),
+      citizen(2, 'Waiting'),
+    ])
+
+    socketMocks.listeners.update_active_citizen(
+      citizen(1, 'On hold', { citizen_comments: 'Updated' }),
     )
+
+    expect(
+      queryClient.getQueryData<Citizen[]>(queryKeys.citizens)?.[0],
+    ).toMatchObject({
+      citizen_comments: 'Updated',
+      citizen_id: 1,
+    })
+  })
+
+  test('opens the queue service modal for an invited active citizen', () => {
+    window.history.pushState(null, '', '/queue')
+    createMockSocket()
+    const { service } = createService()
+
+    service.connect()
+    socketMocks.listeners.update_active_citizen(citizen(7, 'Invited'))
+
+    expect(useWorkflowStore.getState()).toMatchObject({
+      activeCitizenId: 7,
+      activeServiceRequestId: 20,
+      citizenInvited: true,
+      serviceBegun: false,
+      showServiceModal: true,
+    })
+  })
+
+  test('marks being-served active citizens as service begun', () => {
+    createMockSocket()
+    const { service } = createService()
+
+    service.connect()
+    socketMocks.listeners.update_active_citizen(citizen(7, 'Being Served'))
+
+    expect(useWorkflowStore.getState()).toMatchObject({
+      activeCitizenId: 7,
+      activeServiceRequestId: 20,
+      citizenInvited: false,
+      serviceBegun: true,
+    })
+  })
+
+  test('clears only matching active workflow when a citizen is no longer active for the CSR', () => {
+    createMockSocket()
+    const { service } = createService()
+
+    service.connect()
+    useWorkflowStore.getState().setActiveServiceCitizen(99, 99, true)
+    socketMocks.listeners.update_active_citizen(citizen(7, 'On hold'))
+
+    expect(useWorkflowStore.getState().activeCitizenId).toBe(99)
+
+    useWorkflowStore.getState().setActiveServiceCitizen(7, 20, true)
+    socketMocks.listeners.update_active_citizen(citizen(7, 'On hold'))
+
+    expect(useWorkflowStore.getState().activeCitizenId).toBeNull()
+  })
+
+  test('invalid update_active_citizen payloads preserve workflow state and refresh safely', () => {
+    createMockSocket()
+    const { invalidateQueries, service } = createService()
+    useWorkflowStore.getState().setActiveServiceCitizen(7, 20, true)
+
+    service.connect()
+    socketMocks.listeners.update_active_citizen({ citizen_id: 7 })
+
+    expect(useWorkflowStore.getState().activeCitizenId).toBe(7)
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: queryKeys.citizens,
     })
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: queryKeys.activeCitizen,
-    })
-    expect(invalidateQueries).toHaveBeenCalledWith({
-      queryKey: queryKeys.appointments,
     })
   })
 })

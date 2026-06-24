@@ -10,6 +10,8 @@ import FatalStartupError from '@/app/FatalStartupError'
 import { AuthProvider } from '@/auth/AuthProvider'
 import { AuthService } from '@/auth/auth-service'
 import { loadRuntime } from '@/config/runtime-config'
+import { createE2eAuthService } from '@/e2e/e2e-auth-service'
+import { createE2eRealtimeService } from '@/e2e/e2e-realtime-service'
 import { createAppQueryClient } from '@/query/query-client'
 import { RealtimeProvider } from '@/realtime/RealtimeProvider'
 
@@ -21,7 +23,10 @@ async function start() {
 
   try {
     const runtime = await loadRuntime()
-    const authService = new AuthService(runtime.keycloak)
+    const e2eMode = runtime.config.VITE_Q_E2E_AUTH_ENABLED
+    const authService = e2eMode
+      ? createE2eAuthService()
+      : new AuthService(runtime.keycloak)
     await authService.initialize()
 
     const apiClient = new ApiClient({
@@ -41,12 +46,13 @@ async function start() {
                   timeout: runtime.config.VITE_Q_SOCKET_TIMEOUT,
                   url: runtime.config.VITE_Q_SOCKET_URL,
                 }}
+                createService={e2eMode ? createE2eRealtimeService : undefined}
               >
                 <BrowserRouter>
                   <App
-                    adminBaseUrl={new URL(
-                      runtime.config.VITE_Q_SOCKET_URL,
-                    ).origin}
+                    adminBaseUrl={
+                      new URL(runtime.config.VITE_Q_SOCKET_URL).origin
+                    }
                     queryClient={queryClient}
                     supportUrl={runtime.config.VITE_Q_SUPPORT_URL}
                   />
