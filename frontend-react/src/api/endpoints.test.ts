@@ -12,6 +12,7 @@ import {
   getServices,
   loginAdminSession,
   markCitizenLeft,
+  updateCsr,
   updateCitizen,
 } from './endpoints'
 
@@ -23,6 +24,29 @@ describe('loginAdminSession', () => {
 
     await expect(loginAdminSession(client)).resolves.toEqual({
       authenticated: true,
+    })
+  })
+})
+
+describe('updateCsr', () => {
+  test('sends counter and receptionist state to the legacy CSR endpoint', async () => {
+    const client = {
+      request: vi.fn().mockResolvedValue({ csr: {}, errors: {} }),
+    } as unknown as ApiClient
+
+    await updateCsr(client, 42, {
+      counter_id: 2,
+      receptionist_ind: 0,
+    })
+
+    expect(client.request).toHaveBeenCalledWith('/csrs/42/', {
+      body: {
+        counter_id: 2,
+        receptionist_ind: 0,
+      },
+      method: 'PUT',
+      schema: expect.anything(),
+      signal: undefined,
     })
   })
 })
@@ -84,10 +108,14 @@ describe('add citizen endpoints', () => {
     const client = {
       get: vi.fn((path: string) => {
         if (path === '/categories/') {
-          return Promise.resolve({ categories: [{ service_id: 1, service_name: 'Permits' }] })
+          return Promise.resolve({
+            categories: [{ service_id: 1, service_name: 'Permits' }],
+          })
         }
         if (path === '/channels/') {
-          return Promise.resolve({ channels: [{ channel_id: 2, channel_name: 'In Person' }] })
+          return Promise.resolve({
+            channels: [{ channel_id: 2, channel_name: 'In Person' }],
+          })
         }
         return Promise.resolve({
           services: [

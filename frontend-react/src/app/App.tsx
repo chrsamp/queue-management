@@ -21,6 +21,7 @@ import {
 } from '@/app/admin'
 import { useAuth } from '@/auth/use-auth'
 import Button from '@/components/Button'
+import CounterSwitcher from '@/components/CounterSwitcher'
 import CsrStatusSwitch from '@/components/CsrStatusSwitch'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
@@ -80,6 +81,7 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
       >
         <div className="flex items-center gap-6">
           {auth.authenticated && <CsrStatusSwitch />}
+          {auth.authenticated && <CounterSwitcher />}
           {auth.authenticated && auth.username && (
             <div className="flex min-w-0 flex-col items-end">
               <span className="text-bc-small text-bc-secondary truncate">
@@ -259,7 +261,6 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
       }
       isLoading={citizensQuery.isPending}
       office={office}
-      csr={csr}
       csrId={csr.csr_id}
     />
   )

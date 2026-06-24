@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ChevronDown, ChevronUp, ChevronsUpDown } from 'lucide-react'
 import {
   flexRender,
   getCoreRowModel,
@@ -168,13 +169,22 @@ function buildColumns({
             type="button"
           >
             <span>Time</span>
-            <span aria-hidden="true" className="text-bc-secondary text-xs">
-              {sortDirection === 'asc'
-                ? '^'
-                : sortDirection === 'desc'
-                  ? 'v'
-                  : '-'}
-            </span>
+            {sortDirection === 'asc' ? (
+              <ChevronUp
+                aria-hidden="true"
+                className="text-bc-secondary h-4 w-4"
+              />
+            ) : sortDirection === 'desc' ? (
+              <ChevronDown
+                aria-hidden="true"
+                className="text-bc-secondary h-4 w-4"
+              />
+            ) : (
+              <ChevronsUpDown
+                aria-hidden="true"
+                className="text-bc-secondary h-4 w-4"
+              />
+            )}
           </button>
         )
       },

@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react'
+import { CircleAlert } from 'lucide-react'
 import {
   FieldError,
   Input,
@@ -68,9 +69,10 @@ export default function TextField({
               placeholder={placeholder}
             />
             {isInvalid && (
-              <span aria-hidden="true" className="text-bc-danger">
-                !
-              </span>
+              <CircleAlert
+                aria-hidden="true"
+                className="text-bc-danger h-4 w-4 shrink-0"
+              />
             )}
             {iconRight}
           </div>

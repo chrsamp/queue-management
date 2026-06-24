@@ -168,7 +168,12 @@ export function markCitizenLeft(
 export function updateCsr(
   client: ApiClient,
   csrId: number,
-  payload: { csr_state_id?: number; office_id?: number },
+  payload: {
+    counter_id?: number | null
+    csr_state_id?: number
+    office_id?: number
+    receptionist_ind?: number
+  },
   signal?: AbortSignal,
 ) {
   return client.request(`/csrs/${csrId}/`, {

@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react'
 import type { Key } from 'react-aria-components'
 import {
   Button as ReactAriaButton,
@@ -40,9 +41,10 @@ export default function HeaderNavigationMenu({
     <MenuTrigger>
       <ReactAriaButton className="focus-visible:outline-bc-focus border-bc-border-dark bg-bc-white text-bc-primary hover:bg-bc-button-secondary-hover data-[pressed]:bg-bc-button-secondary-pressed text-bc-body inline-flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-sm border px-4 focus-visible:outline-2 focus-visible:outline-offset-2">
         Menu
-        <span aria-hidden="true" className="text-bc-secondary">
-          v
-        </span>
+        <ChevronDown
+          aria-hidden="true"
+          className="text-bc-secondary h-4 w-4"
+        />
       </ReactAriaButton>
       <Popover
         className="border-bc-border bg-bc-white shadow-bc-popover z-50 min-w-52 rounded-sm border p-1"

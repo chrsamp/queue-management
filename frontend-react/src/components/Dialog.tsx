@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { X } from 'lucide-react'
 import {
   Dialog as ReactAriaDialog,
   DialogTrigger,
@@ -42,9 +43,7 @@ export default function Dialog({
               size="small"
               variant="tertiary"
             >
-              <span aria-hidden="true" className="text-bc-h4 leading-none">
-                x
-              </span>
+              <X aria-hidden="true" className="h-4 w-4" />
             </Button>
           )}
           {children}

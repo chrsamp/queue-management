@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createLucideIcon, HandHelping } from 'lucide-react'
 
 import type {
   Category,
@@ -33,6 +34,13 @@ import {
   isValidNotificationPhone,
 } from './add-citizen-utils'
 import { getWaitingCitizens, isReceptionOffice } from './queue-utils'
+
+const UserRoundArrowLeft = createLucideIcon('user-round-arrow-left', [
+  ['path', { d: 'M2 21a8 8 0 0 1 13.292-6', key: 'bjp14o' }],
+  ['circle', { cx: '10', cy: '8', r: '5', key: 'o932ke' }],
+  ['path', { d: 'm19 16-3 3 3 3', key: '1upmm3' }],
+  ['path', { d: 'M22 19h-6', key: '1uvf4f' }],
+])
 
 interface AddCitizenModalState {
   categoryId: number | null
@@ -486,7 +494,10 @@ export default function AddCitizenModal({
                             size="small"
                             variant="tertiary"
                           >
-                            <span aria-hidden="true">Q</span>
+                            <UserRoundArrowLeft
+                              aria-hidden="true"
+                              className="h-4 w-4"
+                            />
                           </Button>
                         </td>
                       )}
@@ -507,7 +518,7 @@ export default function AddCitizenModal({
                           size="small"
                           variant="tertiary"
                         >
-                          <span aria-hidden="true">S</span>
+                          <HandHelping aria-hidden="true" className="h-4 w-4" />
                         </Button>
                       </td>
                       <td className="border-bc-border border-t px-3 py-2">

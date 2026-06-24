@@ -9,8 +9,9 @@ import {
   type PointerEvent,
   type ReactNode,
 } from 'react'
+import { GripHorizontal } from 'lucide-react'
 
-import type { Citizen, Csr, Office } from '@/api/schemas'
+import type { Citizen, Office } from '@/api/schemas'
 
 import QueueActions from './QueueActions'
 import QueueTable from './QueueTable'
@@ -23,7 +24,6 @@ import {
 
 interface QueueWorkspaceProps {
   citizens: Citizen[]
-  csr: Csr
   csrId?: number | null
   errorMessage?: string | null
   isLoading?: boolean
@@ -49,7 +49,6 @@ function getInitialWaitingRatio(csrId: number | null | undefined) {
 
 export default function QueueWorkspace({
   citizens,
-  csr,
   csrId = null,
   errorMessage = null,
   isLoading = false,
@@ -173,16 +172,13 @@ export default function QueueWorkspace({
 
   return (
     <section className="mx-auto flex min-h-[calc(100vh-var(--spacing-bc-header-height))] max-w-7xl flex-col p-6">
-      <QueueActions citizens={citizens} csr={csr} office={office} />
+      <QueueActions citizens={citizens} office={office} />
       {isLoading ? (
         <QueueStatusMessage message="Loading queue..." />
       ) : errorMessage ? (
         <QueueStatusMessage message={errorMessage} tone="error" />
       ) : reception ? (
-        <div
-          className="flex min-h-0 flex-1 flex-col"
-          ref={splitContainerRef}
-        >
+        <div className="flex min-h-0 flex-1 flex-col" ref={splitContainerRef}>
           <QueuePanel
             className="min-h-0"
             count={waitingCitizens.length}
@@ -212,7 +208,7 @@ export default function QueueWorkspace({
             onPointerUp={handleResizePointerEnd}
             type="button"
           >
-            <span aria-hidden="true">=</span>
+            <GripHorizontal aria-hidden="true" className="h-4 w-4" />
           </button>
 
           <QueuePanel

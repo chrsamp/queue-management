@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import {
   Menu,
   MenuItem,
@@ -17,10 +18,11 @@ import {
   getServices,
   updateCitizen,
 } from '@/api/endpoints'
-import type { Category, Channel, Citizen, Csr, Office, Service } from '@/api/schemas'
+import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import Button from '@/components/Button'
 import { queryKeys } from '@/query/query-keys'
+import { useWorkflowStore } from '@/store/workflow-store'
 
 import AddCitizenModal, {
   createAddCitizenModalState,
@@ -31,18 +33,22 @@ import {
   getAvailableQuickItems,
   getDefaultChannelId,
 } from './add-citizen-utils'
-import { getWaitingCitizens } from './queue-utils'
+import { getWaitingCitizens, isReceptionOffice } from './queue-utils'
 
 interface QueueActionsProps {
   citizens: Citizen[]
-  csr: Csr
   office: Office
 }
 
-export default function QueueActions({ citizens, csr, office }: QueueActionsProps) {
+export default function QueueActions({ citizens, office }: QueueActionsProps) {
   const apiClient = useApiClient()
   const queryClient = useQueryClient()
-  const [modalState, setModalState] = useState<AddCitizenModalState | null>(null)
+  const currentReceptionist = useWorkflowStore(
+    (state) => state.currentReceptionist,
+  )
+  const [modalState, setModalState] = useState<AddCitizenModalState | null>(
+    null,
+  )
   const [isPerformingAction, setIsPerformingAction] = useState(false)
   const [actionAlert, setActionAlert] = useState<string | null>(null)
 
@@ -67,7 +73,7 @@ export default function QueueActions({ citizens, csr, office }: QueueActionsProp
     channelsQuery.isPending ||
     servicesQuery.isPending
   const canOpenPrefilledModal =
-    csr.receptionist_ind === 1 && office.sb?.sb_type !== 'nocallonsmartboard'
+    currentReceptionist === true && isReceptionOffice(office)
 
   async function ensureReferenceData() {
     const [categories, channels, services] = await Promise.all([
@@ -80,7 +86,8 @@ export default function QueueActions({ citizens, csr, office }: QueueActionsProp
         queryKey: queryKeys.channels,
       }),
       queryClient.ensureQueryData({
-        queryFn: ({ signal }) => getServices(apiClient, office.office_id, signal),
+        queryFn: ({ signal }) =>
+          getServices(apiClient, office.office_id, signal),
         queryKey: queryKeys.services(office.office_id),
       }),
     ])
@@ -116,7 +123,9 @@ export default function QueueActions({ citizens, csr, office }: QueueActionsProp
         }),
       )
     } catch (error) {
-      setActionAlert(getErrorMessage(error, 'An error occurred adding a citizen.'))
+      setActionAlert(
+        getErrorMessage(error, 'An error occurred adding a citizen.'),
+      )
     } finally {
       setIsPerformingAction(false)
     }
@@ -196,7 +205,7 @@ export default function QueueActions({ citizens, csr, office }: QueueActionsProp
       <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
         {actionAlert && (
           <p
-            className="bg-bc-danger-surface text-bc-danger border-bc-danger mr-auto m-0 border-l-4 px-3 py-2"
+            className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 mr-auto border-l-4 px-3 py-2"
             role="alert"
           >
             {actionAlert}
@@ -263,7 +272,7 @@ function SplitAction({
             disabled={disabled}
             isIconButton
           >
-            <span aria-hidden="true">v</span>
+            <ChevronDown aria-hidden="true" className="h-4 w-4" />
           </Button>
           <Popover
             className="border-bc-border bg-bc-white shadow-bc-popover z-50 min-w-64 overflow-hidden rounded-sm border p-1"

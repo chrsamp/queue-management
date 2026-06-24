@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react'
+import { Check, ChevronDown, ChevronUp, CircleAlert } from 'lucide-react'
 import {
   Autocomplete,
   Button as ReactAriaButton,
@@ -94,9 +95,10 @@ export default function Select<T extends SelectItem>({
                 )}
               </span>
               {isSelected && (
-                <span aria-hidden="true" className="text-bc-link">
-                  ✓
-                </span>
+                <Check
+                  aria-hidden="true"
+                  className="text-bc-link h-4 w-4 shrink-0"
+                />
               )}
             </>
           )}
@@ -139,13 +141,22 @@ export default function Select<T extends SelectItem>({
               )}
             </SelectValue>
             {isInvalid && (
-              <span aria-hidden="true" className="text-bc-danger">
-                !
-              </span>
+              <CircleAlert
+                aria-hidden="true"
+                className="text-bc-danger h-4 w-4 shrink-0"
+              />
             )}
-            <span aria-hidden="true" className="text-bc-secondary">
-              {isOpen ? '^' : 'v'}
-            </span>
+            {isOpen ? (
+              <ChevronUp
+                aria-hidden="true"
+                className="text-bc-secondary h-4 w-4 shrink-0"
+              />
+            ) : (
+              <ChevronDown
+                aria-hidden="true"
+                className="text-bc-secondary h-4 w-4 shrink-0"
+              />
+            )}
           </ReactAriaButton>
           {description && (
             <Text
