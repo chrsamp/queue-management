@@ -14,6 +14,7 @@ import {
   createServiceRequest,
   markCitizenLeft,
   updateCitizen,
+  updateServiceRequest,
 } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
 import Button from '@/components/Button'
@@ -23,16 +24,15 @@ import { queryKeys } from '@/query/query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 
 import {
-  type AddCitizenMode,
   createWalkinUniqueId,
   filterServices,
   formatNotificationPhone,
   getCategoryOptions,
-  getDefaultChannelId,
   getModeServices,
   isValidNotificationEmail,
   isValidNotificationPhone,
 } from './add-citizen-utils'
+import type { AddCitizenModalState } from './add-citizen-modal-state'
 import { getWaitingCitizens, isReceptionOffice } from './queue-utils'
 
 const UserRoundArrowLeft = createLucideIcon('user-round-arrow-left', [
@@ -42,21 +42,6 @@ const UserRoundArrowLeft = createLucideIcon('user-round-arrow-left', [
   ['path', { d: 'M22 19h-6', key: '1uvf4f' }],
 ])
 
-interface AddCitizenModalState {
-  categoryId: number | null
-  channelId: number | null
-  citizen: Citizen
-  comments: string
-  counterId: number | null
-  mode: AddCitizenMode
-  notificationEmail: string
-  notificationPhone: string
-  priority: number
-  search: string
-  selectedServiceId: number | null
-  walkinUniqueId: string
-}
-
 interface AddCitizenModalProps {
   categories: Category[]
   channels: Channel[]
@@ -64,43 +49,10 @@ interface AddCitizenModalProps {
   isOpen: boolean
   office: Office
   onClose: () => void
+  onBeginService?: (citizenId: number) => void
+  onReturnToServe?: () => void
   services: Service[]
   state: AddCitizenModalState | null
-}
-
-export type { AddCitizenModalState }
-
-export function createAddCitizenModalState({
-  channels,
-  citizen,
-  mode,
-  office,
-  preselectedService,
-}: {
-  channels: Channel[]
-  citizen: Citizen
-  mode: AddCitizenMode
-  office: Office
-  preselectedService?: Pick<Service, 'service_id' | 'service_name'> | null
-}): AddCitizenModalState {
-  const sortedCounters = [...office.counters].sort((left, right) =>
-    left.counter_name.localeCompare(right.counter_name),
-  )
-
-  return {
-    categoryId: null,
-    channelId: getDefaultChannelId(channels, mode),
-    citizen,
-    comments: '',
-    counterId: sortedCounters[0]?.counter_id ?? null,
-    mode,
-    notificationEmail: '',
-    notificationPhone: '',
-    priority: 2,
-    search: preselectedService?.service_name ?? '',
-    selectedServiceId: preselectedService?.service_id ?? null,
-    walkinUniqueId: '',
-  }
 }
 
 export default function AddCitizenModal({
@@ -110,6 +62,8 @@ export default function AddCitizenModal({
   isOpen,
   office,
   onClose,
+  onBeginService,
+  onReturnToServe,
   services,
   state,
 }: AddCitizenModalProps) {
@@ -122,6 +76,9 @@ export default function AddCitizenModal({
   const [isPerformingAction, setIsPerformingAction] = useState(false)
 
   useEffect(() => {
+    // The modal keeps editable local form state and must reset when a new
+    // citizen/service workflow opens.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(state)
     setAlertMessage(null)
     setIsPerformingAction(false)
@@ -166,6 +123,8 @@ export default function AddCitizenModal({
   const selectedService = form?.selectedServiceId
     ? services.find((service) => service.service_id === form.selectedServiceId)
     : null
+  const serviceModalMode =
+    form?.mode === 'add-next-service' || form?.mode === 'edit-service'
   const commentsTooLong = (form?.comments.length ?? 0) > 1000
   const hasInvalidNotification =
     !!form &&
@@ -271,6 +230,7 @@ export default function AddCitizenModal({
       await createSelectedServiceRequest(nextForm)
       await beginCitizenService(apiClient, nextForm.citizen.citizen_id)
       await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      onBeginService?.(nextForm.citizen.citizen_id)
       onClose()
     } catch (error) {
       setAlertMessage(getErrorMessage(error, 'Unable to begin service.'))
@@ -281,6 +241,12 @@ export default function AddCitizenModal({
   async function handleCancel() {
     if (!form) {
       onClose()
+      return
+    }
+
+    if (serviceModalMode) {
+      onClose()
+      onReturnToServe?.()
       return
     }
 
@@ -297,11 +263,49 @@ export default function AddCitizenModal({
     }
   }
 
+  async function handleApplyService(nextForm = form) {
+    if (!nextForm || !validateRequired(nextForm)) {
+      return
+    }
+
+    setIsPerformingAction(true)
+    setAlertMessage(null)
+
+    try {
+      await saveCitizenBase(nextForm)
+
+      if (nextForm.mode === 'edit-service' && nextForm.activeServiceRequestId) {
+        await updateServiceRequest(apiClient, nextForm.activeServiceRequestId, {
+          channel_id: nextForm.channelId ?? undefined,
+          service_id: nextForm.selectedServiceId ?? undefined,
+        })
+      } else {
+        await createSelectedServiceRequest(nextForm)
+      }
+
+      await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      onClose()
+      onReturnToServe?.()
+    } catch (error) {
+      setAlertMessage(getErrorMessage(error, 'Unable to save service.'))
+      setIsPerformingAction(false)
+    }
+  }
+
   if (!form) {
     return null
   }
 
-  const title = form.mode === 'back-office' ? 'Back Office' : 'Add Citizen'
+  const title =
+    form.mode === 'back-office'
+      ? 'Back Office'
+      : form.mode === 'add-next-service'
+        ? 'Add Next Service'
+        : form.mode === 'edit-service'
+          ? 'Edit Service'
+          : form.mode === 'simplified'
+            ? 'Begin Tracking'
+            : 'Add Citizen'
   const waitingCount = getWaitingCitizens(citizens).length
 
   return (
@@ -451,7 +455,7 @@ export default function AddCitizenModal({
             <table className="w-full border-collapse text-left">
               <thead className="bg-bc-secondary text-bc-white sticky top-0">
                 <tr>
-                  {isReception && (
+                  {isReception && !serviceModalMode && (
                     <th className="w-20 px-3 py-2 text-center font-normal">
                       To Q
                     </th>
@@ -476,7 +480,7 @@ export default function AddCitizenModal({
                       }
                       key={service.service_id}
                     >
-                      {isReception && (
+                      {isReception && !serviceModalMode && (
                         <td className="border-bc-border border-t px-3 py-2 text-center">
                           <Button
                             aria-label={`Add ${service.service_name} to queue`}
@@ -503,7 +507,11 @@ export default function AddCitizenModal({
                       )}
                       <td className="border-bc-border border-t px-3 py-2 text-center">
                         <Button
-                          aria-label={`Begin ${service.service_name}`}
+                          aria-label={
+                            serviceModalMode
+                              ? `Apply ${service.service_name}`
+                              : `Begin ${service.service_name}`
+                          }
                           disabled={baseActionDisabled || !form.channelId}
                           isIconButton
                           onClick={() => {
@@ -513,7 +521,11 @@ export default function AddCitizenModal({
                               selectedServiceId: service.service_id,
                             }
                             setForm(nextForm)
-                            void handleBeginService(nextForm)
+                            if (serviceModalMode) {
+                              void handleApplyService(nextForm)
+                            } else {
+                              void handleBeginService(nextForm)
+                            }
                           }}
                           size="small"
                           variant="tertiary"
@@ -546,7 +558,7 @@ export default function AddCitizenModal({
                   <tr>
                     <td
                       className="text-bc-secondary px-3 py-6 text-center"
-                      colSpan={isReception ? 4 : 3}
+                      colSpan={isReception && !serviceModalMode ? 4 : 3}
                     >
                       No services match the current filters.
                     </td>
@@ -602,7 +614,7 @@ export default function AddCitizenModal({
             >
               Cancel
             </Button>
-            {isReception && (
+            {isReception && !serviceModalMode && (
               <Button
                 disabled={actionDisabled}
                 onClick={() => void handleAddToQueue()}
@@ -611,12 +623,21 @@ export default function AddCitizenModal({
                 Add to queue
               </Button>
             )}
-            <Button
-              disabled={actionDisabled}
-              onClick={() => void handleBeginService()}
-            >
-              Begin service
-            </Button>
+            {serviceModalMode ? (
+              <Button
+                disabled={actionDisabled}
+                onClick={() => void handleApplyService()}
+              >
+                Apply
+              </Button>
+            ) : (
+              <Button
+                disabled={actionDisabled}
+                onClick={() => void handleBeginService()}
+              >
+                Begin service
+              </Button>
+            )}
           </div>
         </div>
 

@@ -16,36 +16,51 @@ import {
   getCategories,
   getChannels,
   getServices,
+  inviteNextCitizen,
   updateCitizen,
 } from '@/api/endpoints'
 import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import Button from '@/components/Button'
+import { cx } from '@/lib/cx'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
-import AddCitizenModal, {
+import AddCitizenModal from './AddCitizenModal'
+import {
   createAddCitizenModalState,
   type AddCitizenModalState,
-} from './AddCitizenModal'
+} from './add-citizen-modal-state'
 import {
   type AddCitizenMode,
   getAvailableQuickItems,
   getDefaultChannelId,
 } from './add-citizen-utils'
-import { getWaitingCitizens, isReceptionOffice } from './queue-utils'
+import { getActiveService, getWaitingCitizens, isReceptionOffice } from './queue-utils'
 
 interface QueueActionsProps {
   citizens: Citizen[]
+  hasActiveServiceCitizen: boolean
   office: Office
 }
 
-export default function QueueActions({ citizens, office }: QueueActionsProps) {
+export default function QueueActions({
+  citizens,
+  hasActiveServiceCitizen,
+  office,
+}: QueueActionsProps) {
   const apiClient = useApiClient()
   const queryClient = useQueryClient()
   const currentReceptionist = useWorkflowStore(
     (state) => state.currentReceptionist,
   )
+  const clearServeCitizen = useWorkflowStore((state) => state.clearServeCitizen)
+  const currentCounterId = useWorkflowStore((state) => state.currentCounterId)
+  const openServiceModal = useWorkflowStore((state) => state.openServiceModal)
+  const setActiveServiceCitizen = useWorkflowStore(
+    (state) => state.setActiveServiceCitizen,
+  )
+  const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
   const [modalState, setModalState] = useState<AddCitizenModalState | null>(
     null,
   )
@@ -173,11 +188,56 @@ export default function QueueActions({ citizens, office }: QueueActionsProps) {
       })
       await beginCitizenService(apiClient, citizen.citizen_id)
       await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      openServiceModal()
+      setActiveServiceCitizen(citizen.citizen_id, null, true)
     } catch (error) {
       setActionAlert(getErrorMessage(error, 'Unable to begin service.'))
     } finally {
       setIsPerformingAction(false)
     }
+  }
+
+  async function handleInviteNext() {
+    if (hasActiveServiceCitizen || showServiceModal) {
+      setActionAlert(
+        'You are already serving a citizen.  Click Serve Now to resume.',
+      )
+      return
+    }
+
+    const nextCitizen = getWaitingCitizens(citizens)[0]
+
+    if (!nextCitizen) {
+      setActionAlert('The are currently no citizens to invite.')
+      return
+    }
+
+    setIsPerformingAction(true)
+    setActionAlert(null)
+
+    try {
+      await inviteNextCitizen(apiClient, currentCounterId)
+      await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      openServiceModal()
+      setActiveServiceCitizen(
+        nextCitizen.citizen_id,
+        getActiveService(nextCitizen)?.sr_id ?? null,
+        false,
+      )
+    } catch (error) {
+      setActionAlert(getErrorMessage(error, 'Unable to invite citizen.'))
+    } finally {
+      setIsPerformingAction(false)
+    }
+  }
+
+  function handleServeNow() {
+    if (hasActiveServiceCitizen) {
+      openServiceModal()
+      return
+    }
+
+    clearServeCitizen()
   }
 
   function handleQuickAction(mode: AddCitizenMode, key: Key) {
@@ -212,6 +272,26 @@ export default function QueueActions({ citizens, office }: QueueActionsProps) {
           </p>
         )}
 
+        {isReceptionOffice(office) && (
+          <Button
+            disabled={isBusy || hasActiveServiceCitizen || showServiceModal}
+            onClick={() => void handleInviteNext()}
+          >
+            Invite
+          </Button>
+        )}
+        <Button
+          className={cx(
+            hasActiveServiceCitizen &&
+              !showServiceModal &&
+              'animate-pulse border border-yellow-700 bg-yellow-300 text-black hover:bg-yellow-300',
+          )}
+          disabled={!hasActiveServiceCitizen}
+          onClick={handleServeNow}
+          id="serve-citizen-button"
+        >
+          Serve Now
+        </Button>
         <SplitAction
           disabled={isBusy}
           items={quickListItems}
@@ -235,6 +315,10 @@ export default function QueueActions({ citizens, office }: QueueActionsProps) {
         isOpen={modalState !== null}
         office={office}
         onClose={() => setModalState(null)}
+        onBeginService={(citizenId) => {
+          openServiceModal()
+          setActiveServiceCitizen(citizenId, null, true)
+        }}
         services={servicesQuery.data ?? []}
         state={modalState}
       />

@@ -10,12 +10,20 @@ import {
   type ReactNode,
 } from 'react'
 import { GripHorizontal } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 
 import type { Citizen, Office } from '@/api/schemas'
+import { beginCitizenService, inviteCitizen } from '@/api/endpoints'
+import { useApiClient } from '@/api/use-api-client'
+import { queryKeys } from '@/query/query-keys'
+import { useWorkflowStore } from '@/store/workflow-store'
 
 import QueueActions from './QueueActions'
 import QueueTable from './QueueTable'
+import ServeCitizenModal from './ServeCitizenModal'
 import {
+  getActiveCitizenForCsr,
+  getActiveService,
   getHoldCitizens,
   getWaitingCitizens,
   isNotificationEnabled,
@@ -54,13 +62,35 @@ export default function QueueWorkspace({
   isLoading = false,
   office,
 }: QueueWorkspaceProps) {
+  const apiClient = useApiClient()
+  const queryClient = useQueryClient()
   const reception = isReceptionOffice(office)
   const notificationsEnabled = isNotificationEnabled(office)
   const waitingCitizens = getWaitingCitizens(citizens)
   const holdCitizens = getHoldCitizens(citizens)
+  const activeCitizenId = useWorkflowStore((state) => state.activeCitizenId)
+  const activeServiceRequestId = useWorkflowStore(
+    (state) => state.activeServiceRequestId,
+  )
+  const clearServeCitizen = useWorkflowStore((state) => state.clearServeCitizen)
+  const currentCounterId = useWorkflowStore((state) => state.currentCounterId)
+  const currentUsername = useWorkflowStore((state) => state.currentUsername)
+  const openServiceModal = useWorkflowStore((state) => state.openServiceModal)
+  const resetTerminalClearedCitizen = useWorkflowStore(
+    (state) => state.resetTerminalClearedCitizen,
+  )
+  const serviceBegun = useWorkflowStore((state) => state.serviceBegun)
+  const setActiveServiceCitizen = useWorkflowStore(
+    (state) => state.setActiveServiceCitizen,
+  )
+  const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
+  const terminalClearedCitizenId = useWorkflowStore(
+    (state) => state.terminalClearedCitizenId,
+  )
   const [waitingRatio, setWaitingRatio] = useState(() =>
     getInitialWaitingRatio(csrId),
   )
+  const [queueAlert, setQueueAlert] = useState<string | null>(null)
   const resizeStorageKey = useMemo(
     () => (csrId ? `queueWorkspace:${csrId}:waitingRatio` : null),
     [csrId],
@@ -88,6 +118,63 @@ export default function QueueWorkspace({
     [splitHeight],
   )
   const activeWaitingRatio = clampRatio(waitingRatio)
+  const detectedActiveCitizen = getActiveCitizenForCsr({
+    citizens,
+    csrId,
+    username: currentUsername,
+  })
+  const confirmedActiveCitizen =
+    detectedActiveCitizen?.citizen.citizen_id === terminalClearedCitizenId
+      ? null
+      : detectedActiveCitizen
+  const hasActiveServiceCitizen = confirmedActiveCitizen !== null
+  const activeCitizen =
+    confirmedActiveCitizen?.citizen ??
+    citizens.find((citizen) => citizen.citizen_id === activeCitizenId) ??
+    null
+
+  useEffect(() => {
+    if (!confirmedActiveCitizen) {
+      if (activeCitizenId !== null && !showServiceModal) {
+        clearServeCitizen()
+      }
+
+      if (!detectedActiveCitizen && terminalClearedCitizenId !== null) {
+        resetTerminalClearedCitizen()
+      }
+
+      return
+    }
+
+    if (
+      activeCitizenId === confirmedActiveCitizen.citizen.citizen_id &&
+      activeServiceRequestId === confirmedActiveCitizen.serviceRequest.sr_id &&
+      serviceBegun === confirmedActiveCitizen.serviceBegun
+    ) {
+      return
+    }
+
+    setActiveServiceCitizen(
+      confirmedActiveCitizen.citizen.citizen_id,
+      confirmedActiveCitizen.serviceRequest.sr_id,
+      confirmedActiveCitizen.serviceBegun,
+    )
+  }, [
+    activeCitizenId,
+    activeServiceRequestId,
+    clearServeCitizen,
+    confirmedActiveCitizen,
+    confirmedActiveCitizen?.citizen.citizen_id,
+    confirmedActiveCitizen?.serviceBegun,
+    confirmedActiveCitizen?.serviceRequest.sr_id,
+    detectedActiveCitizen,
+    detectedActiveCitizen?.citizen.citizen_id,
+    resetTerminalClearedCitizen,
+    serviceBegun,
+    setActiveServiceCitizen,
+    showServiceModal,
+    terminalClearedCitizenId,
+  ])
 
   useEffect(() => {
     const updateSplitHeight = () => {
@@ -170,9 +257,90 @@ export default function QueueWorkspace({
     [activeWaitingRatio, commitWaitingRatio],
   )
 
+  const handleWaitingCitizenClick = useCallback(
+    async (citizen: Citizen) => {
+      if (hasActiveServiceCitizen || showServiceModal) {
+        setQueueAlert(
+          'You are already serving a citizen.  Click Serve Now to resume.',
+        )
+        return
+      }
+
+      setQueueAlert(null)
+
+      try {
+        await inviteCitizen(apiClient, citizen.citizen_id, currentCounterId)
+        await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+        openServiceModal()
+        setActiveServiceCitizen(
+          citizen.citizen_id,
+          getActiveService(citizen)?.sr_id ?? null,
+          false,
+        )
+      } catch (error) {
+        setQueueAlert(getErrorMessage(error, 'Unable to invite citizen.'))
+      }
+    },
+    [
+      apiClient,
+      currentCounterId,
+      hasActiveServiceCitizen,
+      openServiceModal,
+      queryClient,
+      setActiveServiceCitizen,
+      showServiceModal,
+    ],
+  )
+
+  const handleHoldCitizenClick = useCallback(
+    async (citizen: Citizen) => {
+      if (hasActiveServiceCitizen || showServiceModal) {
+        setQueueAlert(
+          'You are already serving a citizen.  Click Serve Now to resume.',
+        )
+        return
+      }
+
+      setQueueAlert(null)
+
+      try {
+        await beginCitizenService(apiClient, citizen.citizen_id)
+        await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+        openServiceModal()
+        setActiveServiceCitizen(
+          citizen.citizen_id,
+          getActiveService(citizen)?.sr_id ?? null,
+          true,
+        )
+      } catch (error) {
+        setQueueAlert(getErrorMessage(error, 'Unable to begin service.'))
+      }
+    },
+    [
+      apiClient,
+      hasActiveServiceCitizen,
+      openServiceModal,
+      queryClient,
+      setActiveServiceCitizen,
+      showServiceModal,
+    ],
+  )
+
   return (
     <section className="mx-auto flex min-h-[calc(100vh-var(--spacing-bc-header-height))] max-w-7xl flex-col p-6">
-      <QueueActions citizens={citizens} office={office} />
+      <QueueActions
+        citizens={citizens}
+        hasActiveServiceCitizen={hasActiveServiceCitizen}
+        office={office}
+      />
+      {queueAlert && (
+        <p
+          className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 mb-4 border-l-4 px-3 py-2"
+          role="alert"
+        >
+          {queueAlert}
+        </p>
+      )}
       {isLoading ? (
         <QueueStatusMessage message="Loading queue..." />
       ) : errorMessage ? (
@@ -191,6 +359,7 @@ export default function QueueWorkspace({
             <QueueTable
               citizens={waitingCitizens}
               emptyMessage="No citizens are waiting."
+              onCitizenClick={handleWaitingCitizenClick}
               office={office}
               showCounter
               showNotifications={notificationsEnabled}
@@ -223,6 +392,7 @@ export default function QueueWorkspace({
             <QueueTable
               citizens={holdCitizens}
               emptyMessage="No citizens are on hold."
+              onCitizenClick={handleHoldCitizenClick}
               office={office}
               showCounter
               showNotifications={notificationsEnabled}
@@ -239,6 +409,7 @@ export default function QueueWorkspace({
           <QueueTable
             citizens={holdCitizens}
             emptyMessage="No citizens are on hold."
+            onCitizenClick={handleHoldCitizenClick}
             office={office}
             showCounter={false}
             showNotifications={notificationsEnabled}
@@ -246,6 +417,11 @@ export default function QueueWorkspace({
           />
         </QueuePanel>
       )}
+      <ServeCitizenModal
+        citizen={activeCitizen}
+        citizens={citizens}
+        office={office}
+      />
     </section>
   )
 }
@@ -299,4 +475,12 @@ function QueueStatusMessage({
       {message}
     </div>
   )
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    return error.message
+  }
+
+  return fallback
 }

@@ -84,6 +84,7 @@ export function addCitizen(
 }
 
 export interface UpdateCitizenPayload {
+  accurate_time_ind?: number | null
   citizen_comments?: string
   counter_id?: number | null
   notification_email?: string
@@ -140,6 +141,33 @@ export function addCitizenToQueue(
   })
 }
 
+export function inviteNextCitizen(
+  client: ApiClient,
+  counterId: number | null,
+  signal?: AbortSignal,
+) {
+  return client.request('/citizens/invite/', {
+    body: { counter_id: counterId },
+    method: 'POST',
+    schema: serviceRequestResponseSchema,
+    signal,
+  })
+}
+
+export function inviteCitizen(
+  client: ApiClient,
+  citizenId: number,
+  counterId: number | null,
+  signal?: AbortSignal,
+) {
+  return client.request(`/citizens/${citizenId}/invite/`, {
+    body: { counter_id: counterId },
+    method: 'POST',
+    schema: serviceRequestResponseSchema,
+    signal,
+  })
+}
+
 export function beginCitizenService(
   client: ApiClient,
   citizenId: number,
@@ -153,12 +181,85 @@ export function beginCitizenService(
   })
 }
 
+export function placeCitizenOnHold(
+  client: ApiClient,
+  citizenId: number,
+  signal?: AbortSignal,
+) {
+  return client.request(`/citizens/${citizenId}/place_on_hold/`, {
+    method: 'POST',
+    schema: serviceRequestResponseSchema,
+    signal,
+  })
+}
+
+export function finishCitizenService(
+  client: ApiClient,
+  citizenId: number,
+  inaccurate: boolean,
+  signal?: AbortSignal,
+) {
+  return client.request(
+    `/citizens/${citizenId}/finish_service/?inaccurate=${String(inaccurate)}`,
+    {
+      method: 'POST',
+      schema: serviceRequestResponseSchema,
+      signal,
+    },
+  )
+}
+
 export function markCitizenLeft(
   client: ApiClient,
   citizenId: number,
   signal?: AbortSignal,
 ) {
   return client.request(`/citizens/${citizenId}/citizen_left/`, {
+    method: 'POST',
+    schema: serviceRequestResponseSchema,
+    signal,
+  })
+}
+
+export interface UpdateServiceRequestPayload {
+  channel_id?: number
+  quantity?: number
+  service_id?: number
+}
+
+export function updateServiceRequest(
+  client: ApiClient,
+  serviceRequestId: number,
+  payload: UpdateServiceRequestPayload,
+  signal?: AbortSignal,
+) {
+  return client.request(`/service_requests/${serviceRequestId}/`, {
+    body: payload,
+    method: 'PUT',
+    schema: serviceRequestResponseSchema,
+    signal,
+  })
+}
+
+export function activateServiceRequest(
+  client: ApiClient,
+  serviceRequestId: number,
+  signal?: AbortSignal,
+) {
+  return client.request(`/service_requests/${serviceRequestId}/activate/`, {
+    method: 'POST',
+    schema: serviceRequestResponseSchema,
+    signal,
+  })
+}
+
+export function sendWalkinLineReminder(
+  client: ApiClient,
+  citizenId: number,
+  signal?: AbortSignal,
+) {
+  return client.request('/send-reminder/line-walkin/', {
+    body: { previous_citizen_id: citizenId },
     method: 'POST',
     schema: serviceRequestResponseSchema,
     signal,

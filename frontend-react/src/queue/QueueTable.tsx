@@ -26,6 +26,7 @@ import {
 interface QueueTableProps {
   citizens: Citizen[]
   emptyMessage: string
+  onCitizenClick?: (citizen: Citizen) => void
   office: Office
   showCounter: boolean
   showNotifications: boolean
@@ -35,6 +36,7 @@ interface QueueTableProps {
 export default function QueueTable({
   citizens,
   emptyMessage,
+  onCitizenClick,
   office,
   showCounter,
   showNotifications,
@@ -101,7 +103,25 @@ export default function QueueTable({
             </tr>
           ) : (
             table.getRowModel().rows.map((row) => (
-              <tr className="even:bg-bc-light-gray/45" key={row.id}>
+              <tr
+                className={cx(
+                  'even:bg-bc-light-gray/45',
+                  onCitizenClick &&
+                    'hover:bg-bc-button-secondary-hover cursor-pointer',
+                )}
+                key={row.id}
+                onClick={() => onCitizenClick?.(row.original)}
+                onKeyDown={(event) => {
+                  if (
+                    onCitizenClick &&
+                    (event.key === 'Enter' || event.key === ' ')
+                  ) {
+                    event.preventDefault()
+                    onCitizenClick(row.original)
+                  }
+                }}
+                tabIndex={onCitizenClick ? 0 : undefined}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td
                     className="border-bc-border text-bc-primary border-b px-3 py-2 align-top"

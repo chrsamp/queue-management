@@ -5,6 +5,8 @@ import type { Citizen, Office, ServiceRequest } from '@/api/schemas'
 import {
   formatNotificationTime,
   formatQueueTime,
+  getActiveCitizenForCsr,
+  getActiveServiceRequests,
   getCategory,
   getCounterName,
   getHoldCitizens,
@@ -39,7 +41,11 @@ const office = {
   },
 } satisfies Office
 
-function serviceRequest(periodName: string, timeEnd: string | null = null) {
+function serviceRequest(
+  periodName: string,
+  timeEnd: string | null = null,
+  overrides: Partial<ServiceRequest> = {},
+) {
   return {
     citizen_id: 1,
     periods: [
@@ -49,6 +55,7 @@ function serviceRequest(periodName: string, timeEnd: string | null = null) {
           counter_id: 7,
           username: 'csr.user',
         },
+        csr_id: 10,
         period_id: 100,
         ps: {
           ps_name: periodName,
@@ -65,6 +72,7 @@ function serviceRequest(periodName: string, timeEnd: string | null = null) {
       service_name: 'Driver licence',
     },
     sr_id: 1,
+    ...overrides,
   } satisfies ServiceRequest
 }
 
@@ -199,5 +207,77 @@ describe('queue-utils', () => {
     expect(formatQueueTime(null)).toBe('')
     expect(formatQueueTime('not a date')).toBe('')
     expect(formatNotificationTime(undefined)).toBe('')
+  })
+
+  test('finds the current CSR active citizen and service state', () => {
+    const invitedCitizen = citizen(1, [serviceRequest('Invited')])
+    const servedCitizen = citizen(2, [
+      serviceRequest('Being Served', null, { sr_id: 2 }),
+    ])
+
+    expect(
+      getActiveCitizenForCsr({
+        citizens: [invitedCitizen],
+        csrId: 10,
+        username: 'other.user',
+      }),
+    ).toMatchObject({
+      citizen: invitedCitizen,
+      serviceBegun: false,
+      serviceRequest: { sr_id: 1 },
+    })
+    expect(
+      getActiveCitizenForCsr({
+        citizens: [servedCitizen],
+        csrId: 10,
+        username: 'other.user',
+      }),
+    ).toMatchObject({
+      citizen: servedCitizen,
+      serviceBegun: true,
+      serviceRequest: { sr_id: 2 },
+    })
+    expect(
+      getActiveCitizenForCsr({
+        citizens: [invitedCitizen],
+        csrId: 99,
+        username: 'csr.user',
+      }),
+    ).toBeNull()
+  })
+
+  test('falls back to username matching and sorts service requests newest first', () => {
+    const older = serviceRequest('Invited', null, {
+      periods: [
+        {
+          csr: {
+            counter: 7,
+            counter_id: 7,
+            username: 'csr.user',
+          },
+          period_id: 100,
+          ps: {
+            ps_name: 'Invited',
+          },
+          time_end: null,
+          time_start: '2026-06-23T16:00:00Z',
+        },
+      ],
+      sr_id: 1,
+    })
+    const newer = serviceRequest('Waiting', null, { sr_id: 3 })
+    const activeCitizen = citizen(1, [older, newer])
+
+    expect(
+      getActiveCitizenForCsr({
+        citizens: [activeCitizen],
+        csrId: 10,
+        username: 'csr.user',
+      })?.serviceRequest.sr_id,
+    ).toBe(1)
+    expect(getActiveServiceRequests(activeCitizen).map((item) => item.sr_id)).toEqual([
+      3,
+      1,
+    ])
   })
 })

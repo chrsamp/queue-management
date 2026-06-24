@@ -1,6 +1,11 @@
 import type { Category, Channel, QuickService, Service } from '@/api/schemas'
 
-export type AddCitizenMode = 'add-citizen' | 'back-office'
+export type AddCitizenMode =
+  | 'add-citizen'
+  | 'add-next-service'
+  | 'back-office'
+  | 'edit-service'
+  | 'simplified'
 
 export function getAvailableQuickItems(items: QuickService[] | undefined) {
   return (items ?? []).filter((item) => item.deleted === null)
@@ -25,7 +30,7 @@ export function getDefaultChannelId(
 
 export function getModeServices(services: Service[], mode: AddCitizenMode) {
   return services.filter((service) =>
-    mode === 'add-citizen'
+    mode === 'add-citizen' || mode === 'add-next-service' || mode === 'edit-service'
       ? service.display_dashboard_ind === 1
       : service.display_dashboard_ind === 0,
   )
@@ -98,7 +103,7 @@ export function isValidNotificationPhone(value: string) {
   return value === '' || value.length === 14
 }
 
-const emailPattern = /^\w+([\-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/
+const emailPattern = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/
 
 export function isValidNotificationEmail(value: string) {
   return value === '' || emailPattern.test(value)

@@ -132,6 +132,7 @@ export const periodCsrSchema = z
 export const periodSchema = z
   .object({
     period_id: z.number(),
+    csr_id: z.number().nullable().optional(),
     time_start: z.string().nullable().optional(),
     time_end: z.string().nullable().optional(),
     ps: periodStateSchema,
@@ -157,6 +158,17 @@ export const serviceRequestSchema = z
   .object({
     sr_id: z.number(),
     citizen_id: z.number(),
+    channel_id: z.number().nullable().optional(),
+    channel: z
+      .object({
+        channel_id: z.number().optional(),
+        channel_name: z.string(),
+      })
+      .passthrough()
+      .nullable()
+      .optional(),
+    quantity: z.number().nullable().optional(),
+    service_id: z.number().nullable().optional(),
     periods: z.array(periodSchema),
     service: serviceRequestServiceSchema,
   })
@@ -184,6 +196,8 @@ export const citizenSchema = z
     notification_phone: z.string().nullable().optional(),
     notification_email: z.string().nullable().optional(),
     reminder_flag: z.number().nullable().optional(),
+    accurate_time_ind: z.number().nullable().optional(),
+    walkin_unique_id: z.string().nullable().optional(),
   })
   .passthrough()
 

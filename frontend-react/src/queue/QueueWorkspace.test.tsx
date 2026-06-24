@@ -126,11 +126,16 @@ function renderQueueWorkspace(props: ComponentProps<typeof QueueWorkspace>) {
     </ApiProvider>,
   )
 
-  return { ...view, client }
+  return { ...view, client, queryClient }
 }
 
 function serviceRequest(periodName: string) {
   return {
+    channel: {
+      channel_id: 1,
+      channel_name: 'In Person',
+    },
+    channel_id: 1,
     citizen_id: 1,
     periods: [
       {
@@ -139,6 +144,7 @@ function serviceRequest(periodName: string) {
           counter_id: 1,
           username: 'csr.user',
         },
+        csr_id: 10,
         period_id: 1,
         ps: {
           ps_name: periodName,
@@ -154,6 +160,7 @@ function serviceRequest(periodName: string) {
       parent_id: 1,
       service_name: 'Road test',
     },
+    quantity: 1,
     sr_id: 1,
   } satisfies ServiceRequest
 }
@@ -452,6 +459,218 @@ describe('QueueWorkspace', () => {
     expect(
       within(waitingTable).getByRole('columnheader', { name: /Time/ }),
     ).toHaveAttribute('aria-sort', 'descending')
+  })
+
+  test('invites a waiting citizen from the row and begins service in the modal', async () => {
+    const user = userEvent.setup()
+    useWorkflowStore.getState().setCurrentCsr(csr)
+    const { client } = renderQueueWorkspace({
+      citizens: [citizen(1, 'Waiting')],
+      csrId: csr.csr_id,
+      office: receptionOffice,
+    })
+
+    await user.click(screen.getByText('A1'))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/citizens/1/invite/', {
+        body: { counter_id: 1 },
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+    expect(
+      await screen.findByRole('heading', { name: 'Serve Citizen' }),
+    ).toBeVisible()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Begin Service' }),
+    )
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/citizens/1/begin_service/', {
+        body: {},
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+  })
+
+  test('resumes a held citizen and can place the active ticket back on hold', async () => {
+    const user = userEvent.setup()
+    useWorkflowStore.getState().setCurrentCsr(csr)
+    const { client } = renderQueueWorkspace({
+      citizens: [citizen(1, 'On hold')],
+      csrId: csr.csr_id,
+      office: receptionOffice,
+    })
+
+    await user.click(screen.getByText('A1'))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/citizens/1/begin_service/', {
+        body: {},
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Place on Hold' }))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/citizens/1/place_on_hold/', {
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+  })
+
+  test('uses Invite and Serve Now buttons for the active citizen', async () => {
+    const user = userEvent.setup()
+    useWorkflowStore.getState().setCurrentCsr(csr)
+    const { client, queryClient, rerender } = renderQueueWorkspace({
+      citizens: [citizen(1, 'Waiting')],
+      csrId: csr.csr_id,
+      office: receptionOffice,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/citizens/invite/', {
+        body: { counter_id: 1 },
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+    expect(screen.getByRole('heading', { name: 'Serve Citizen' })).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'Begin Service' }))
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/citizens/1/begin_service/', {
+        body: {},
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+
+    rerender(
+      <ApiProvider client={client}>
+        <QueryClientProvider client={queryClient}>
+          <QueueWorkspace
+            citizens={[citizen(1, 'Being Served')]}
+            csrId={csr.csr_id}
+            office={receptionOffice}
+          />
+        </QueryClientProvider>
+      </ApiProvider>,
+    )
+    await user.click(screen.getByRole('button', { name: 'Minimize' }))
+    expect(screen.queryByRole('heading', { name: 'Serve Citizen' })).not.toBeInTheDocument()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Serve Now' })).not.toBeDisabled()
+    })
+    await user.click(screen.getByRole('button', { name: 'Serve Now' }))
+    expect(screen.getByRole('heading', { name: 'Serve Citizen' })).toBeVisible()
+  })
+
+  test('clears stale active state when the queue data has no active CSR citizen', async () => {
+    const user = userEvent.setup()
+    useWorkflowStore.getState().setCurrentCsr(csr)
+    useWorkflowStore.getState().setActiveServiceCitizen(99, 99, true)
+
+    const { client } = renderQueueWorkspace({
+      citizens: [citizen(1, 'Waiting')],
+      csrId: csr.csr_id,
+      office: receptionOffice,
+    })
+
+    await waitFor(() => {
+      expect(useWorkflowStore.getState().activeCitizenId).toBeNull()
+    })
+
+    expect(screen.getByRole('button', { name: 'Serve Now' })).toBeDisabled()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Invite' })).not.toBeDisabled()
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/citizens/invite/', {
+        body: { counter_id: 1 },
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+    expect(
+      screen.queryByText(
+        'You are already serving a citizen.  Click Serve Now to resume.',
+      ),
+    ).not.toBeInTheDocument()
+  })
+
+  test('does not leave Serve Now locked after finishing an active citizen', async () => {
+    const user = userEvent.setup()
+    useWorkflowStore.getState().setCurrentCsr(csr)
+    const { client, queryClient, rerender } = renderQueueWorkspace({
+      citizens: [citizen(1, 'Being Served')],
+      csrId: csr.csr_id,
+      office: receptionOffice,
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Serve Now' })).not.toBeDisabled()
+    })
+    await user.click(screen.getByRole('button', { name: 'Serve Now' }))
+    await user.click(screen.getByRole('button', { name: 'Finish' }))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith(
+        '/citizens/1/finish_service/?inaccurate=false',
+        {
+          method: 'POST',
+          schema: expect.anything(),
+          signal: undefined,
+        },
+      )
+    })
+
+    rerender(
+      <ApiProvider client={client}>
+        <QueryClientProvider client={queryClient}>
+          <QueueWorkspace
+            citizens={[citizen(2, 'Waiting')]}
+            csrId={csr.csr_id}
+            office={receptionOffice}
+          />
+        </QueryClientProvider>
+      </ApiProvider>,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Serve Now' })).toBeDisabled()
+    })
+    expect(screen.getByRole('button', { name: 'Invite' })).not.toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Invite' }))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/citizens/invite/', {
+        body: { counter_id: 1 },
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
   })
 })
 

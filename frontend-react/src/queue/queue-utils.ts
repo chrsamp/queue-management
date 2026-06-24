@@ -2,6 +2,8 @@ import type { Citizen, Office, Period, ServiceRequest } from '@/api/schemas'
 
 const waitingPeriodName = 'Waiting'
 const holdPeriodName = 'On hold'
+const invitedPeriodName = 'Invited'
+const beingServedPeriodName = 'Being Served'
 
 export function isReceptionOffice(office: Office) {
   const smartboardType = office.sb?.sb_type
@@ -21,6 +23,53 @@ export function getActiveService(citizen: Citizen) {
 
 export function getActivePeriod(serviceRequest: ServiceRequest | undefined) {
   return serviceRequest?.periods.find(isActivePeriod) ?? null
+}
+
+export function getActiveServiceRequests(citizen: Citizen) {
+  return [...citizen.service_reqs].sort((left, right) => right.sr_id - left.sr_id)
+}
+
+export function getActiveServiceForCsr(
+  citizen: Citizen,
+  csrId: number | null | undefined,
+  username: string | null | undefined,
+) {
+  return citizen.service_reqs.find((serviceRequest) =>
+    serviceRequest.periods.some(
+      (period) => isActivePeriod(period) && isPeriodForCsr(period, csrId, username),
+    ),
+  )
+}
+
+export function getActiveCitizenForCsr({
+  citizens,
+  csrId,
+  username,
+}: {
+  citizens: Citizen[]
+  csrId: number | null | undefined
+  username: string | null | undefined
+}) {
+  for (const citizen of citizens) {
+    const serviceRequest = getActiveServiceForCsr(citizen, csrId, username)
+    const period = getActivePeriod(serviceRequest)
+
+    if (
+      serviceRequest &&
+      period &&
+      (period.ps.ps_name === invitedPeriodName ||
+        period.ps.ps_name === beingServedPeriodName)
+    ) {
+      return {
+        citizen,
+        period,
+        serviceBegun: period.ps.ps_name === beingServedPeriodName,
+        serviceRequest,
+      }
+    }
+  }
+
+  return null
 }
 
 export function getWaitingCitizens(citizens: Citizen[]) {
@@ -147,4 +196,20 @@ function hasActivePeriodNamed(citizen: Citizen, periodName: string) {
 
 function isActivePeriod(period: Period) {
   return period.time_end === null
+}
+
+export function isPeriodForCsr(
+  period: Period,
+  csrId: number | null | undefined,
+  username: string | null | undefined,
+) {
+  if (csrId !== null && csrId !== undefined && period.csr_id !== undefined) {
+    return period.csr_id === csrId
+  }
+
+  return !!username && period.csr.username === username
+}
+
+export function isActivePeriodForName(period: Period, periodName: string) {
+  return isActivePeriod(period) && period.ps.ps_name === periodName
 }

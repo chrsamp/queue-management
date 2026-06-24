@@ -2,18 +2,25 @@ import { describe, expect, test, vi } from 'vitest'
 
 import type { ApiClient } from './client'
 import {
+  activateServiceRequest,
   addCitizen,
   addCitizenToQueue,
   beginCitizenService,
   createServiceRequest,
+  finishCitizenService,
   getCategories,
   getChannels,
   getCitizens,
   getServices,
+  inviteCitizen,
+  inviteNextCitizen,
   loginAdminSession,
   markCitizenLeft,
+  placeCitizenOnHold,
+  sendWalkinLineReminder,
   updateCsr,
   updateCitizen,
+  updateServiceRequest,
 } from './endpoints'
 
 describe('loginAdminSession', () => {
@@ -191,6 +198,17 @@ describe('add citizen endpoints', () => {
     await addCitizenToQueue(client, 5)
     await beginCitizenService(client, 5)
     await markCitizenLeft(client, 5)
+    await inviteNextCitizen(client, 3)
+    await inviteCitizen(client, 5, 3)
+    await placeCitizenOnHold(client, 5)
+    await finishCitizenService(client, 5, true)
+    await updateServiceRequest(client, 11, {
+      channel_id: 7,
+      quantity: 2,
+      service_id: 9,
+    })
+    await activateServiceRequest(client, 11)
+    await sendWalkinLineReminder(client, 5)
 
     expect(client.request).toHaveBeenNthCalledWith(
       1,
@@ -249,6 +267,69 @@ describe('add citizen endpoints', () => {
       6,
       '/citizens/5/citizen_left/',
       {
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      },
+    )
+    expect(client.request).toHaveBeenNthCalledWith(7, '/citizens/invite/', {
+      body: { counter_id: 3 },
+      method: 'POST',
+      schema: expect.anything(),
+      signal: undefined,
+    })
+    expect(client.request).toHaveBeenNthCalledWith(
+      8,
+      '/citizens/5/invite/',
+      {
+        body: { counter_id: 3 },
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      },
+    )
+    expect(client.request).toHaveBeenNthCalledWith(
+      9,
+      '/citizens/5/place_on_hold/',
+      {
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      },
+    )
+    expect(client.request).toHaveBeenNthCalledWith(
+      10,
+      '/citizens/5/finish_service/?inaccurate=true',
+      {
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      },
+    )
+    expect(client.request).toHaveBeenNthCalledWith(11, '/service_requests/11/', {
+      body: {
+        channel_id: 7,
+        quantity: 2,
+        service_id: 9,
+      },
+      method: 'PUT',
+      schema: expect.anything(),
+      signal: undefined,
+    })
+    expect(client.request).toHaveBeenNthCalledWith(
+      12,
+      '/service_requests/11/activate/',
+      {
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      },
+    )
+    expect(client.request).toHaveBeenNthCalledWith(
+      13,
+      '/send-reminder/line-walkin/',
+      {
+        body: { previous_citizen_id: 5 },
         method: 'POST',
         schema: expect.anything(),
         signal: undefined,
