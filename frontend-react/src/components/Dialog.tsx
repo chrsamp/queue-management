@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import {
   Dialog as ReactAriaDialog,
   DialogTrigger,
+  Heading,
   type DialogProps as ReactAriaDialogProps,
 } from 'react-aria-components'
 
@@ -26,11 +27,16 @@ export default function Dialog({
   role = 'dialog',
   ...props
 }: DialogProps) {
+  const labelledProps =
+    props['aria-label'] || props['aria-labelledby']
+      ? props
+      : { 'aria-label': 'Dialog', ...props }
+
   return (
     <ReactAriaDialog
       className={cx('relative flex min-h-20 flex-col p-6', className)}
       role={role}
-      {...props}
+      {...labelledProps}
     >
       {({ close }) => (
         <>
@@ -53,4 +59,18 @@ export default function Dialog({
   )
 }
 
-export { Dialog, DialogTrigger }
+function DialogTitle({
+  children,
+  className,
+}: {
+  children: ReactNode
+  className?: string
+}) {
+  return (
+    <Heading className={className} slot="title">
+      {children}
+    </Heading>
+  )
+}
+
+export { Dialog, DialogTitle, DialogTrigger }

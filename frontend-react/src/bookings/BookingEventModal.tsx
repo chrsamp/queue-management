@@ -16,7 +16,7 @@ import type { Exam, Invigilator, Office, Room } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 
@@ -91,7 +91,8 @@ export default function BookingEventModal({
   const stat = Boolean(event?.stat_flag)
   const blackout = event?.blackout_flag === 'Y'
   const selectedInvigilators = invigilators.filter(
-    (candidate) => candidate.shadow_count === 2 || candidate.shadow_count == null,
+    (candidate) =>
+      candidate.shadow_count === 2 || candidate.shadow_count == null,
   )
   const titleText = useMemo(() => {
     if (mode === 'exam') {
@@ -287,7 +288,9 @@ export default function BookingEventModal({
     }
   }
 
-  async function handleDelete(kind: 'single' | 'series' | 'stat-current' | 'stat-all') {
+  async function handleDelete(
+    kind: 'single' | 'series' | 'stat-current' | 'stat-all',
+  ) {
     if (!event) {
       return
     }
@@ -329,13 +332,14 @@ export default function BookingEventModal({
     <Modal className="max-w-3xl overflow-hidden" isDismissable={false} isOpen>
       <Dialog className="p-0" isCloseable={false}>
         <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <h2 className="text-bc-h4 m-0 font-bold">{titleText}</h2>
+          <DialogTitle className="text-bc-h4 m-0 font-bold">
+            {titleText}
+          </DialogTitle>
         </div>
         <div className="flex max-h-[75vh] flex-col gap-4 overflow-auto p-6">
           {errorMessage && (
             <AlertBanner
               isCloseable={false}
-              layout="fluid"
               role="alert"
               size="small"
               variant="danger"
@@ -365,7 +369,11 @@ export default function BookingEventModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="font-bold">
-                {stat ? 'STAT Notes' : blackout ? 'Blackout Notes' : 'Scheduling Party'}
+                {stat
+                  ? 'STAT Notes'
+                  : blackout
+                    ? 'Blackout Notes'
+                    : 'Scheduling Party'}
               </span>
               <input
                 className="border-bc-border rounded-sm border px-3 py-2"
@@ -456,7 +464,9 @@ export default function BookingEventModal({
               <select
                 className="border-bc-border rounded-sm border px-3 py-2"
                 disabled={!canEdit || Boolean(exam)}
-                onChange={(item) => setDurationMinutes(Number(item.target.value))}
+                onChange={(item) =>
+                  setDurationMinutes(Number(item.target.value))
+                }
                 value={durationMinutes}
               >
                 {[30, 60, 90, 120, 180, 240].map((value) => (
@@ -509,7 +519,9 @@ export default function BookingEventModal({
                   <span className="font-bold">Invigilator</span>
                   <select
                     className="border-bc-border rounded-sm border px-3 py-2"
-                    onChange={(item) => setInvigilatorId(Number(item.target.value))}
+                    onChange={(item) =>
+                      setInvigilatorId(Number(item.target.value))
+                    }
                     value={invigilatorId}
                   >
                     <option value="">Select invigilator</option>
@@ -547,7 +559,9 @@ export default function BookingEventModal({
           )}
           {confirmDelete && event && (
             <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4">
-              <p className="mt-0 mb-3">Are you sure you want to delete this booking?</p>
+              <p className="mt-0 mb-3">
+                Are you sure you want to delete this booking?
+              </p>
               <div className="flex flex-wrap gap-2">
                 <Button
                   danger

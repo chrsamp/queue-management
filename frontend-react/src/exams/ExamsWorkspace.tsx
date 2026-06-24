@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import {
   flexRender,
   getCoreRowModel,
@@ -36,7 +36,7 @@ import { useApiClient } from '@/api/use-api-client'
 import { officeDateToUtcIso } from '@/bookings/booking-utils'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -81,7 +81,10 @@ interface ExamsWorkspaceProps {
 }
 
 type ActiveModal =
-  | { exam: Exam; type: 'delete' | 'edit' | 'group-booking' | 'return' | 'upload' }
+  | {
+      exam: Exam
+      type: 'delete' | 'edit' | 'group-booking' | 'return' | 'upload'
+    }
   | { type: 'add'; setup: ExamSetup }
   | { type: 'financial-report' }
   | { exam: Exam; type: 'select-invigilator' }
@@ -144,8 +147,7 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
   const exams = examsQuery.data ?? emptyExams
   const examTypes = examTypesQuery.data ?? emptyExamTypes
   const invigilators = invigilatorsQuery.data ?? emptyInvigilators
-  const offsiteInvigilators =
-    offsiteInvigilatorsQuery.data ?? emptyInvigilators
+  const offsiteInvigilators = offsiteInvigilatorsQuery.data ?? emptyInvigilators
   const offices = officesQuery.data ?? emptyOffices
   const filteredExams = useMemo(
     () =>
@@ -165,114 +167,115 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
   )
 
   const columns: ColumnDef<Exam>[] = [
-      {
-        accessorKey: 'event_id',
-        cell: ({ row }) => row.original.event_id || '-',
-        header: 'Event ID',
+    {
+      accessorKey: 'event_id',
+      cell: ({ row }) => row.original.event_id || '-',
+      header: 'Event ID',
+    },
+    {
+      accessorFn: (exam) => exam.exam_type?.exam_type_name ?? '',
+      cell: ({ row }) => row.original.exam_type?.exam_type_name || '-',
+      header: 'Exam Type',
+      id: 'exam_type_name',
+    },
+    {
+      accessorKey: 'exam_name',
+      cell: ({ row }) => row.original.exam_name || '-',
+      header: 'Exam Name',
+    },
+    {
+      accessorFn: (exam) => exam.booking?.start_time ?? '',
+      cell: ({ row }) =>
+        row.original.booking?.start_time
+          ? formatDate(row.original.booking.start_time)
+          : '-',
+      header: 'Scheduled Date',
+      id: 'start_time',
+    },
+    {
+      accessorKey: 'exam_method',
+      cell: ({ row }) => row.original.exam_method || '-',
+      header: 'Method',
+    },
+    {
+      accessorKey: 'expiry_date',
+      cell: ({ row }) =>
+        (isMonthlySessionExam(row.original) ||
+          row.original.exam_type?.group_exam_ind) &&
+        !shouldBlockScheduling(row.original)
+          ? '-'
+          : formatDate(row.original.expiry_date),
+      header: 'Expiry Date',
+    },
+    {
+      accessorFn: (exam) => (exam.exam_received_date ? 'Yes' : 'No'),
+      cell: ({ row }) => (row.original.exam_received_date ? 'Yes' : 'No'),
+      header: 'Received?',
+      id: 'exam_received',
+    },
+    {
+      accessorKey: 'notes',
+      cell: ({ row }) => row.original.notes || '-',
+      header: 'Notes',
+    },
+    {
+      accessorFn: (exam) => getExamStatus(exam).rank,
+      cell: ({ row }) => {
+        const status = getExamStatus(row.original)
+        return (
+          <button
+            aria-label={`${status.label}; show details`}
+            className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent font-bold"
+            onClick={() =>
+              setExpandedExamId((current) =>
+                current === row.original.exam_id ? null : row.original.exam_id,
+              )
+            }
+            style={{ color: status.color }}
+            type="button"
+          >
+            {status.tone === 'ready'
+              ? '✓'
+              : status.tone === 'done'
+                ? '↗'
+                : status.tone === 'pending'
+                  ? '!'
+                  : '×'}
+          </button>
+        )
       },
-      {
-        accessorFn: (exam) => exam.exam_type?.exam_type_name ?? '',
-        cell: ({ row }) => row.original.exam_type?.exam_type_name || '-',
-        header: 'Exam Type',
-        id: 'exam_type_name',
-      },
-      {
-        accessorKey: 'exam_name',
-        cell: ({ row }) => row.original.exam_name || '-',
-        header: 'Exam Name',
-      },
-      {
-        accessorFn: (exam) => exam.booking?.start_time ?? '',
-        cell: ({ row }) =>
-          row.original.booking?.start_time
-            ? formatDate(row.original.booking.start_time)
-            : '-',
-        header: 'Scheduled Date',
-        id: 'start_time',
-      },
-      {
-        accessorKey: 'exam_method',
-        cell: ({ row }) => row.original.exam_method || '-',
-        header: 'Method',
-      },
-      {
-        accessorKey: 'expiry_date',
-        cell: ({ row }) =>
-          (isMonthlySessionExam(row.original) || row.original.exam_type?.group_exam_ind) &&
-          !shouldBlockScheduling(row.original)
-            ? '-'
-            : formatDate(row.original.expiry_date),
-        header: 'Expiry Date',
-      },
-      {
-        accessorFn: (exam) => (exam.exam_received_date ? 'Yes' : 'No'),
-        cell: ({ row }) => (row.original.exam_received_date ? 'Yes' : 'No'),
-        header: 'Received?',
-        id: 'exam_received',
-      },
-      {
-        accessorKey: 'notes',
-        cell: ({ row }) => row.original.notes || '-',
-        header: 'Notes',
-      },
-      {
-        accessorFn: (exam) => getExamStatus(exam).rank,
-        cell: ({ row }) => {
-          const status = getExamStatus(row.original)
-          return (
-            <button
-              aria-label={`${status.label}; show details`}
-              className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent font-bold"
-              onClick={() =>
-                setExpandedExamId((current) =>
-                  current === row.original.exam_id ? null : row.original.exam_id,
-                )
-              }
-              style={{ color: status.color }}
-              type="button"
-            >
-              {status.tone === 'ready'
-                ? '✓'
-                : status.tone === 'done'
-                  ? '↗'
-                  : status.tone === 'pending'
-                    ? '!'
-                    : '×'}
-            </button>
-          )
-        },
-        header: 'Status',
-        id: 'status',
-      },
-      {
-        cell: ({ row }) => (
-          <ExamActions
-            exam={row.original}
-            homeOfficeNumber={office.office_number}
-            officeFilter={filters.officeNumber}
-            onAction={handleExamAction}
-            permissions={permissions}
-          />
-        ),
-        header: 'Actions',
-        id: 'actions',
-      },
-      {
-        accessorKey: 'examinee_name',
-        cell: ({ row }) => row.original.examinee_name || '-',
-        header: 'Candidate Name',
-      },
-      ...(filters.showAllPesticide
-        ? [
-            {
-              accessorFn: (exam: Exam) => exam.office?.office_name ?? '',
-              cell: ({ row }: { row: { original: Exam } }) =>
-                row.original.office?.office_name || '-',
-              header: 'Office',
-              id: 'office',
-            } satisfies ColumnDef<Exam>,
-          ]
-        : []),
+      header: 'Status',
+      id: 'status',
+    },
+    {
+      cell: ({ row }) => (
+        <ExamActions
+          exam={row.original}
+          homeOfficeNumber={office.office_number}
+          officeFilter={filters.officeNumber}
+          onAction={handleExamAction}
+          permissions={permissions}
+        />
+      ),
+      header: 'Actions',
+      id: 'actions',
+    },
+    {
+      accessorKey: 'examinee_name',
+      cell: ({ row }) => row.original.examinee_name || '-',
+      header: 'Candidate Name',
+    },
+    ...(filters.showAllPesticide
+      ? [
+          {
+            accessorFn: (exam: Exam) => exam.office?.office_name ?? '',
+            cell: ({ row }: { row: { original: Exam } }) =>
+              row.original.office?.office_name || '-',
+            header: 'Office',
+            id: 'office',
+          } satisfies ColumnDef<Exam>,
+        ]
+      : []),
   ]
 
   // TanStack Table returns imperative helpers that are intentionally not compiler-memoizable.
@@ -368,7 +371,10 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
     }
 
     if (action === 'return') {
-      setActiveModal({ exam, type: isPesticideExam(exam) ? 'upload' : 'return' })
+      setActiveModal({
+        exam,
+        type: isPesticideExam(exam) ? 'upload' : 'return',
+      })
       return
     }
 
@@ -405,30 +411,25 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
   ] satisfies Array<{ label: string; value: QuickActionFilter }>
 
   return (
-    <section className="mx-auto flex min-h-[calc(100vh-var(--spacing-bc-header-height))] w-full max-w-7xl flex-col gap-4 p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-bc-h3 mt-0 mb-2 font-bold">Exam Inventory</h2>
-          <p className="text-bc-secondary m-0">
-            Click an exam in the table to review its details and fulfill the exam process
-          </p>
-        </div>
-        <div className="flex flex-wrap justify-end gap-2">
-          <AddExamButtons
-            onAdd={(setup) => setActiveModal({ setup, type: 'add' })}
-            onReport={() => setActiveModal({ type: 'financial-report' })}
-            permissions={permissions}
-          />
-        </div>
+    <section className="flex h-full min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden p-6">
+      <div className="flex shrink-0 flex-wrap justify-end gap-2">
+        <AddExamButtons
+          onAdd={(setup) => setActiveModal({ setup, type: 'add' })}
+          onReport={() => setActiveModal({ type: 'financial-report' })}
+          permissions={permissions}
+        />
       </div>
 
-      <div className="border-bc-border bg-bc-white flex flex-wrap items-end gap-3 rounded-sm border p-3">
+      <div className="border-bc-border bg-bc-white flex shrink-0 flex-wrap items-end gap-3 rounded-sm border p-3">
         <label className="flex flex-col gap-1">
           <span className="font-bold">Search</span>
           <input
             className="border-bc-border rounded-sm border px-3 py-2"
             onChange={(event) =>
-              setFilters((current) => ({ ...current, search: event.target.value }))
+              setFilters((current) => ({
+                ...current,
+                search: event.target.value,
+              }))
             }
             value={filters.search}
           />
@@ -508,7 +509,6 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
       {(routeMessage || examsQuery.isError) && (
         <AlertBanner
           isCloseable={false}
-          layout="fluid"
           role="alert"
           size="small"
           variant="danger"
@@ -518,15 +518,15 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
         </AlertBanner>
       )}
 
-      <div className="border-bc-border overflow-hidden rounded-sm border bg-white">
-        <div className="max-h-[calc(100vh-330px)] min-h-80 overflow-auto">
+      <div className="border-bc-border min-h-0 flex-1 overflow-hidden rounded-sm border bg-white">
+        <div className="h-full min-h-0 overflow-auto">
           <table className="w-full min-w-[1180px] border-collapse text-left">
-            <thead className="bg-bc-light-gray sticky top-0 z-10">
+            <thead className="bg-bc-light-gray">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
-                      className="border-bc-border border-b px-3 py-2 text-sm"
+                      className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border-b px-3 py-2 text-sm"
                       key={header.id}
                     >
                       {header.isPlaceholder ? null : (
@@ -565,18 +565,22 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
                 </tr>
               ) : (
                 table.getRowModel().rows.map((row) => (
-                  <>
+                  <Fragment key={row.id}>
                     <tr
                       className="hover:bg-bc-light-gray"
-                      key={row.id}
-                      onDoubleClick={() => handleExamAction('edit', row.original)}
+                      onDoubleClick={() =>
+                        handleExamAction('edit', row.original)
+                      }
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td
                           className="border-bc-border border-b px-3 py-2 align-top text-sm"
                           key={cell.id}
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
                         </td>
                       ))}
                     </tr>
@@ -593,7 +597,7 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))
               )}
             </tbody>
@@ -641,7 +645,9 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
           exam={activeModal.exam}
           examTypes={examTypes}
           onClose={() => setActiveModal(null)}
-          onDelete={() => setActiveModal({ exam: activeModal.exam, type: 'delete' })}
+          onDelete={() =>
+            setActiveModal({ exam: activeModal.exam, type: 'delete' })
+          }
           onSaved={invalidateExams}
           permissions={permissions}
         />
@@ -703,7 +709,9 @@ function AddExamButtons({
 }) {
   return (
     <>
-      <Button onClick={() => onAdd('individual')}>Add SkilledTradesBC Exam</Button>
+      <Button onClick={() => onAdd('individual')}>
+        Add SkilledTradesBC Exam
+      </Button>
       {permissions.canSeeMonthlySessionOption && (
         <Button onClick={() => onAdd('challenger')} variant="secondary">
           Add Monthly Session Exam
@@ -741,7 +749,9 @@ function ExamActions({
     String(officeFilter) === String(homeOfficeNumber)
   const returned = Boolean(exam.exam_returned_date)
   const canSchedule =
-    !exam.booking || Object.keys(exam.booking).length === 0 || exam.offsite_location
+    !exam.booking ||
+    Object.keys(exam.booking).length === 0 ||
+    exam.offsite_location
   const bookingLabel = hasEnoughInvigilators(exam)
     ? 'Update Booking'
     : isGroupExam(exam) || isPesticideExam(exam)
@@ -939,7 +949,11 @@ function AddExamModal({
   }
 
   function validate() {
-    if (setup !== 'challenger' && !draft.exam_type_id && setup !== 'pesticide') {
+    if (
+      setup !== 'challenger' &&
+      !draft.exam_type_id &&
+      setup !== 'pesticide'
+    ) {
       return 'Exam Type is required.'
     }
 
@@ -1166,7 +1180,9 @@ function AddExamModal({
             (setup === 'pesticide' && draft.ind_or_group === 'group')) && (
             <TextField
               label="Number of Students"
-              onChange={(value) => update({ number_of_students: Number(value) })}
+              onChange={(value) =>
+                update({ number_of_students: Number(value) })
+              }
               type="number"
               value={draft.number_of_students ?? ''}
             />
@@ -1232,15 +1248,17 @@ function AddExamModal({
               </SelectField>
             </>
           )}
-          {setup === 'pesticide' && draft.ind_or_group === 'group' && candidateCount > 0 && (
-            <div className="sm:col-span-2">
-              <CandidateEditor
-                count={candidateCount}
-                examTypes={pesticideTypes}
-                onChange={(candidates) => update({ candidates })}
-              />
-            </div>
-          )}
+          {setup === 'pesticide' &&
+            draft.ind_or_group === 'group' &&
+            candidateCount > 0 && (
+              <div className="sm:col-span-2">
+                <CandidateEditor
+                  count={candidateCount}
+                  examTypes={pesticideTypes}
+                  onChange={(candidates) => update({ candidates })}
+                />
+              </div>
+            )}
           <TextAreaField
             className="sm:col-span-2"
             label="Additional Notes"
@@ -1316,7 +1334,11 @@ function EditExamModal({
       return item.group_exam_ind && !item.pesticide_exam_ind
     }
     if (type === 'individual') {
-      return item.ita_ind && !item.group_exam_ind && !item.exam_type_name?.includes('Monthly')
+      return (
+        item.ita_ind &&
+        !item.group_exam_ind &&
+        !item.exam_type_name?.includes('Monthly')
+      )
     }
     if (type === 'other') {
       return !item.ita_ind && !item.group_exam_ind && !item.pesticide_exam_ind
@@ -1448,7 +1470,9 @@ function EditExamModal({
                 value={fields.exam_name ?? ''}
               />
               <SelectField
-                label={type === 'pesticide' ? 'Exam Printed?' : 'Exam Received?'}
+                label={
+                  type === 'pesticide' ? 'Exam Printed?' : 'Exam Received?'
+                }
                 onChange={(value) =>
                   update(
                     'exam_received_date',
@@ -1462,7 +1486,9 @@ function EditExamModal({
               </SelectField>
               {fields.exam_received_date ? (
                 <TextField
-                  label={type === 'pesticide' ? 'Printed Date' : 'Received Date'}
+                  label={
+                    type === 'pesticide' ? 'Printed Date' : 'Received Date'
+                  }
                   onChange={(value) => update('exam_received_date', value)}
                   type="date"
                   value={fields.exam_received_date ?? ''}
@@ -1471,7 +1497,9 @@ function EditExamModal({
               {['group', 'challenger'].includes(type) && (
                 <TextField
                   label="# of Writers"
-                  onChange={(value) => update('number_of_students', Number(value))}
+                  onChange={(value) =>
+                    update('number_of_students', Number(value))
+                  }
                   type="number"
                   value={fields.number_of_students ?? ''}
                 />
@@ -1555,10 +1583,14 @@ function EditExamModal({
           {confirmBookingDelete && (
             <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4 sm:col-span-2">
               <p className="mt-0">
-                Room booking for the exam will be deleted. Are you sure you want to proceed?
+                Room booking for the exam will be deleted. Are you sure you want
+                to proceed?
               </p>
               <div className="flex gap-2">
-                <Button onClick={() => setConfirmBookingDelete(false)} variant="secondary">
+                <Button
+                  onClick={() => setConfirmBookingDelete(false)}
+                  variant="secondary"
+                >
                   Cancel
                 </Button>
                 <Button danger onClick={() => void submitConfirmed()}>
@@ -1577,7 +1609,10 @@ function EditExamModal({
           <Button disabled={isSaving} onClick={onClose} variant="secondary">
             Cancel
           </Button>
-          <Button disabled={isSaving || confirmBookingDelete} onClick={handleSubmit}>
+          <Button
+            disabled={isSaving || confirmBookingDelete}
+            onClick={handleSubmit}
+          >
             Submit
           </Button>
         </div>
@@ -1602,7 +1637,10 @@ function GroupBookingModal({
   permissions: ReturnType<typeof getExamPermissions>
 }) {
   const apiClient = useApiClient()
-  const timezone = exam.booking?.office.timezone.timezone_name ?? exam.office?.timezone.timezone_name ?? 'America/Vancouver'
+  const timezone =
+    exam.booking?.office.timezone.timezone_name ??
+    exam.office?.timezone.timezone_name ??
+    'America/Vancouver'
   const [date, setDate] = useState(dateInputValue(exam.booking?.start_time))
   const [time, setTime] = useState(
     exam.booking?.start_time
@@ -1682,11 +1720,18 @@ function GroupBookingModal({
         offsite_location: offsiteLocation || exam.offsite_location,
       })
 
-      if (shadowInvigilatorId && shadowInvigilatorId !== exam.booking?.shadow_invigilator_id) {
-        await updateInvigilatorShadowCount(apiClient, Number(shadowInvigilatorId), {
-          add: true,
-          subtract: false,
-        })
+      if (
+        shadowInvigilatorId &&
+        shadowInvigilatorId !== exam.booking?.shadow_invigilator_id
+      ) {
+        await updateInvigilatorShadowCount(
+          apiClient,
+          Number(shadowInvigilatorId),
+          {
+            add: true,
+            subtract: false,
+          },
+        )
       }
 
       await onSaved()
@@ -1701,11 +1746,16 @@ function GroupBookingModal({
   return (
     <Modal className="max-w-3xl overflow-hidden" isDismissable={false} isOpen>
       <Dialog className="p-0" isCloseable={false}>
-        <ModalHeader title={`Edit ${setupLabel(examTypeForEdit(exam))} Exam Booking`} />
+        <ModalHeader
+          title={`Edit ${setupLabel(examTypeForEdit(exam))} Exam Booking`}
+        />
         <div className="grid max-h-[75vh] gap-4 overflow-auto p-6 sm:grid-cols-2">
           {errorMessage && <Alert message={errorMessage} />}
           <ReadOnlyField label="Exam" value={exam.exam_name ?? '-'} />
-          <ReadOnlyField label="Writers" value={String(exam.number_of_students ?? '-')} />
+          <ReadOnlyField
+            label="Writers"
+            value={String(exam.number_of_students ?? '-')}
+          />
           <TextField
             disabled={fieldDisabled}
             label="Event ID"
@@ -1763,16 +1813,26 @@ function GroupBookingModal({
             <p className="mt-0 mb-2">Required Invigilators: {required}</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {invigilatorSource
-                .filter((item) => item.shadow_count === 2 || item.shadow_count == null)
+                .filter(
+                  (item) =>
+                    item.shadow_count === 2 || item.shadow_count == null,
+                )
                 .map((item) => (
-                  <label className="flex items-center gap-2" key={item.invigilator_id}>
+                  <label
+                    className="flex items-center gap-2"
+                    key={item.invigilator_id}
+                  >
                     <input
-                      checked={selectedInvigilators.includes(item.invigilator_id)}
+                      checked={selectedInvigilators.includes(
+                        item.invigilator_id,
+                      )}
                       onChange={(event) =>
                         setSelectedInvigilators((current) =>
                           event.target.checked
                             ? [...current, item.invigilator_id]
-                            : current.filter((id) => id !== item.invigilator_id),
+                            : current.filter(
+                                (id) => id !== item.invigilator_id,
+                              ),
                         )
                       }
                       type="checkbox"
@@ -1785,7 +1845,9 @@ function GroupBookingModal({
           <SelectField
             className="sm:col-span-2"
             label="Shadow Invigilator"
-            onChange={(value) => setShadowInvigilatorId(value ? Number(value) : '')}
+            onChange={(value) =>
+              setShadowInvigilatorId(value ? Number(value) : '')
+            }
             value={shadowInvigilatorId}
           >
             <option value="">Unassigned</option>
@@ -1851,7 +1913,9 @@ function ReturnExamModal({
       await onSaved()
       onClose()
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'Unable to update return details.'))
+      setErrorMessage(
+        getErrorMessage(error, 'Unable to update return details.'),
+      )
     } finally {
       setIsSaving(false)
     }
@@ -1911,7 +1975,9 @@ function ReturnExamModal({
         <ModalFooter
           isSaving={isSaving}
           onCancel={onClose}
-          onSubmit={() => (editMode || !returned ? void submit() : setConfirm(true))}
+          onSubmit={() =>
+            editMode || !returned ? void submit() : setConfirm(true)
+          }
         />
       </Dialog>
     </Modal>
@@ -1968,7 +2034,9 @@ function UploadPesticideExamModal({
       await onSaved()
       setSubmitted(true)
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, 'File upload failed, please try again.'))
+      setErrorMessage(
+        getErrorMessage(error, 'File upload failed, please try again.'),
+      )
     } finally {
       setIsSaving(false)
       setConfirm(false)
@@ -2004,7 +2072,11 @@ function UploadPesticideExamModal({
           </div>
           {!submitted && (
             <>
-              <SelectField label="Exam Status" onChange={setStatus} value={status}>
+              <SelectField
+                label="Exam Status"
+                onChange={setStatus}
+                value={status}
+              >
                 <option value=""></option>
                 <option value="unwritten">Unwritten</option>
                 {printed && <option value="written">Written</option>}
@@ -2033,9 +2105,14 @@ function UploadPesticideExamModal({
               )}
               {confirm && (
                 <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4">
-                  <p className="mt-0">Are you sure you want to upload this exam?</p>
+                  <p className="mt-0">
+                    Are you sure you want to upload this exam?
+                  </p>
                   <div className="flex gap-2">
-                    <Button onClick={() => setConfirm(false)} variant="secondary">
+                    <Button
+                      onClick={() => setConfirm(false)}
+                      variant="secondary"
+                    >
                       No
                     </Button>
                     <Button onClick={() => void submit()}>Yes</Button>
@@ -2046,13 +2123,19 @@ function UploadPesticideExamModal({
           )}
         </div>
         <div className="bg-bc-light-gray flex justify-end gap-3 border-t px-6 py-4">
-          <Button disabled={isSaving} onClick={submitted ? onClose : onClose} variant="secondary">
+          <Button
+            disabled={isSaving}
+            onClick={submitted ? onClose : onClose}
+            variant="secondary"
+          >
             {submitted ? 'Done' : 'Cancel'}
           </Button>
           {!submitted && (
             <Button
               disabled={isSaving || !status}
-              onClick={() => (status === 'written' ? setConfirm(true) : void submit())}
+              onClick={() =>
+                status === 'written' ? setConfirm(true) : void submit()
+              }
             >
               Submit
             </Button>
@@ -2117,7 +2200,11 @@ function DeleteExamModal({
           <Button disabled={isSaving} onClick={onClose} variant="secondary">
             No
           </Button>
-          <Button danger disabled={isSaving} onClick={() => void handleDelete()}>
+          <Button
+            danger
+            disabled={isSaving}
+            onClick={() => void handleDelete()}
+          >
             Yes
           </Button>
         </div>
@@ -2189,7 +2276,9 @@ function FinancialReportModal({ onClose }: { onClose: () => void }) {
             <option value="">Click for Filter Options</option>
             <option value="all_exams">All Exams</option>
             <option value="all_bookings">All Booking Events</option>
-            <option value="ita">SkilledTradesBC Individual and Group Exams</option>
+            <option value="ita">
+              SkilledTradesBC Individual and Group Exams
+            </option>
             <option value="all_non_ita">All Non-SkilledTradesBC Exams</option>
           </SelectField>
         </div>
@@ -2220,7 +2309,9 @@ function SelectInvigilatorModal({
   const [isSaving, setIsSaving] = useState(false)
 
   async function submit() {
-    const invigilator = invigilators.find((item) => item.invigilator_id === selected)
+    const invigilator = invigilators.find(
+      (item) => item.invigilator_id === selected,
+    )
     if (!invigilator) {
       return
     }
@@ -2301,7 +2392,10 @@ function CandidateEditor({
     <div className="grid gap-3">
       <h3 className="text-bc-h5 m-0 font-bold">Candidates</h3>
       {Array.from({ length: count }, (_, index) => (
-        <div className="border-bc-border grid gap-2 rounded-sm border p-3 sm:grid-cols-3" key={index}>
+        <div
+          className="border-bc-border grid gap-2 rounded-sm border p-3 sm:grid-cols-3"
+          key={index}
+        >
           <TextField
             label={`Candidate ${index + 1} Name`}
             onChange={(value) => update(index, 'name', value)}
@@ -2368,7 +2462,7 @@ function setupDurationHours(examType?: ExamType) {
 function ModalHeader({ title }: { title: string }) {
   return (
     <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-      <h2 className="text-bc-h4 m-0 font-bold">{title}</h2>
+      <DialogTitle className="text-bc-h4 m-0 font-bold">{title}</DialogTitle>
     </div>
   )
 }
@@ -2403,7 +2497,6 @@ function Alert({ message }: { message: string }) {
     <AlertBanner
       className="sm:col-span-2"
       isCloseable={false}
-      layout="fluid"
       role="alert"
       size="small"
       variant="danger"

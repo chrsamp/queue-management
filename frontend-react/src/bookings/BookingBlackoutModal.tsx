@@ -12,7 +12,7 @@ import type { Office, Room } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 
@@ -63,19 +63,28 @@ export default function BookingBlackoutModal({
   const [dateValue, setDateValue] = useState(formatDateInputValue(new Date()))
   const [startTimeValue, setStartTimeValue] = useState('08:30')
   const [endTimeValue, setEndTimeValue] = useState('17:00')
-  const [endDateValue, setEndDateValue] = useState(formatDateInputValue(new Date()))
+  const [endDateValue, setEndDateValue] = useState(
+    formatDateInputValue(new Date()),
+  )
   const [frequency, setFrequency] = useState<'daily' | 'weekly'>('weekly')
   const [weekdays, setWeekdays] = useState(['MO'])
   const [count, setCount] = useState('')
-  const [selectedRoomIds, setSelectedRoomIds] = useState<Array<number | '_offsite'>>([])
+  const [selectedRoomIds, setSelectedRoomIds] = useState<
+    Array<number | '_offsite'>
+  >([])
   const [notes, setNotes] = useState('')
   const [contact, setContact] = useState(username)
-  const [statDates, setStatDates] = useState([{ date: formatDateInputValue(new Date()), note: '' }])
+  const [statDates, setStatDates] = useState([
+    { date: formatDateInputValue(new Date()), note: '' },
+  ])
   const [onlyThisOffice, setOnlyThisOffice] = useState(false)
   const [onlyBookings, setOnlyBookings] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
+  const [progress, setProgress] = useState<{
+    done: number
+    total: number
+  } | null>(null)
 
   const support = roleCode === 'SUPPORT'
   const roomOptions = [
@@ -88,7 +97,11 @@ export default function BookingBlackoutModal({
         .filter((entry) => entry.date)
         .map((entry) => {
           const start = mergeDateAndTime(entry.date, '00:00')
-          return { start, end: addMinutes(start, 24 * 60 - 1), note: entry.note }
+          return {
+            start,
+            end: addMinutes(start, 24 * 60 - 1),
+            note: entry.note,
+          }
         })
     }
 
@@ -213,11 +226,17 @@ export default function BookingBlackoutModal({
           blackout_notes: notes || null,
           booking_contact_information: contact || username,
           booking_name: 'BLACKOUT PERIOD',
-          end_time: officeDateToUtcIso(window.end, office.timezone.timezone_name),
+          end_time: officeDateToUtcIso(
+            window.end,
+            office.timezone.timezone_name,
+          ),
           office_id: office.office_id,
           recurring_uuid: recurringUuid,
           room_id: roomId === '_offsite' ? null : roomId,
-          start_time: officeDateToUtcIso(window.start, office.timezone.timezone_name),
+          start_time: officeDateToUtcIso(
+            window.start,
+            office.timezone.timezone_name,
+          ),
         })
         done += 1
         setProgress({ done, total })
@@ -227,7 +246,9 @@ export default function BookingBlackoutModal({
 
   async function createStatRecords() {
     const recurringUuid = createUuid()
-    const targetOffices = onlyThisOffice ? [office] : await getOffices(apiClient)
+    const targetOffices = onlyThisOffice
+      ? [office]
+      : await getOffices(apiClient)
     const dateEntries = statDates.filter((entry) => entry.date)
     const officeRoomEntries = []
 
@@ -252,7 +273,10 @@ export default function BookingBlackoutModal({
     let done = 0
     setProgress({ done, total })
 
-    for (const { office: targetOffice, rooms: officeRooms } of officeRoomEntries) {
+    for (const {
+      office: targetOffice,
+      rooms: officeRooms,
+    } of officeRoomEntries) {
       for (const entry of dateEntries) {
         const start = mergeDateAndTime(entry.date, '00:00')
         const end = addMinutes(start, 24 * 60 - 1)
@@ -304,13 +328,14 @@ export default function BookingBlackoutModal({
     <Modal className="max-w-4xl overflow-hidden" isDismissable={false} isOpen>
       <Dialog className="p-0" isCloseable={false}>
         <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <h2 className="text-bc-h4 m-0 font-bold">Schedule Booking Blackout</h2>
+          <DialogTitle className="text-bc-h4 m-0 font-bold">
+            Schedule Booking Blackout
+          </DialogTitle>
         </div>
         <div className="flex max-h-[75vh] flex-col gap-4 overflow-auto p-6">
           {errorMessage && (
             <AlertBanner
               isCloseable={false}
-              layout="fluid"
               role="alert"
               size="small"
               variant="danger"
@@ -324,7 +349,9 @@ export default function BookingBlackoutModal({
             </p>
           )}
           <fieldset className="border-bc-border rounded-sm border p-4">
-            <legend className="px-1 font-bold">Step 1: Select Event Type</legend>
+            <legend className="px-1 font-bold">
+              Step 1: Select Event Type
+            </legend>
             <div className="flex flex-wrap gap-3">
               <Button
                 onClick={() => setMode('single')}
@@ -409,14 +436,19 @@ export default function BookingBlackoutModal({
                     <legend className="font-bold">Select Weekdays</legend>
                     <div className="flex flex-wrap gap-3">
                       {weekdayOptions.map((option) => (
-                        <label className="flex items-center gap-2" key={option.value}>
+                        <label
+                          className="flex items-center gap-2"
+                          key={option.value}
+                        >
                           <input
                             checked={weekdays.includes(option.value)}
                             onChange={(event) =>
                               setWeekdays((current) =>
                                 event.target.checked
                                   ? [...current, option.value]
-                                  : current.filter((value) => value !== option.value),
+                                  : current.filter(
+                                      (value) => value !== option.value,
+                                    ),
                               )
                             }
                             type="checkbox"
@@ -427,7 +459,9 @@ export default function BookingBlackoutModal({
                     </div>
                   </fieldset>
                   <label className="flex flex-col gap-1">
-                    <span className="font-bold">Number of Occurences (optional)</span>
+                    <span className="font-bold">
+                      Number of Occurences (optional)
+                    </span>
                     <input
                       className="border-bc-border rounded-sm border px-3 py-2"
                       onChange={(event) => setCount(event.target.value)}
@@ -441,7 +475,10 @@ export default function BookingBlackoutModal({
                 <legend className="px-1 font-bold">Select Room(s)</legend>
                 <div className="grid gap-2 sm:grid-cols-3">
                   {roomOptions.map((room) => (
-                    <label className="flex items-center gap-2" key={String(room.value)}>
+                    <label
+                      className="flex items-center gap-2"
+                      key={String(room.value)}
+                    >
                       <input
                         checked={selectedRoomIds.includes(room.value)}
                         onChange={(event) =>
@@ -471,7 +508,10 @@ export default function BookingBlackoutModal({
           ) : (
             <div className="flex flex-col gap-4">
               {statDates.map((entry, index) => (
-                <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]" key={index}>
+                <div
+                  className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+                  key={index}
+                >
                   <input
                     aria-label="STAT Date"
                     className="border-bc-border rounded-sm border px-3 py-2"
@@ -562,7 +602,11 @@ export default function BookingBlackoutModal({
           </label>
         </div>
         <div className="bg-bc-light-gray flex justify-end gap-3 border-t px-6 py-4">
-          <Button disabled={isSaving} onClick={resetAndClose} variant="secondary">
+          <Button
+            disabled={isSaving}
+            onClick={resetAndClose}
+            variant="secondary"
+          >
             Cancel
           </Button>
           <Button disabled={isSaving} onClick={() => void handleSubmit()}>

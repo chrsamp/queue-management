@@ -19,7 +19,6 @@ export interface AlertBannerProps {
   customIcon?: ReactNode
   isCloseable?: boolean
   isIconHidden?: boolean
-  layout?: 'fixed' | 'fluid'
   onClose?: () => void
   role?: AriaRole
   size?: 'small' | 'medium'
@@ -54,7 +53,6 @@ export default function AlertBanner({
   customIcon,
   isCloseable = true,
   isIconHidden = false,
-  layout = 'fixed',
   onClose,
   role = 'status',
   size = 'medium',
@@ -66,9 +64,8 @@ export default function AlertBanner({
     <div className={cx('w-full', variantClasses[variant], className)}>
       <div
         className={cx(
-          'mx-auto flex w-full items-start gap-4 px-4',
+          'mx-auto flex w-full items-start gap-4 px-6',
           sizeClasses[size].container,
-          layout === 'fixed' ? 'max-w-bc-content' : 'max-w-none',
           containerClassName,
         )}
       >
@@ -90,7 +87,7 @@ export default function AlertBanner({
           <Button
             aria-label="Close this alert"
             className={cx(
-              'shrink-0',
+              'size-6 shrink-0',
               variant === 'warning'
                 ? 'text-bc-primary'
                 : 'text-bc-white hover:text-bc-primary',

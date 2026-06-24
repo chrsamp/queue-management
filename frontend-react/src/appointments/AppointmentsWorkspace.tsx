@@ -35,6 +35,7 @@ import {
   officeDateToUtcIso,
   type AppointmentCalendarEvent,
 } from './appointment-utils'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const locales = { 'en-US': enUS }
 const emptyAppointments: never[] = []
@@ -184,8 +185,8 @@ export default function AppointmentsWorkspace({
   }
 
   return (
-    <section className="mx-auto flex min-h-[calc(100vh-var(--spacing-bc-header-height))] w-full max-w-7xl flex-col gap-4 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="flex h-full min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden p-6">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setDate(new Date())}>Today</Button>
           <Button
@@ -212,20 +213,19 @@ export default function AppointmentsWorkspace({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => navigate('prev')} variant="secondary">
-            Last
+            <ChevronLeft />
           </Button>
           <h2 className="text-bc-h4 m-0 min-w-64 text-center font-bold">
-            Appointments:{' '}
             {format(date, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
           </h2>
           <Button onClick={() => navigate('next')} variant="secondary">
-            Next
+            <ChevronRight />
           </Button>
         </div>
       </div>
 
       <form
-        className="flex flex-wrap items-center gap-2"
+        className="flex shrink-0 flex-wrap items-center gap-2"
         onSubmit={(event) => event.preventDefault()}
       >
         <label className="font-bold" htmlFor="appointment-search">
@@ -251,7 +251,6 @@ export default function AppointmentsWorkspace({
       {errorMessage && (
         <AlertBanner
           isCloseable={false}
-          layout="fluid"
           role="alert"
           size="small"
           variant="danger"
@@ -262,7 +261,6 @@ export default function AppointmentsWorkspace({
       {appointmentError && (
         <AlertBanner
           isCloseable={false}
-          layout="fluid"
           role="alert"
           size="small"
           variant="danger"
@@ -284,7 +282,7 @@ export default function AppointmentsWorkspace({
           }}
         />
       ) : (
-        <div className="border-bc-border min-h-[640px] border bg-white p-2">
+        <div className="border-bc-border min-h-0 flex-1 overflow-hidden border bg-white p-2">
           <Calendar
             date={date}
             dayLayoutAlgorithm="no-overlap"
@@ -374,7 +372,7 @@ function AppointmentList({
   }
 
   return (
-    <div className="border-bc-border overflow-auto border bg-white">
+    <div className="border-bc-border min-h-0 flex-1 overflow-auto border bg-white">
       <table
         className="w-full border-collapse"
         aria-label="Filtered appointments"
@@ -387,7 +385,10 @@ function AppointmentList({
                 key={`${dateKey}-heading`}
                 onClick={() => onSelectDate(dayEvents[0].start)}
               >
-                <th className="px-3 py-2 text-left" colSpan={3}>
+                <th
+                  className="border-bc-border border-b px-3 py-2 text-left"
+                  colSpan={3}
+                >
                   {format(dayEvents[0].start, 'MMMM dd, yyyy')}
                 </th>
               </tr>

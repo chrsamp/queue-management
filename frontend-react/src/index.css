@@ -8,10 +8,12 @@
   --color-bc-border: #d8d8d8;
   --color-bc-border-dark: #353433;
   --color-bc-gray-110: #252423;
+  --color-bc-gold: #fcba19;
   --color-bc-gold-60: #fbd389;
   --color-bc-primary: #2d2d2d;
   --color-bc-secondary: #474543;
   --color-bc-link: #255a90;
+  --color-bc-local-env: #a21caf;
   --color-bc-focus: #2e5dd7;
   --color-bc-info: #053662;
   --color-bc-overlay: rgb(0 0 0 / 0.45);
@@ -36,6 +38,8 @@
   --container-bc-content: 68.75rem;
 
   --spacing-bc-header-height: 4.0625rem;
+  --spacing-bc-subheader-small: 2rem;
+  --spacing-bc-subheader-medium: 2.5rem;
   --spacing-bc-logo-header: 8.0625rem;
   --spacing-bc-logo-footer: 9.125rem;
   --spacing-bc-footer-logo: 36rem;

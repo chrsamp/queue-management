@@ -65,14 +65,14 @@ export default function QueueTable({
     <div className="border-bc-border h-full overflow-auto rounded-lg border bg-white">
       <table
         aria-label={tableLabel}
-        className="text-bc-small min-w-5xl table-fixed border-collapse"
+        className="text-bc-small w-full table-fixed border-collapse"
       >
         <thead className="bg-bc-light-gray">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
-                  className="border-bc-border text-bc-primary border-b px-3 py-2 text-left align-bottom font-bold"
+                  className="border-bc-border bg-bc-light-gray text-bc-primary sticky top-0 z-10 border-b px-3 py-2 text-left align-bottom font-bold"
                   key={header.id}
                   aria-sort={getHeaderSortDirection(
                     header.column.getIsSorted(),

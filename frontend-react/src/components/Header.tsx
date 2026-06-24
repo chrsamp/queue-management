@@ -21,6 +21,7 @@ export interface HeaderProps {
   children?: ReactNode
   className?: string
   containerClassName?: string
+  sticky?: boolean
 }
 
 export default function Header({
@@ -39,19 +40,21 @@ export default function Header({
   children,
   className,
   containerClassName,
+  sticky = true,
 }: HeaderProps) {
   const TitleElement = titleAs as ElementType
 
   return (
     <header
       className={cx(
-        'min-h-bc-header-height border-bc-border bg-bc-white sticky top-0 z-40 box-border flex w-full shrink-0 items-center justify-around border-b px-4',
+        'min-h-bc-header-height border-bc-border bg-bc-white box-border flex w-full shrink-0 items-center justify-around border-b px-4',
+        sticky && 'sticky top-0 z-40',
         className,
       )}
     >
       <div
         className={cx(
-          'max-w-bc-content relative flex w-full flex-1 flex-row items-center gap-4',
+          'relative flex w-full flex-1 flex-row items-center gap-4',
           containerClassName,
         )}
       >

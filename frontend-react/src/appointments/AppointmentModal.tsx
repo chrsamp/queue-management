@@ -15,7 +15,7 @@ import type { Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 
@@ -258,7 +258,9 @@ export default function AppointmentModal({
     <Modal className="max-w-2xl overflow-hidden" isDismissable={false} isOpen>
       <Dialog className="p-0" isCloseable={false}>
         <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <h2 className="text-bc-h4 m-0 font-bold">{title}</h2>
+          <DialogTitle className="text-bc-h4 m-0 font-bold">
+            {title}
+          </DialogTitle>
         </div>
         <div className="flex flex-col gap-4 p-6">
           {draft ? (
@@ -270,7 +272,6 @@ export default function AppointmentModal({
               {errorMessage && (
                 <AlertBanner
                   isCloseable={false}
-                  layout="fluid"
                   role="alert"
                   size="small"
                   variant="danger"

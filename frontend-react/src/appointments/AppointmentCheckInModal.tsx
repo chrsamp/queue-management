@@ -6,7 +6,7 @@ import { checkInAppointment } from './appointment-checkin'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -40,7 +40,8 @@ export default function AppointmentCheckInModal({
 
   const draft = Boolean(clickedEvent.is_draft)
   const blackout = clickedEvent.blackout_flag === 'Y'
-  const recurring = Boolean(clickedEvent.recurring_uuid) && !clickedEvent.stat_flag
+  const recurring =
+    Boolean(clickedEvent.recurring_uuid) && !clickedEvent.stat_flag
   const stat = Boolean(clickedEvent.stat_flag)
   const support = roleCode === 'SUPPORT'
 
@@ -86,7 +87,9 @@ export default function AppointmentCheckInModal({
     <Modal className="max-w-sm overflow-hidden" isDismissable={false} isOpen>
       <Dialog className="p-0" isCloseable={false}>
         <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <h2 className="text-bc-h4 m-0 font-bold">Appointment</h2>
+          <DialogTitle className="text-bc-h4 m-0 font-bold">
+            Appointment
+          </DialogTitle>
         </div>
         <div className="flex flex-col gap-4 p-6">
           {draft ? (
@@ -98,7 +101,6 @@ export default function AppointmentCheckInModal({
               {errorMessage && (
                 <AlertBanner
                   isCloseable={false}
-                  layout="fluid"
                   role="alert"
                   size="small"
                   variant="danger"
@@ -147,7 +149,9 @@ export default function AppointmentCheckInModal({
               {stat && (
                 <div>
                   <p className="mb-3">
-                    {support ? 'Edit or Cancel Recurring STAT Series?' : 'View STAT?'}
+                    {support
+                      ? 'Edit or Cancel Recurring STAT Series?'
+                      : 'View STAT?'}
                   </p>
                   <Button
                     className="w-full"

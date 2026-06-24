@@ -303,6 +303,23 @@ describe('QueueWorkspace', () => {
     ).toBeVisible()
   })
 
+  test('keeps add citizen and back office buttons fully rounded without quick-service menus', () => {
+    renderQueueWorkspace({ citizens: [], office: receptionOffice })
+
+    expect(screen.getByRole('button', { name: 'Add Citizen' })).not.toHaveClass(
+      'rounded-r-none',
+    )
+    expect(screen.getByRole('button', { name: 'Back Office' })).not.toHaveClass(
+      'rounded-r-none',
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Add Citizen quick services' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Back Office quick services' }),
+    ).not.toBeInTheDocument()
+  })
+
   test('shows add citizen and back office split buttons with quick-service menus', async () => {
     const user = userEvent.setup()
 
@@ -326,6 +343,12 @@ describe('QueueWorkspace', () => {
 
     expect(screen.getByRole('button', { name: 'Add Citizen' })).toBeVisible()
     expect(screen.getByRole('button', { name: 'Back Office' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Add Citizen' })).toHaveClass(
+      'rounded-r-none',
+    )
+    expect(screen.getByRole('button', { name: 'Back Office' })).toHaveClass(
+      'rounded-r-none',
+    )
 
     await user.click(
       screen.getByRole('button', { name: 'Add Citizen quick services' }),

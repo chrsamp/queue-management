@@ -36,6 +36,7 @@ function renderMenu(
         currentOffice={currentOffice}
         currentRoleCode={currentRoleCode}
         onLogout={onLogout}
+        username="Staff User"
       />
       <Routes>
         <Route element={<LocationText />} path="*" />
@@ -61,19 +62,35 @@ describe('HeaderNavigationMenu', () => {
     expect(screen.getByRole('menuitem', { name: 'Appointments' })).toBeVisible()
     expect(screen.getByRole('menuitem', { name: 'Admin' })).toBeVisible()
     expect(screen.getByRole('menuitem', { name: 'Log out' })).toBeVisible()
+    expect(screen.getByText('Staff User')).toBeVisible()
+    expect(screen.getAllByRole('separator')).toHaveLength(2)
   })
 
   test('hides admin for non-admin roles', async () => {
     const user = userEvent.setup()
     renderMenu('CSR')
+    const trigger = screen.getByRole('button', { name: /menu/i })
 
-    await user.click(screen.getByRole('button', { name: /menu/i }))
+    expect(trigger.querySelector('svg')).toBeInTheDocument()
+    await user.click(trigger)
 
     expect(await screen.findByRole('menuitem', { name: 'Queue' })).toBeVisible()
     expect(
       screen.queryByRole('menuitem', { name: 'Admin' }),
     ).not.toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: 'Log out' })).toBeVisible()
+  })
+
+  test('uses a hamburger trigger and danger logout item', async () => {
+    const user = userEvent.setup()
+    renderMenu('CSR')
+
+    await user.click(screen.getByRole('button', { name: /menu/i }))
+
+    const logout = await screen.findByRole('menuitem', { name: 'Log out' })
+
+    expect(logout).toHaveClass('text-bc-danger')
+    expect(logout.querySelector('svg')).toBeInTheDocument()
   })
 
   test('hides appointments when office appointments are disabled', async () => {

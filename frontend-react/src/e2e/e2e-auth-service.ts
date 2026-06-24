@@ -7,6 +7,7 @@ export function createE2eAuthService() {
     initialized: true,
     token: 'e2e-token',
     username: 'e2e.user',
+    displayName: 'E2E User',
   }
   const subscribers = new Set<() => void>()
 
@@ -21,6 +22,7 @@ export function createE2eAuthService() {
         initialized: true,
         token: null,
         username: null,
+        displayName: null,
       }
       subscribers.forEach((subscriber) => subscriber())
       window.history.pushState(null, '', '/')

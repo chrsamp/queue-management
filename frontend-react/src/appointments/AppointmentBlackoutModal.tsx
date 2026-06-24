@@ -12,7 +12,7 @@ import type { Appointment, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 
@@ -61,12 +61,16 @@ export default function AppointmentBlackoutModal({
   const [dateValue, setDateValue] = useState(formatDateInputValue(new Date()))
   const [startTimeValue, setStartTimeValue] = useState('08:30')
   const [endTimeValue, setEndTimeValue] = useState('17:00')
-  const [endDateValue, setEndDateValue] = useState(formatDateInputValue(new Date()))
+  const [endDateValue, setEndDateValue] = useState(
+    formatDateInputValue(new Date()),
+  )
   const [frequency, setFrequency] = useState<'daily' | 'weekly'>('weekly')
   const [weekdays, setWeekdays] = useState(['MO'])
   const [count, setCount] = useState('')
   const [notes, setNotes] = useState('')
-  const [statDates, setStatDates] = useState([{ date: formatDateInputValue(new Date()), note: '' }])
+  const [statDates, setStatDates] = useState([
+    { date: formatDateInputValue(new Date()), note: '' },
+  ])
   const [onlyThisOffice, setOnlyThisOffice] = useState(false)
   const [onlyAppointments, setOnlyAppointments] = useState(false)
   const [confirmOverlap, setConfirmOverlap] = useState(false)
@@ -181,10 +185,16 @@ export default function AppointmentBlackoutModal({
             citizen_name: 'BLACKOUT PERIOD',
             comments: notes || null,
             contact_information: username,
-            end_time: officeDateToUtcIso(window.end, office.timezone.timezone_name),
+            end_time: officeDateToUtcIso(
+              window.end,
+              office.timezone.timezone_name,
+            ),
             office_id: office.office_id,
             recurring_uuid: recurringUuid,
-            start_time: officeDateToUtcIso(window.start, office.timezone.timezone_name),
+            start_time: officeDateToUtcIso(
+              window.start,
+              office.timezone.timezone_name,
+            ),
           })
         }
       }
@@ -212,10 +222,16 @@ export default function AppointmentBlackoutModal({
           citizen_name: `STAT PERIOD_${targetOffice.office_name}`,
           comments: entry.note || null,
           contact_information: username,
-          end_time: officeDateToUtcIso(end, targetOffice.timezone.timezone_name),
+          end_time: officeDateToUtcIso(
+            end,
+            targetOffice.timezone.timezone_name,
+          ),
           office_id: targetOffice.office_id,
           recurring_uuid: recurringUuid,
-          start_time: officeDateToUtcIso(start, targetOffice.timezone.timezone_name),
+          start_time: officeDateToUtcIso(
+            start,
+            targetOffice.timezone.timezone_name,
+          ),
           stat_flag: true,
         }
 
@@ -247,15 +263,14 @@ export default function AppointmentBlackoutModal({
     <Modal className="max-w-3xl overflow-hidden" isDismissable={false} isOpen>
       <Dialog className="p-0" isCloseable={false}>
         <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <h2 className="text-bc-h4 m-0 font-bold">
+          <DialogTitle className="text-bc-h4 m-0 font-bold">
             Schedule Appointment Blackout
-          </h2>
+          </DialogTitle>
         </div>
         <div className="flex flex-col gap-4 p-6">
           {errorMessage && (
             <AlertBanner
               isCloseable={false}
-              layout="fluid"
               role="alert"
               size="small"
               variant="danger"
@@ -274,25 +289,39 @@ export default function AppointmentBlackoutModal({
               </p>
               <div className="flex gap-3">
                 <Button onClick={() => void handleSubmit(true)}>Yes</Button>
-                <Button onClick={() => setConfirmOverlap(false)} variant="secondary">
+                <Button
+                  onClick={() => setConfirmOverlap(false)}
+                  variant="secondary"
+                >
                   No
                 </Button>
               </div>
             </div>
           )}
           <fieldset className="border-bc-border rounded-sm border p-4">
-            <legend className="px-1 font-bold">Step 1: Select Event Type</legend>
+            <legend className="px-1 font-bold">
+              Step 1: Select Event Type
+            </legend>
             <div className="flex flex-wrap gap-3">
-              <Button onClick={() => setMode('single')} variant={mode === 'single' ? 'primary' : 'secondary'}>
+              <Button
+                onClick={() => setMode('single')}
+                variant={mode === 'single' ? 'primary' : 'secondary'}
+              >
                 Create Single Blackout
               </Button>
               {recurringEnabled && (
-                <Button onClick={() => setMode('recurring')} variant={mode === 'recurring' ? 'primary' : 'secondary'}>
+                <Button
+                  onClick={() => setMode('recurring')}
+                  variant={mode === 'recurring' ? 'primary' : 'secondary'}
+                >
                   Create Recurring Blackout
                 </Button>
               )}
               {support && (
-                <Button onClick={() => setMode('stat')} variant={mode === 'stat' ? 'primary' : 'secondary'}>
+                <Button
+                  onClick={() => setMode('stat')}
+                  variant={mode === 'stat' ? 'primary' : 'secondary'}
+                >
                   Create STAT
                 </Button>
               )}
@@ -358,14 +387,19 @@ export default function AppointmentBlackoutModal({
                     <legend className="font-bold">Select Weekdays:</legend>
                     <div className="flex flex-wrap gap-3">
                       {weekdayOptions.map((option) => (
-                        <label className="flex items-center gap-2" key={option.value}>
+                        <label
+                          className="flex items-center gap-2"
+                          key={option.value}
+                        >
                           <input
                             checked={weekdays.includes(option.value)}
                             onChange={(event) =>
                               setWeekdays((current) =>
                                 event.target.checked
                                   ? [...current, option.value]
-                                  : current.filter((value) => value !== option.value),
+                                  : current.filter(
+                                      (value) => value !== option.value,
+                                    ),
                               )
                             }
                             type="checkbox"
@@ -376,7 +410,9 @@ export default function AppointmentBlackoutModal({
                     </div>
                   </fieldset>
                   <label className="flex flex-col gap-1">
-                    <span className="font-bold">Number of Occurences(optional):</span>
+                    <span className="font-bold">
+                      Number of Occurences(optional):
+                    </span>
                     <input
                       className="border-bc-border rounded-sm border px-3 py-2"
                       onChange={(event) => setCount(event.target.value)}
@@ -399,7 +435,10 @@ export default function AppointmentBlackoutModal({
           ) : (
             <div className="flex flex-col gap-4">
               {statDates.map((entry, index) => (
-                <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]" key={index}>
+                <div
+                  className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+                  key={index}
+                >
                   <input
                     aria-label="STAT Date"
                     className="border-bc-border rounded-sm border px-3 py-2"
@@ -472,7 +511,9 @@ export default function AppointmentBlackoutModal({
                 <label className="flex items-center gap-2">
                   <input
                     checked={onlyAppointments}
-                    onChange={(event) => setOnlyAppointments(event.target.checked)}
+                    onChange={(event) =>
+                      setOnlyAppointments(event.target.checked)
+                    }
                     type="checkbox"
                   />
                   Only appointment
@@ -482,7 +523,11 @@ export default function AppointmentBlackoutModal({
           )}
         </div>
         <div className="bg-bc-light-gray flex justify-end gap-3 border-t px-6 py-4">
-          <Button disabled={isSaving} onClick={resetAndClose} variant="secondary">
+          <Button
+            disabled={isSaving}
+            onClick={resetAndClose}
+            variant="secondary"
+          >
             Cancel
           </Button>
           <Button disabled={isSaving} onClick={() => void handleSubmit(false)}>

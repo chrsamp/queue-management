@@ -23,7 +23,6 @@ describe('AlertBanner', () => {
       <AlertBanner
         className="root-class"
         containerClassName="container-class"
-        layout="fluid"
         role="alert"
         size="small"
         variant="warning"
@@ -36,7 +35,6 @@ describe('AlertBanner', () => {
     expect(container.firstElementChild).toHaveClass('bg-bc-warning')
     expect(container.firstElementChild).toHaveClass('root-class')
     expect(container.querySelector('.container-class')).toBeInTheDocument()
-    expect(container.querySelector('.max-w-none')).toBeInTheDocument()
   })
 
   test('can hide or replace the icon', () => {

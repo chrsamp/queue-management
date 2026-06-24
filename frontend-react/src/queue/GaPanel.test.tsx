@@ -9,7 +9,6 @@ import type { Citizen, CsrListItem, CsrState, Office } from '@/api/schemas'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 import GaPanel from './GaPanel'
-import QueueActions from './QueueActions'
 
 const office = {
   check_in_notification: null,
@@ -252,68 +251,5 @@ describe('GaPanel', () => {
     )
 
     expect(await screen.findByText('Citizens on Hold')).toBeVisible()
-  })
-})
-
-describe('QueueActions GA panel trigger', () => {
-  test('is hidden for CSR and visible for GA and SUPPORT', async () => {
-    const queryClient = new QueryClient()
-    const client = {
-      get: vi
-        .fn()
-        .mockResolvedValue({ categories: [], channels: [], services: [] }),
-    } as unknown as ApiClient
-
-    const { rerender } = render(
-      <ApiProvider client={client}>
-        <QueryClientProvider client={queryClient}>
-          <QueueActions
-            citizens={[]}
-            hasActiveServiceCitizen={false}
-            office={office}
-          />
-        </QueryClientProvider>
-      </ApiProvider>,
-    )
-
-    expect(
-      screen.queryByRole('button', { name: 'GA Panel' }),
-    ).not.toBeInTheDocument()
-
-    useWorkflowStore.getState().setCurrentCsr({
-      ...csr(1, 'ga.user', 'GA'),
-      office,
-    })
-    rerender(
-      <ApiProvider client={client}>
-        <QueryClientProvider client={queryClient}>
-          <QueueActions
-            citizens={[]}
-            hasActiveServiceCitizen={false}
-            office={office}
-          />
-        </QueryClientProvider>
-      </ApiProvider>,
-    )
-
-    expect(screen.getByRole('button', { name: 'GA Panel' })).toBeVisible()
-
-    useWorkflowStore.getState().setCurrentCsr({
-      ...csr(2, 'support.user', 'SUPPORT'),
-      office,
-    })
-    rerender(
-      <ApiProvider client={client}>
-        <QueryClientProvider client={queryClient}>
-          <QueueActions
-            citizens={[]}
-            hasActiveServiceCitizen={false}
-            office={office}
-          />
-        </QueryClientProvider>
-      </ApiProvider>,
-    )
-
-    expect(screen.getByRole('button', { name: 'GA Panel' })).toBeVisible()
   })
 })

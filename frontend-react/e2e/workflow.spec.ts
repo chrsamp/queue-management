@@ -294,6 +294,15 @@ function stripOffice<T extends { office?: unknown }>(value: T) {
 }
 
 test.describe('mocked queue workflows', () => {
+  test('redirects authenticated root visits to the queue', async ({ page }) => {
+    await installMockRoutes(page)
+
+    await page.goto('/')
+
+    await expect(page).toHaveURL(/\/queue$/)
+    await expect(page.getByText('Citizens Waiting: 1')).toBeVisible()
+  })
+
   test('invites, begins, holds, and clears active citizen state', async ({
     page,
   }) => {

@@ -8,6 +8,7 @@ export interface AuthSnapshot {
   initialized: boolean
   token: string | null
   username: string | null
+  displayName: string | null
   error: string | null
 }
 
@@ -19,6 +20,7 @@ const initialSnapshot: AuthSnapshot = {
   initialized: false,
   token: null,
   username: null,
+  displayName: null,
   error: null,
 }
 
@@ -52,7 +54,14 @@ export class AuthService {
         responseMode: 'fragment',
       })
 
-      this.updateSnapshot({ authenticated, error: null, initialized: true })
+      this.updateSnapshot({
+        authenticated,
+        error: null,
+        initialized: true,
+        token: this.keycloak.token ?? null,
+        username: this.getUsername(),
+        displayName: this.getDisplayName(),
+      })
       this.syncCookie()
 
       if (authenticated) {
@@ -68,6 +77,7 @@ export class AuthService {
         initialized: true,
         token: null,
         username: null,
+        displayName: null,
       })
       clearOidcJwtCookie()
     }
@@ -94,6 +104,7 @@ export class AuthService {
       error: null,
       token: this.keycloak.token ?? null,
       username: this.getUsername(),
+      displayName: this.getDisplayName(),
     })
     this.syncCookie()
   }
@@ -105,6 +116,7 @@ export class AuthService {
         error: null,
         token: this.keycloak.token ?? null,
         username: this.getUsername(),
+        displayName: this.getDisplayName(),
       })
       this.syncCookie()
       this.startRefreshTimer()
@@ -116,6 +128,7 @@ export class AuthService {
         error: null,
         token: this.keycloak.token ?? null,
         username: this.getUsername(),
+        displayName: this.getDisplayName(),
       })
       this.syncCookie()
     }
@@ -129,6 +142,7 @@ export class AuthService {
         error: 'Your session expired. Please log in again.',
         token: null,
         username: null,
+        displayName: null,
       })
     }
 
@@ -140,6 +154,7 @@ export class AuthService {
         error: null,
         token: null,
         username: null,
+        displayName: null,
       })
     }
   }
@@ -181,6 +196,17 @@ export class AuthService {
     }
 
     return null
+  }
+
+  private getDisplayName() {
+    const parsed = this.keycloak.tokenParsed
+
+    if (typeof parsed?.display_name !== 'string') {
+      return null
+    }
+
+    const displayName = parsed.display_name.trim()
+    return displayName === '' ? null : displayName
   }
 
   private updateSnapshot(next: Partial<AuthSnapshot>) {

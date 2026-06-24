@@ -94,6 +94,7 @@ const unauthenticatedSnapshot: AuthSnapshot = {
   initialized: true,
   token: null,
   username: null,
+  displayName: null,
 }
 
 const authenticatedSnapshot: AuthSnapshot = {
@@ -102,6 +103,7 @@ const authenticatedSnapshot: AuthSnapshot = {
   initialized: true,
   token: 'token',
   username: 'queue.user',
+  displayName: 'Queue User',
 }
 
 afterEach(() => {

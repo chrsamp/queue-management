@@ -28,7 +28,6 @@ import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 import AddCitizenModal from './AddCitizenModal'
-import GaPanel from './GaPanel'
 import {
   createAddCitizenModalState,
   type AddCitizenModalState,
@@ -60,7 +59,6 @@ export default function QueueActions({
   const currentReceptionist = useWorkflowStore(
     (state) => state.currentReceptionist,
   )
-  const currentRoleCode = useWorkflowStore((state) => state.currentRoleCode)
   const clearServeCitizen = useWorkflowStore((state) => state.clearServeCitizen)
   const currentCounterId = useWorkflowStore((state) => state.currentCounterId)
   const openServiceModal = useWorkflowStore((state) => state.openServiceModal)
@@ -71,7 +69,6 @@ export default function QueueActions({
   const [modalState, setModalState] = useState<AddCitizenModalState | null>(
     null,
   )
-  const [isGaPanelOpen, setIsGaPanelOpen] = useState(false)
   const [isPerformingAction, setIsPerformingAction] = useState(false)
   const [actionAlert, setActionAlert] = useState<string | null>(null)
 
@@ -97,8 +94,6 @@ export default function QueueActions({
     servicesQuery.isPending
   const canOpenPrefilledModal =
     currentReceptionist === true && isReceptionOffice(office)
-  const canOpenGaPanel =
-    currentRoleCode === 'GA' || currentRoleCode === 'SUPPORT'
 
   async function ensureReferenceData() {
     const [categories, channels, services] = await Promise.all([
@@ -272,63 +267,56 @@ export default function QueueActions({
 
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
-        {actionAlert && (
-          <AlertBanner
-            className="mr-auto w-auto"
-            isCloseable={false}
-            layout="fluid"
-            role="alert"
-            size="small"
-            variant="danger"
-          >
-            {actionAlert}
-          </AlertBanner>
-        )}
-
-        {isReceptionOffice(office) && (
-          <Button
-            disabled={isBusy || hasActiveServiceCitizen || showServiceModal}
-            onClick={() => void handleInviteNext()}
-          >
-            Invite
-          </Button>
-        )}
-        {canOpenGaPanel && (
-          <Button
-            disabled={isBusy}
-            onClick={() => setIsGaPanelOpen(true)}
-            variant="secondary"
-          >
-            GA Panel
-          </Button>
-        )}
-        <Button
-          className={cx(
-            hasActiveServiceCitizen &&
-              !showServiceModal &&
-              'animate-pulse border border-yellow-700 bg-yellow-300 text-black hover:bg-yellow-300',
-          )}
-          disabled={!hasActiveServiceCitizen}
-          onClick={handleServeNow}
-          id="serve-citizen-button"
+      {actionAlert && (
+        <AlertBanner
+          className="mb-4 w-fit"
+          isCloseable={false}
+          role="alert"
+          size="small"
+          variant="danger"
         >
-          Serve Now
-        </Button>
-        <SplitAction
-          disabled={isBusy}
-          items={quickListItems}
-          label="Add Citizen"
-          onAction={(key) => handleQuickAction('add-citizen', key)}
-          onPrimary={() => void openModal('add-citizen')}
-        />
-        <SplitAction
-          disabled={isBusy}
-          items={backOfficeItems}
-          label="Back Office"
-          onAction={(key) => handleQuickAction('back-office', key)}
-          onPrimary={() => void openModal('back-office')}
-        />
+          {actionAlert}
+        </AlertBanner>
+      )}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {isReceptionOffice(office) && (
+            <Button
+              disabled={isBusy || hasActiveServiceCitizen || showServiceModal}
+              onClick={() => void handleInviteNext()}
+            >
+              Invite
+            </Button>
+          )}
+          <Button
+            className={cx(
+              hasActiveServiceCitizen &&
+                !showServiceModal &&
+                'animate-pulse border border-yellow-700 bg-yellow-300 text-black hover:bg-yellow-300',
+            )}
+            disabled={!hasActiveServiceCitizen}
+            id="serve-citizen-button"
+            onClick={handleServeNow}
+          >
+            Serve Now
+          </Button>
+        </div>
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <SplitAction
+            disabled={isBusy}
+            items={backOfficeItems}
+            label="Back Office"
+            onAction={(key) => handleQuickAction('back-office', key)}
+            onPrimary={() => void openModal('back-office')}
+          />
+          <SplitAction
+            disabled={isBusy}
+            items={quickListItems}
+            label="Add Citizen"
+            onAction={(key) => handleQuickAction('add-citizen', key)}
+            onPrimary={() => void openModal('add-citizen')}
+          />
+        </div>
       </div>
 
       <AddCitizenModal
@@ -345,14 +333,6 @@ export default function QueueActions({
         services={servicesQuery.data ?? []}
         state={modalState}
       />
-      {canOpenGaPanel && (
-        <GaPanel
-          citizens={citizens}
-          isOpen={isGaPanelOpen}
-          office={office}
-          onClose={() => setIsGaPanelOpen(false)}
-        />
-      )}
     </>
   )
 }
@@ -370,16 +350,18 @@ function SplitAction({
   onAction: (key: Key) => void
   onPrimary: () => void
 }) {
+  const hasMenu = items.length > 0
+
   return (
     <div className="inline-flex items-stretch">
       <Button
-        className="rounded-r-none"
+        className={cx(hasMenu && 'rounded-r-none')}
         disabled={disabled}
         onClick={onPrimary}
       >
         {label}
       </Button>
-      {items.length > 0 && (
+      {hasMenu && (
         <MenuTrigger>
           <Button
             aria-label={`${label} quick services`}

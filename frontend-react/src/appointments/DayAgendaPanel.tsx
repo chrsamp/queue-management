@@ -124,7 +124,6 @@ export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
       {errorMessage && (
         <AlertBanner
           isCloseable={false}
-          layout="fluid"
           role="alert"
           size="small"
           variant="danger"
@@ -135,7 +134,6 @@ export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
       {agendaError && (
         <AlertBanner
           isCloseable={false}
-          layout="fluid"
           role="alert"
           size="small"
           variant="danger"

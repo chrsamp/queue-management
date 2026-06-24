@@ -1,13 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createLucideIcon, HandHelping } from 'lucide-react'
 
-import type {
-  Category,
-  Channel,
-  Citizen,
-  Office,
-  Service,
-} from '@/api/schemas'
+import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import {
   addCitizenToQueue,
   beginCitizenService,
@@ -19,7 +13,7 @@ import {
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 import { useQueryClient } from '@tanstack/react-query'
@@ -147,7 +141,10 @@ export default function AddCitizenModal({
     const notificationPhone = formatNotificationPhone(value)
     updateForm({
       notificationPhone,
-      walkinUniqueId: notificationPhone || form?.notificationEmail ? createWalkinUniqueId() : '',
+      walkinUniqueId:
+        notificationPhone || form?.notificationEmail
+          ? createWalkinUniqueId()
+          : '',
     })
   }
 
@@ -155,7 +152,9 @@ export default function AddCitizenModal({
     updateForm({
       notificationEmail,
       walkinUniqueId:
-        form?.notificationPhone || notificationEmail ? createWalkinUniqueId() : '',
+        form?.notificationPhone || notificationEmail
+          ? createWalkinUniqueId()
+          : '',
     })
   }
 
@@ -318,7 +317,9 @@ export default function AddCitizenModal({
       <Dialog className="p-0" isCloseable={false}>
         <div className="border-bc-border bg-bc-light-gray flex items-center justify-between border-b px-6 py-4">
           <div>
-            <h2 className="text-bc-h4 m-0 font-bold">{title}</h2>
+            <DialogTitle className="text-bc-h4 m-0 font-bold">
+              {title}
+            </DialogTitle>
             <p className="text-bc-small text-bc-secondary m-0">
               Citizens Waiting: {waitingCount}
             </p>
@@ -339,7 +340,6 @@ export default function AddCitizenModal({
             <AlertBanner
               className="mb-3"
               isCloseable={false}
-              layout="fluid"
               role="alert"
               size="small"
               variant="danger"
@@ -351,7 +351,6 @@ export default function AddCitizenModal({
             <AlertBanner
               className="mb-3"
               isCloseable={false}
-              layout="fluid"
               role="alert"
               size="small"
               variant="danger"
@@ -373,7 +372,9 @@ export default function AddCitizenModal({
                 className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus min-h-16 rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
                 id="add-citizen-comments"
                 maxLength={1000}
-                onChange={(event) => updateForm({ comments: event.target.value })}
+                onChange={(event) =>
+                  updateForm({ comments: event.target.value })
+                }
                 placeholder="add comments here"
                 ref={commentsRef}
                 value={form.comments}
@@ -465,15 +466,19 @@ export default function AddCitizenModal({
               <thead className="bg-bc-secondary text-bc-white sticky top-0">
                 <tr>
                   {isReception && !serviceModalMode && (
-                    <th className="w-20 px-3 py-2 text-center font-normal">
+                    <th className="border-bc-border w-20 border-b px-3 py-2 text-center font-normal">
                       To Q
                     </th>
                   )}
-                  <th className="w-24 px-3 py-2 text-center font-normal">
+                  <th className="border-bc-border w-24 border-b px-3 py-2 text-center font-normal">
                     Serve
                   </th>
-                  <th className="px-3 py-2 font-normal">Service</th>
-                  <th className="px-3 py-2 font-normal">Category</th>
+                  <th className="border-bc-border border-b px-3 py-2 font-normal">
+                    Service
+                  </th>
+                  <th className="border-bc-border border-b px-3 py-2 font-normal">
+                    Category
+                  </th>
                 </tr>
               </thead>
               <tbody>

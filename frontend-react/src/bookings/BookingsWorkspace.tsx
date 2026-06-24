@@ -20,7 +20,7 @@ import type { Exam, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -38,6 +38,7 @@ import {
   type BookingCalendarEvent,
   type RoomResource,
 } from './booking-utils'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const locales = { 'en-US': enUS }
 const localizer = dateFnsLocalizer({
@@ -89,8 +90,7 @@ export default function BookingsWorkspace({
   const [slotStart, setSlotStart] = useState<Date | null>(null)
   const [slotEnd, setSlotEnd] = useState<Date | null>(null)
   const [slotResource, setSlotResource] = useState<RoomResource | null>(null)
-  const [eventModalMode, setEventModalMode] =
-    useState<EventModalMode>('other')
+  const [eventModalMode, setEventModalMode] = useState<EventModalMode>('other')
   const [eventModalOpen, setEventModalOpen] = useState(false)
   const [examPickerOpen, setExamPickerOpen] = useState(false)
   const [blackoutModalOpen, setBlackoutModalOpen] = useState(false)
@@ -289,8 +289,8 @@ export default function BookingsWorkspace({
   }
 
   return (
-    <section className="mx-auto flex min-h-[calc(100vh-var(--spacing-bc-header-height))] w-full max-w-7xl flex-col gap-4 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="flex h-full min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden p-6">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setDate(new Date())}>Today</Button>
           <Button
@@ -305,10 +305,7 @@ export default function BookingsWorkspace({
           >
             {view === 'month' ? 'Week View' : 'Month View'}
           </Button>
-          <Button
-            onClick={() => setExamPickerOpen(true)}
-            variant="secondary"
-          >
+          <Button onClick={() => setExamPickerOpen(true)} variant="secondary">
             Exam Event
           </Button>
           <Button onClick={openOtherScheduling} variant="secondary">
@@ -325,19 +322,19 @@ export default function BookingsWorkspace({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => navigate('prev')} variant="secondary">
-            Last
+            <ChevronLeft />
           </Button>
           <h2 className="text-bc-h4 m-0 min-w-64 text-center font-bold">
-            Bookings: {format(date, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
+            {format(date, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
           </h2>
           <Button onClick={() => navigate('next')} variant="secondary">
-            Next
+            <ChevronRight />
           </Button>
         </div>
       </div>
 
       <form
-        className="flex flex-wrap items-center gap-3"
+        className="flex shrink-0 flex-wrap items-center gap-3"
         onSubmit={(event) => event.preventDefault()}
       >
         <label className="font-bold" htmlFor="booking-search">
@@ -350,7 +347,11 @@ export default function BookingsWorkspace({
           value={search}
         />
         {search && (
-          <Button onClick={() => setSearch('')} size="small" variant="secondary">
+          <Button
+            onClick={() => setSearch('')}
+            size="small"
+            variant="secondary"
+          >
             Clear
           </Button>
         )}
@@ -376,7 +377,6 @@ export default function BookingsWorkspace({
       {(errorMessage || routeError) && (
         <AlertBanner
           isCloseable={false}
-          layout="fluid"
           role="alert"
           size="small"
           variant="danger"
@@ -395,7 +395,7 @@ export default function BookingsWorkspace({
         </p>
       )}
 
-      <div className="border-bc-border min-h-[680px] rounded-sm border bg-white p-3">
+      <div className="border-bc-border min-h-0 flex-1 overflow-hidden rounded-sm border bg-white p-3">
         <Calendar
           date={date}
           endAccessor="end"
@@ -418,14 +418,13 @@ export default function BookingsWorkspace({
           selectable
           startAccessor="start"
           step={30}
-          style={{ minHeight: 650 }}
           titleAccessor="title"
           view={view}
           views={['day', 'work_week', 'month', 'agenda']}
         />
       </div>
 
-      <div className="flex flex-wrap gap-x-5 gap-y-2">
+      <div className="flex shrink-0 flex-wrap gap-x-5 gap-y-2">
         {visibleResources.map((resource) => (
           <div className="flex items-center gap-2" key={String(resource.id)}>
             <span
@@ -488,20 +487,32 @@ function ExamPickerModal({
     <Modal className="max-w-4xl overflow-hidden" isDismissable={false} isOpen>
       <Dialog className="p-0" isCloseable={false}>
         <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <h2 className="text-bc-h4 m-0 font-bold">Select Exam</h2>
+          <DialogTitle className="text-bc-h4 m-0 font-bold">
+            Select Exam
+          </DialogTitle>
         </div>
         <div className="max-h-[70vh] overflow-auto p-6">
           {exams.length === 0 ? (
             <p className="m-0">No unscheduled exams are available.</p>
           ) : (
             <table className="border-bc-border w-full border-collapse border text-left">
-              <thead>
-                <tr className="bg-bc-light-gray">
-                  <th className="border-bc-border border p-2">Exam</th>
-                  <th className="border-bc-border border p-2">Writer</th>
-                  <th className="border-bc-border border p-2">Event ID</th>
-                  <th className="border-bc-border border p-2">Expiry</th>
-                  <th className="border-bc-border border p-2">Action</th>
+              <thead className="bg-bc-light-gray">
+                <tr>
+                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                    Exam
+                  </th>
+                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                    Writer
+                  </th>
+                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                    Event ID
+                  </th>
+                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                    Expiry
+                  </th>
+                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>

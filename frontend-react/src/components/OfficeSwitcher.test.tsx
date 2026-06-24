@@ -9,6 +9,7 @@ import { ApiError } from '@/api/errors'
 import { getOffices, updateCsr } from '@/api/endpoints'
 import { useWorkflowStore } from '@/store/workflow-store'
 
+import GlobalAlertRegion from './GlobalAlertRegion'
 import Header from './Header'
 import OfficeSwitcher from './OfficeSwitcher'
 
@@ -103,21 +104,12 @@ function renderOfficeSwitcher() {
             <OfficeSwitcher />
           </div>
         </Header>
+        <GlobalAlertRegion />
       </QueryClientProvider>
     </ApiProvider>,
   )
 
   return queryClient
-}
-
-async function openOfficeModal(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(
-    screen.getByRole('button', {
-      name: `Change office, current office ${downtownOffice.office_name}`,
-    }),
-  )
-
-  return screen.getByRole('dialog', { name: 'Change office' })
 }
 
 async function selectVictoria(user: ReturnType<typeof userEvent.setup>) {
@@ -126,11 +118,7 @@ async function selectVictoria(user: ReturnType<typeof userEvent.setup>) {
 }
 
 async function openOfficeSelect(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(
-    screen.getByRole('button', {
-      name: /downtown office/i,
-    }),
-  )
+  await user.click(await screen.findByRole('button', { name: /downtown/i }))
 }
 
 beforeEach(() => {
@@ -159,14 +147,12 @@ afterEach(() => {
 })
 
 describe('OfficeSwitcher', () => {
-  test('shows the current office underneath the username in the header', async () => {
+  test('shows the current office dropdown underneath the username in the header', async () => {
     renderOfficeSwitcher()
 
     expect(screen.getByText('queue.user')).toBeVisible()
     expect(
-      screen.getByRole('button', {
-        name: `Change office, current office ${downtownOffice.office_name}`,
-      }),
+      await screen.findByRole('button', { name: /downtown/i }),
     ).toBeVisible()
   })
 
@@ -174,7 +160,6 @@ describe('OfficeSwitcher', () => {
     const user = userEvent.setup()
     renderOfficeSwitcher()
 
-    await openOfficeModal(user)
     await openOfficeSelect(user)
 
     await user.type(
@@ -200,7 +185,6 @@ describe('OfficeSwitcher', () => {
     const user = userEvent.setup()
     renderOfficeSwitcher()
 
-    await openOfficeModal(user)
     await openOfficeSelect(user)
 
     await user.type(
@@ -217,30 +201,23 @@ describe('OfficeSwitcher', () => {
     ).not.toBeInTheDocument()
   })
 
-  test('saves a new office and updates the header', async () => {
+  test('saves a new office immediately and updates the header', async () => {
     const user = userEvent.setup()
     renderOfficeSwitcher()
 
-    await openOfficeModal(user)
     await selectVictoria(user)
-    await user.click(screen.getByRole('button', { name: 'Save' }))
 
     await waitFor(() => {
       expect(updateCsr).toHaveBeenCalledWith(expect.anything(), csr.csr_id, {
         office_id: victoriaOffice.office_id,
       })
     })
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    })
     expect(
-      screen.getByRole('button', {
-        name: `Change office, current office ${victoriaOffice.office_name}`,
-      }),
+      await screen.findByRole('button', { name: /victoria/i }),
     ).toBeVisible()
   })
 
-  test('keeps the modal open and shows an error when saving fails', async () => {
+  test('shows a global error when saving fails', async () => {
     const user = userEvent.setup()
     vi.mocked(updateCsr).mockRejectedValueOnce(
       new ApiError({
@@ -251,13 +228,11 @@ describe('OfficeSwitcher', () => {
     )
     renderOfficeSwitcher()
 
-    await openOfficeModal(user)
     await selectVictoria(user)
-    await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Office update failed',
     )
-    expect(screen.getByRole('dialog', { name: 'Change office' })).toBeVisible()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

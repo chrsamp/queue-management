@@ -19,7 +19,7 @@ import type { Citizen, Office, Service, ServiceRequest } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { cx } from '@/lib/cx'
 import { queryKeys } from '@/query/query-keys'
@@ -104,14 +104,16 @@ export default function ServeCitizenModal({
   const activeService =
     citizen?.service_reqs.find(
       (serviceRequest) => serviceRequest.sr_id === activeServiceRequestId,
-    ) ??
-    (citizen ? getActiveService(citizen) : null)
+    ) ?? (citizen ? getActiveService(citizen) : null)
   const serviceRequests = citizen ? getActiveServiceRequests(citizen) : []
   const [form, setForm] = useState<ServeCitizenForm>(() =>
     createFormState(citizen, activeService),
   )
   const commentsTooLong = form.comments.length > 1000
-  const combinedAlert = [serveModalAlert, commentsTooLong ? commentsTooLongAlert : null]
+  const combinedAlert = [
+    serveModalAlert,
+    commentsTooLong ? commentsTooLongAlert : null,
+  ]
     .filter(Boolean)
     .join('  ')
 
@@ -137,7 +139,9 @@ export default function ServeCitizenModal({
 
   async function saveBeforeLifecycle() {
     if (!citizen || !activeService) {
-      throw new Error('An error occurred loading citizen, please try refreshing the page.')
+      throw new Error(
+        'An error occurred loading citizen, please try refreshing the page.',
+      )
     }
 
     const quantity = Number(form.activeQuantity)
@@ -167,7 +171,11 @@ export default function ServeCitizenModal({
 
   async function runLifecycle(
     action: () => Promise<unknown>,
-    options: { clear?: boolean; reminder?: boolean; serviceBegun?: boolean } = {},
+    options: {
+      clear?: boolean
+      reminder?: boolean
+      serviceBegun?: boolean
+    } = {},
   ) {
     if (!citizen) {
       return
@@ -229,8 +237,11 @@ export default function ServeCitizenModal({
 
     setServiceFormState({
       ...nextState,
-      activeServiceRequestId: mode === 'edit-service' ? activeService.sr_id : null,
-      channelId: activeService.channel_id ?? getDefaultChannelId(channels, 'add-citizen'),
+      activeServiceRequestId:
+        mode === 'edit-service' ? activeService.sr_id : null,
+      channelId:
+        activeService.channel_id ??
+        getDefaultChannelId(channels, 'add-citizen'),
       comments: form.comments,
       counterId: form.counterId,
       notificationEmail: citizen.notification_email ?? '',
@@ -250,9 +261,9 @@ export default function ServeCitizenModal({
       <Modal className="max-w-5xl overflow-hidden" isDismissable={false} isOpen>
         <Dialog className="p-0" isCloseable={false}>
           <div className="border-bc-border bg-bc-light-gray flex items-center justify-between border-b px-6 py-4">
-            <h2 className="text-bc-h4 text-bc-secondary m-0 font-bold">
+            <DialogTitle className="text-bc-h4 text-bc-secondary m-0 font-bold">
               {simplified ? 'TheQ Time Tracking' : 'Serve Citizen'}
-            </h2>
+            </DialogTitle>
             <Button
               disabled={isPerformingAction}
               onClick={handleMinimize}
@@ -269,7 +280,6 @@ export default function ServeCitizenModal({
                   <AlertBanner
                     className="mb-3"
                     isCloseable={false}
-                    layout="fluid"
                     role="alert"
                     size="small"
                     variant="warning"
@@ -289,7 +299,9 @@ export default function ServeCitizenModal({
                       </p>
                       <p className="m-0">
                         Channel:{' '}
-                        <strong>{activeService?.channel?.channel_name ?? ''}</strong>
+                        <strong>
+                          {activeService?.channel?.channel_name ?? ''}
+                        </strong>
                       </p>
                       <p className="m-0">
                         Created At:{' '}
@@ -306,7 +318,9 @@ export default function ServeCitizenModal({
                       className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus min-h-24 rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
                       id="serve-citizen-comments"
                       maxLength={1000}
-                      onChange={(event) => updateForm({ comments: event.target.value })}
+                      onChange={(event) =>
+                        updateForm({ comments: event.target.value })
+                      }
                       value={form.comments}
                     />
                   </div>
@@ -325,7 +339,10 @@ export default function ServeCitizenModal({
                           onClick={() =>
                             void runLifecycle(
                               () =>
-                                beginCitizenService(apiClient, citizen.citizen_id),
+                                beginCitizenService(
+                                  apiClient,
+                                  citizen.citizen_id,
+                                ),
                               { reminder: true, serviceBegun: true },
                             )
                           }
@@ -339,7 +356,11 @@ export default function ServeCitizenModal({
                           disabled={actionDisabled}
                           onClick={() =>
                             void runLifecycle(
-                              () => addCitizenToQueue(apiClient, citizen.citizen_id),
+                              () =>
+                                addCitizenToQueue(
+                                  apiClient,
+                                  citizen.citizen_id,
+                                ),
                               { clear: true },
                             )
                           }
@@ -356,7 +377,8 @@ export default function ServeCitizenModal({
                         disabled={actionDisabled}
                         onClick={() =>
                           void runLifecycle(
-                            () => markCitizenLeft(apiClient, citizen.citizen_id),
+                            () =>
+                              markCitizenLeft(apiClient, citizen.citizen_id),
                             { clear: true, reminder: true },
                           )
                         }
@@ -380,7 +402,9 @@ export default function ServeCitizenModal({
                   )
                 }
                 onEdit={() => openServiceForm('edit-service')}
-                onQuantityChange={(activeQuantity) => updateForm({ activeQuantity })}
+                onQuantityChange={(activeQuantity) =>
+                  updateForm({ activeQuantity })
+                }
                 serviceRequests={serviceRequests}
               />
 
@@ -508,7 +532,9 @@ export default function ServeCitizenModal({
                   <Button
                     danger={!activeCitizenId}
                     onClick={() =>
-                      activeCitizenId ? closeServiceModal() : clearServeCitizen()
+                      activeCitizenId
+                        ? closeServiceModal()
+                        : clearServeCitizen()
                     }
                     variant={activeCitizenId ? 'primary' : 'secondary'}
                   >
@@ -559,11 +585,21 @@ function ServiceRequestsTable({
         <table className="w-full border-collapse text-center">
           <thead className="bg-bc-gray-80 text-bc-white">
             <tr>
-              <th className="px-3 py-2 font-normal">Status</th>
-              <th className="px-3 py-2 font-normal">Category</th>
-              <th className="px-3 py-2 font-normal">Service</th>
-              <th className="px-3 py-2 font-normal">Quantity</th>
-              <th className="px-3 py-2 font-normal">Change Service</th>
+              <th className="border-bc-border border-b px-3 py-2 font-normal">
+                Status
+              </th>
+              <th className="border-bc-border border-b px-3 py-2 font-normal">
+                Category
+              </th>
+              <th className="border-bc-border border-b px-3 py-2 font-normal">
+                Service
+              </th>
+              <th className="border-bc-border border-b px-3 py-2 font-normal">
+                Quantity
+              </th>
+              <th className="border-bc-border border-b px-3 py-2 font-normal">
+                Change Service
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -589,7 +625,9 @@ function ServiceRequestsTable({
                       <input
                         aria-label="Active service quantity"
                         className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-8 w-20 rounded-sm border px-2 text-center focus:outline-2 focus:outline-offset-1"
-                        onChange={(event) => onQuantityChange(event.target.value)}
+                        onChange={(event) =>
+                          onQuantityChange(event.target.value)
+                        }
                         value={activeQuantity}
                       />
                     ) : (

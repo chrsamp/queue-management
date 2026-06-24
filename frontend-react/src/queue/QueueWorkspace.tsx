@@ -331,7 +331,7 @@ export default function QueueWorkspace({
   )
 
   return (
-    <section className="mx-auto flex min-h-[calc(100vh-var(--spacing-bc-header-height))] max-w-7xl flex-col p-6">
+    <section className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden p-6">
       <QueueActions
         citizens={citizens}
         hasActiveServiceCitizen={hasActiveServiceCitizen}
@@ -341,7 +341,6 @@ export default function QueueWorkspace({
         <AlertBanner
           className="mb-4"
           isCloseable={false}
-          layout="fluid"
           role="alert"
           size="small"
           variant="danger"
@@ -351,82 +350,85 @@ export default function QueueWorkspace({
       )}
       <div className="flex min-h-0 flex-1 gap-4">
         <div className="flex min-w-0 flex-1 flex-col">
-      {isLoading ? (
-        <QueueStatusMessage message="Loading queue..." />
-      ) : errorMessage ? (
-        <QueueStatusMessage message={errorMessage} tone="error" />
-      ) : reception ? (
-        <div className="flex min-h-0 flex-1 flex-col" ref={splitContainerRef}>
-          <QueuePanel
-            className="min-h-0"
-            count={waitingCitizens.length}
-            style={{
-              flex: `${activeWaitingRatio} 1 0`,
-              minHeight: minPanelHeight,
-            }}
-            title="Citizens Waiting"
-          >
-            <QueueTable
-              citizens={waitingCitizens}
-              emptyMessage="No citizens are waiting."
-              onCitizenClick={handleWaitingCitizenClick}
-              office={office}
-              showCounter
-              showNotifications={notificationsEnabled}
-              tableLabel="Citizens waiting"
-            />
-          </QueuePanel>
+          {isLoading ? (
+            <QueueStatusMessage message="Loading queue..." />
+          ) : errorMessage ? (
+            <QueueStatusMessage message={errorMessage} tone="error" />
+          ) : reception ? (
+            <div
+              className="flex min-h-0 flex-1 flex-col"
+              ref={splitContainerRef}
+            >
+              <QueuePanel
+                className="min-h-0"
+                count={waitingCitizens.length}
+                style={{
+                  flex: `${activeWaitingRatio} 1 0`,
+                  minHeight: minPanelHeight,
+                }}
+                title="Citizens Waiting"
+              >
+                <QueueTable
+                  citizens={waitingCitizens}
+                  emptyMessage="No citizens are waiting."
+                  onCitizenClick={handleWaitingCitizenClick}
+                  office={office}
+                  showCounter
+                  showNotifications={notificationsEnabled}
+                  tableLabel="Citizens waiting"
+                />
+              </QueuePanel>
 
-          <button
-            aria-label="Resize queue tables"
-            className="border-bc-border bg-bc-light-gray focus-visible:outline-bc-link text-bc-secondary my-1 flex h-6 shrink-0 cursor-row-resize items-center justify-center border font-bold hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2"
-            onKeyDown={handleResizeKeyDown}
-            onPointerCancel={handleResizePointerEnd}
-            onPointerDown={handleResizePointerDown}
-            onPointerMove={handleResizePointerMove}
-            onPointerUp={handleResizePointerEnd}
-            type="button"
-          >
-            <GripHorizontal aria-hidden="true" className="h-4 w-4" />
-          </button>
+              <button
+                aria-label="Resize queue tables"
+                className="text-bc-secondary my-1 flex h-6 shrink-0 cursor-row-resize items-center justify-center font-bold"
+                onKeyDown={handleResizeKeyDown}
+                onPointerCancel={handleResizePointerEnd}
+                onPointerDown={handleResizePointerDown}
+                onPointerMove={handleResizePointerMove}
+                onPointerUp={handleResizePointerEnd}
+                type="button"
+              >
+                <GripHorizontal aria-hidden="true" className="h-4 w-4" />
+              </button>
 
-          <QueuePanel
-            className="min-h-0"
-            count={holdCitizens.length}
-            style={{
-              flex: `${1 - activeWaitingRatio} 1 0`,
-              minHeight: minPanelHeight,
-            }}
-            title="Citizens on Hold"
-          >
-            <QueueTable
-              citizens={holdCitizens}
-              emptyMessage="No citizens are on hold."
-              onCitizenClick={handleHoldCitizenClick}
-              office={office}
-              showCounter
-              showNotifications={notificationsEnabled}
-              tableLabel="Citizens on hold"
-            />
-          </QueuePanel>
-        </div>
-      ) : (
-        <QueuePanel
-          className="min-h-0 flex-1"
-          count={holdCitizens.length}
-          title="Citizens on Hold"
-        >
-          <QueueTable
-            citizens={holdCitizens}
-            emptyMessage="No citizens are on hold."
-            onCitizenClick={handleHoldCitizenClick}
-            office={office}
-            showCounter={false}
-            showNotifications={notificationsEnabled}
-            tableLabel="Citizens on hold"
-          />
-        </QueuePanel>
-      )}
+              <QueuePanel
+                className="min-h-0"
+                count={holdCitizens.length}
+                style={{
+                  flex: `${1 - activeWaitingRatio} 1 0`,
+                  minHeight: minPanelHeight,
+                }}
+                title="Citizens on Hold"
+              >
+                <QueueTable
+                  citizens={holdCitizens}
+                  emptyMessage="No citizens are on hold."
+                  onCitizenClick={handleHoldCitizenClick}
+                  office={office}
+                  showCounter
+                  showNotifications={notificationsEnabled}
+                  tableLabel="Citizens on hold"
+                />
+              </QueuePanel>
+            </div>
+          ) : (
+            <QueuePanel
+              className="min-h-0 flex-1"
+              count={holdCitizens.length}
+              title="Citizens on Hold"
+            >
+              <QueueTable
+                citizens={holdCitizens}
+                emptyMessage="No citizens are on hold."
+                onCitizenClick={handleHoldCitizenClick}
+                office={office}
+                showCounter={false}
+                showNotifications={notificationsEnabled}
+                tableLabel="Citizens on hold"
+              />
+            </QueuePanel>
+          )}
         </div>
         {showDayAgenda && appointmentsEnabled(office) && (
           <DayAgendaPanel office={office} />
@@ -481,7 +483,6 @@ function QueueStatusMessage({
   return (
     <AlertBanner
       isCloseable={false}
-      layout="fluid"
       role={tone === 'error' ? 'alert' : 'status'}
       variant={tone === 'error' ? 'danger' : 'warning'}
     >

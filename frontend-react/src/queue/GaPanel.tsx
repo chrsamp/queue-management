@@ -6,7 +6,7 @@ import type { Citizen, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
+import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
 
@@ -110,9 +110,9 @@ export default function GaPanel({
     >
       <Dialog className="p-0">
         <div className="border-bc-border bg-bc-light-gray flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-bc-h4 text-bc-secondary m-0 font-bold">
+          <DialogTitle className="text-bc-h4 text-bc-secondary m-0 font-bold">
             GA Panel
-          </h2>
+          </DialogTitle>
         </div>
 
         <div className="flex flex-col gap-4 p-6">
@@ -134,7 +134,6 @@ export default function GaPanel({
           {errorMessage && (
             <AlertBanner
               isCloseable={false}
-              layout="fluid"
               role="alert"
               size="small"
               variant="danger"
@@ -150,7 +149,6 @@ export default function GaPanel({
           ) : csrsQuery.isError || csrStatesQuery.isError ? (
             <AlertBanner
               isCloseable={false}
-              layout="fluid"
               role="alert"
               size="small"
               variant="danger"
