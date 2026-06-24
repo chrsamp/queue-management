@@ -17,6 +17,7 @@ import {
   updateServiceRequest,
 } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
+import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
@@ -335,21 +336,29 @@ export default function AddCitizenModal({
 
         <div className="bg-bc-light-gray px-6 py-4">
           {alertMessage && (
-            <p
-              className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 mb-3 border-l-4 px-3 py-2"
+            <AlertBanner
+              className="mb-3"
+              isCloseable={false}
+              layout="fluid"
               role="alert"
+              size="small"
+              variant="danger"
             >
               {alertMessage}
-            </p>
+            </AlertBanner>
           )}
           {commentsTooLong && (
-            <p
-              className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 mb-3 border-l-4 px-3 py-2"
+            <AlertBanner
+              className="mb-3"
+              isCloseable={false}
+              layout="fluid"
               role="alert"
+              size="small"
+              variant="danger"
             >
               You have entered more than the 1,000 characters allowed for
               comments.
-            </p>
+            </AlertBanner>
           )}
 
           {isReception && (

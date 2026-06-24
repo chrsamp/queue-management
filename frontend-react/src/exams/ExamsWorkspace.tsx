@@ -9,7 +9,7 @@ import {
   type SortingState,
 } from '@tanstack/react-table'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 
 import {
   createBooking,
@@ -34,6 +34,7 @@ import {
 import type { Csr, Exam, ExamType, Invigilator, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import { officeDateToUtcIso } from '@/bookings/booking-utils'
+import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
@@ -67,6 +68,7 @@ import {
   type ExamTypeFilter,
   type QuickActionFilter,
 } from './exam-utils'
+import { getInitialExamFilters } from './exam-query-filters'
 
 const emptyExams: never[] = []
 const emptyExamTypes: never[] = []
@@ -88,18 +90,15 @@ type ActiveModal =
 export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
   const apiClient = useApiClient()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
   const permissions = getExamPermissions(csr)
   const setExamSchedulingRequest = useWorkflowStore(
     (state) => state.setExamSchedulingRequest,
   )
-  const [filters, setFilters] = useState<ExamFilters>({
-    examType: 'all',
-    officeNumber: 'default',
-    quickAction: '',
-    search: '',
-    showAllPesticide: false,
-  })
+  const [filters, setFilters] = useState<ExamFilters>(() =>
+    getInitialExamFilters(searchParams),
+  )
   const [expandedExamId, setExpandedExamId] = useState<number | null>(null)
   const [sorting, setSorting] = useState<SortingState>([
     { desc: true, id: 'status' },
@@ -507,13 +506,16 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
       </div>
 
       {(routeMessage || examsQuery.isError) && (
-        <p
-          className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 border-l-4 px-3 py-2"
+        <AlertBanner
+          isCloseable={false}
+          layout="fluid"
           role="alert"
+          size="small"
+          variant="danger"
         >
           {routeMessage ??
             getErrorMessage(examsQuery.error, 'Unable to load exams.')}
-        </p>
+        </AlertBanner>
       )}
 
       <div className="border-bc-border overflow-hidden rounded-sm border bg-white">
@@ -1283,6 +1285,7 @@ function EditExamModal({
   permissions: ReturnType<typeof getExamPermissions>
 }) {
   const apiClient = useApiClient()
+  const setGlobalAlert = useWorkflowStore((state) => state.setGlobalAlert)
   const [fields, setFields] = useState<Record<string, string | number | null>>({
     event_id: exam.event_id ?? '',
     exam_method: exam.exam_method ?? 'paper',
@@ -1361,8 +1364,21 @@ function EditExamModal({
 
       await updateExam(apiClient, exam.exam_id, payload)
       await onSaved()
+      setGlobalAlert({
+        id: 'exam-edit-success',
+        message: 'Success!',
+        role: 'status',
+        variant: 'success',
+      })
       onClose()
     } catch (error) {
+      setGlobalAlert({
+        id: 'exam-edit-failure',
+        message:
+          'Something Went Wrong! Please submit feedback and tell us about this issue.',
+        role: 'alert',
+        variant: 'danger',
+      })
       setErrorMessage(getErrorMessage(error, 'Unable to update exam.'))
     } finally {
       setIsSaving(false)
@@ -2384,12 +2400,16 @@ function ModalFooter({
 
 function Alert({ message }: { message: string }) {
   return (
-    <p
-      className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 border-l-4 px-3 py-2 sm:col-span-2"
+    <AlertBanner
+      className="sm:col-span-2"
+      isCloseable={false}
+      layout="fluid"
       role="alert"
+      size="small"
+      variant="danger"
     >
       {message}
-    </p>
+    </AlertBanner>
   )
 }
 

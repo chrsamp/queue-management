@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { finishCitizenService, getCsrStates, getCsrs } from '@/api/endpoints'
 import type { Citizen, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
+import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
@@ -131,12 +132,15 @@ export default function GaPanel({
           </div>
 
           {errorMessage && (
-            <p
-              className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 border-l-4 px-3 py-2"
+            <AlertBanner
+              isCloseable={false}
+              layout="fluid"
               role="alert"
+              size="small"
+              variant="danger"
             >
               {errorMessage}
-            </p>
+            </AlertBanner>
           )}
 
           {csrsQuery.isPending || csrStatesQuery.isPending ? (
@@ -144,12 +148,15 @@ export default function GaPanel({
               Loading GA panel...
             </p>
           ) : csrsQuery.isError || csrStatesQuery.isError ? (
-            <p
-              className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 border-l-4 px-3 py-2"
+            <AlertBanner
+              isCloseable={false}
+              layout="fluid"
               role="alert"
+              size="small"
+              variant="danger"
             >
               Unable to load GA panel.
-            </p>
+            </AlertBanner>
           ) : (
             <div className="border-bc-border max-h-[65vh] overflow-auto border">
               <table

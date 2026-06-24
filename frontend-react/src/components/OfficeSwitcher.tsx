@@ -9,6 +9,7 @@ import { useApiClient } from '@/api/use-api-client'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
+import AlertBanner from './AlertBanner'
 import Button from './Button'
 import Dialog from './Dialog'
 import Modal from './Modal'
@@ -156,12 +157,15 @@ export default function OfficeSwitcher() {
             />
 
             {updateOfficeMutation.isError && (
-              <p
-                className="border-bc-danger bg-bc-danger-surface text-bc-body m-0 border-l-4 p-3"
+              <AlertBanner
+                isCloseable={false}
+                layout="fluid"
                 role="alert"
+                size="small"
+                variant="danger"
               >
                 {getErrorMessage(updateOfficeMutation.error)}
-              </p>
+              </AlertBanner>
             )}
 
             <div className="flex flex-wrap justify-end gap-3">

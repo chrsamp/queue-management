@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAppointments, getServices } from '@/api/endpoints'
 import type { Appointment, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
+import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -121,20 +122,26 @@ export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
         )}
       </form>
       {errorMessage && (
-        <p
-          className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 border-l-4 px-3 py-2"
+        <AlertBanner
+          isCloseable={false}
+          layout="fluid"
           role="alert"
+          size="small"
+          variant="danger"
         >
           {errorMessage}
-        </p>
+        </AlertBanner>
       )}
       {agendaError && (
-        <p
-          className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 border-l-4 px-3 py-2"
+        <AlertBanner
+          isCloseable={false}
+          layout="fluid"
           role="alert"
+          size="small"
+          variant="danger"
         >
           {agendaError}
-        </p>
+        </AlertBanner>
       )}
       {appointmentsQuery.isPending || servicesQuery.isPending ? (
         <p className="text-bc-secondary m-0" role="status">

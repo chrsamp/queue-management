@@ -42,13 +42,20 @@ interface AppProps {
   supportUrl: string
 }
 
+const examActionItemsAlertId = 'exam-action-items'
+
 function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
   const auth = useAuth()
   const apiClient = useApiClient()
+  const clearGlobalAlert = useWorkflowStore((state) => state.clearGlobalAlert)
   const clearWorkflow = useWorkflowStore((state) => state.clearWorkflow)
   const currentRoleCode = useWorkflowStore((state) => state.currentRoleCode)
   const currentOffice = useWorkflowStore((state) => state.currentOffice)
+  const resetDismissedGlobalAlert = useWorkflowStore(
+    (state) => state.resetDismissedGlobalAlert,
+  )
   const setCurrentCsr = useWorkflowStore((state) => state.setCurrentCsr)
+  const setGlobalAlert = useWorkflowStore((state) => state.setGlobalAlert)
 
   const currentCsrQuery = useQuery({
     enabled: auth.authenticated,
@@ -69,6 +76,35 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
     currentCsrQuery.data,
     currentCsrQuery.isError,
     setCurrentCsr,
+  ])
+
+  useEffect(() => {
+    const csr = currentCsrQuery.data?.csr
+    const canSeeExamActionItems =
+      csr?.office_manager === 1 || csr?.role.role_code === 'GA'
+
+    if (currentCsrQuery.data?.attention_needed && canSeeExamActionItems) {
+      setGlobalAlert({
+        action: {
+          label: 'Show',
+          to: '/exams?quickAction=oemai&examType=all',
+        },
+        id: examActionItemsAlertId,
+        isCloseable: true,
+        message: 'Office Exam Manager Action Items are present',
+        role: 'status',
+        variant: 'info',
+      })
+      return
+    }
+
+    clearGlobalAlert(examActionItemsAlertId)
+    resetDismissedGlobalAlert(examActionItemsAlertId)
+  }, [
+    clearGlobalAlert,
+    currentCsrQuery.data,
+    resetDismissedGlobalAlert,
+    setGlobalAlert,
   ])
 
   async function handleLogout() {

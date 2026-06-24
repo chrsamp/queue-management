@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { AppointmentCalendarEvent } from './appointment-utils'
 import { checkInAppointment } from './appointment-checkin'
 import { useApiClient } from '@/api/use-api-client'
+import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
@@ -95,12 +96,15 @@ export default function AppointmentCheckInModal({
           ) : (
             <>
               {errorMessage && (
-                <p
-                  className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 border-l-4 px-3 py-2"
+                <AlertBanner
+                  isCloseable={false}
+                  layout="fluid"
                   role="alert"
+                  size="small"
+                  variant="danger"
                 >
                   {errorMessage}
-                </p>
+                </AlertBanner>
               )}
               {!blackout && !stat && (
                 <div>

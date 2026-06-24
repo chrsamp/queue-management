@@ -21,6 +21,7 @@ import {
 } from '@/api/endpoints'
 import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
+import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import { cx } from '@/lib/cx'
 import { queryKeys } from '@/query/query-keys'
@@ -273,12 +274,16 @@ export default function QueueActions({
     <>
       <div className="mb-4 flex flex-wrap items-center justify-end gap-3">
         {actionAlert && (
-          <p
-            className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 mr-auto border-l-4 px-3 py-2"
+          <AlertBanner
+            className="mr-auto w-auto"
+            isCloseable={false}
+            layout="fluid"
             role="alert"
+            size="small"
+            variant="danger"
           >
             {actionAlert}
-          </p>
+          </AlertBanner>
         )}
 
         {isReceptionOffice(office) && (

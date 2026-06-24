@@ -17,6 +17,7 @@ import {
 } from '@/api/endpoints'
 import type { Citizen, Office, Service, ServiceRequest } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
+import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
@@ -265,12 +266,16 @@ export default function ServeCitizenModal({
             <>
               <div className="bg-bc-light-gray px-6 py-4">
                 {combinedAlert && (
-                  <p
-                    className="border-bc-gold-60 bg-bc-white text-bc-primary m-0 mb-3 border-l-4 px-3 py-2"
+                  <AlertBanner
+                    className="mb-3"
+                    isCloseable={false}
+                    layout="fluid"
                     role="alert"
+                    size="small"
+                    variant="warning"
                   >
                     {combinedAlert}
-                  </p>
+                  </AlertBanner>
                 )}
 
                 {!simplified && (

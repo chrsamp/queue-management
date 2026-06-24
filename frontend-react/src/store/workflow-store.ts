@@ -10,6 +10,10 @@ export type GlobalAlertVariant =
   | 'warning'
 
 export interface GlobalAlert {
+  action?: {
+    label: string
+    to: string
+  }
   id: string
   isCloseable?: boolean
   message: string
@@ -34,7 +38,8 @@ interface WorkflowState {
   currentCsrId: number | null
   currentRoleCode: string | null
   currentUsername: string | null
-  globalAlert: GlobalAlert | null
+  dismissedGlobalAlertIds: string[]
+  globalAlerts: GlobalAlert[]
   currentCsrState: CsrState | null
   currentOffice: Office | null
   currentReceptionist: boolean | null
@@ -50,14 +55,16 @@ interface WorkflowState {
   showTimeTrackingIcon: boolean
   terminalClearedCitizenId: number | null
   clearWorkflow: () => void
-  clearGlobalAlert: () => void
+  clearGlobalAlert: (id?: string) => void
   clearCurrentOffice: () => void
   clearServeCitizen: () => void
   clearExamSchedulingRequest: () => void
   clearTerminalServeCitizen: (citizenId: number) => void
   closeServiceModal: () => void
+  dismissGlobalAlert: (id: string) => void
   openServiceModal: () => void
   resetTerminalClearedCitizen: () => void
+  resetDismissedGlobalAlert: (id: string) => void
   setActiveServiceCitizen: (
     citizenId: number | null,
     serviceRequestId: number | null,
@@ -89,7 +96,8 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   currentCsrId: null,
   currentRoleCode: null,
   currentUsername: null,
-  globalAlert: null,
+  dismissedGlobalAlertIds: [],
+  globalAlerts: [],
   currentCsrState: null,
   currentOffice: null,
   currentReceptionist: null,
@@ -113,7 +121,8 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       currentCsrId: null,
       currentRoleCode: null,
       currentUsername: null,
-      globalAlert: null,
+      dismissedGlobalAlertIds: [],
+      globalAlerts: [],
       currentCsrState: null,
       currentOffice: null,
       currentReceptionist: null,
@@ -131,7 +140,21 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
     }),
   clearCurrentOffice: () => set({ currentOffice: null }),
   clearExamSchedulingRequest: () => set({ examSchedulingRequest: null }),
-  clearGlobalAlert: () => set({ globalAlert: null }),
+  clearGlobalAlert: (id) =>
+    set((state) => ({
+      globalAlerts: id
+        ? state.globalAlerts.filter((alert) => alert.id !== id)
+        : [],
+    })),
+  dismissGlobalAlert: (id) =>
+    set((state) => {
+      return {
+        dismissedGlobalAlertIds: state.dismissedGlobalAlertIds.includes(id)
+          ? state.dismissedGlobalAlertIds
+          : [...state.dismissedGlobalAlertIds, id],
+        globalAlerts: state.globalAlerts.filter((alert) => alert.id !== id),
+      }
+    }),
   clearServeCitizen: () =>
     set({
       activeCitizenId: null,
@@ -169,6 +192,12 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       terminalClearedCitizenId: null,
     }),
   resetTerminalClearedCitizen: () => set({ terminalClearedCitizenId: null }),
+  resetDismissedGlobalAlert: (id) =>
+    set((state) => ({
+      dismissedGlobalAlertIds: state.dismissedGlobalAlertIds.filter(
+        (dismissedId) => dismissedId !== id,
+      ),
+    })),
   setCounterReceptionistState: (counterId, receptionist) =>
     set({
       currentCounterId: counterId,
@@ -187,7 +216,19 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   setCurrentCsrState: (csrState) => set({ currentCsrState: csrState }),
   setCurrentOffice: (office) => set({ currentOffice: office }),
   setExamSchedulingRequest: (exam) => set({ examSchedulingRequest: exam }),
-  setGlobalAlert: (alert) => set({ globalAlert: alert }),
+  setGlobalAlert: (alert) =>
+    set((state) => {
+      if (state.dismissedGlobalAlertIds.includes(alert.id)) {
+        return state
+      }
+
+      return {
+        globalAlerts: [
+          ...state.globalAlerts.filter((item) => item.id !== alert.id),
+          alert,
+        ],
+      }
+    }),
   setRealtimeConnectionStatus: (status) =>
     set({ realtimeConnectionStatus: status }),
   setRealtimeError: (message) => set({ realtimeLastError: message }),

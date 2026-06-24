@@ -10,6 +10,7 @@ import {
 } from '@/api/endpoints'
 import type { Appointment, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
+import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
@@ -252,12 +253,15 @@ export default function AppointmentBlackoutModal({
         </div>
         <div className="flex flex-col gap-4 p-6">
           {errorMessage && (
-            <p
-              className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 border-l-4 px-3 py-2"
+            <AlertBanner
+              isCloseable={false}
+              layout="fluid"
               role="alert"
+              size="small"
+              variant="danger"
             >
               {errorMessage}
-            </p>
+            </AlertBanner>
           )}
           {confirmOverlap && (
             <div

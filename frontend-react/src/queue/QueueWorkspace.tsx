@@ -15,6 +15,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { Citizen, Office } from '@/api/schemas'
 import { beginCitizenService, inviteCitizen } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
+import AlertBanner from '@/components/AlertBanner'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 import DayAgendaPanel from '@/appointments/DayAgendaPanel'
@@ -337,12 +338,16 @@ export default function QueueWorkspace({
         office={office}
       />
       {queueAlert && (
-        <p
-          className="bg-bc-danger-surface text-bc-danger border-bc-danger m-0 mb-4 border-l-4 px-3 py-2"
+        <AlertBanner
+          className="mb-4"
+          isCloseable={false}
+          layout="fluid"
           role="alert"
+          size="small"
+          variant="danger"
         >
           {queueAlert}
-        </p>
+        </AlertBanner>
       )}
       <div className="flex min-h-0 flex-1 gap-4">
         <div className="flex min-w-0 flex-1 flex-col">
@@ -474,16 +479,14 @@ function QueueStatusMessage({
   tone?: 'default' | 'error'
 }) {
   return (
-    <div
-      className={
-        tone === 'error'
-          ? 'border-bc-danger bg-bc-danger-surface text-bc-primary border-l-4 p-4'
-          : 'border-bc-gold-60 bg-bc-light-gray text-bc-secondary border-l-4 p-4'
-      }
+    <AlertBanner
+      isCloseable={false}
+      layout="fluid"
       role={tone === 'error' ? 'alert' : 'status'}
+      variant={tone === 'error' ? 'danger' : 'warning'}
     >
       {message}
-    </div>
+    </AlertBanner>
   )
 }
 
