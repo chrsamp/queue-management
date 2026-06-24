@@ -317,6 +317,7 @@ export const invigilatorSchema = z
   .object({
     contact_email: z.string().nullable().optional(),
     contact_phone: z.string().nullable().optional(),
+    deleted: z.unknown().nullable().optional(),
     invigilator_id: z.number(),
     invigilator_name: z.string(),
     invigilator_notes: z.string().nullable().optional(),
@@ -327,6 +328,26 @@ export const invigilatorSchema = z
 export const invigilatorsResponseSchema = z
   .object({
     invigilators: z.array(invigilatorSchema),
+    errors: z.unknown().optional(),
+  })
+  .passthrough()
+
+export const uploadUrlResponseSchema = z
+  .object({
+    url: z.string(),
+  })
+  .passthrough()
+
+export const bcmpStatusResponseSchema = z
+  .object({
+    exams_updated: z.array(z.number()).optional(),
+  })
+  .passthrough()
+
+export const bcmpRequestResponseSchema = z
+  .object({
+    bcmp_job_id: z.string().optional(),
+    bcmp: z.unknown().optional(),
     errors: z.unknown().optional(),
   })
   .passthrough()
@@ -342,6 +363,8 @@ export const bookingSchema = z
     booking_name: z.string().nullable().optional(),
     end_time: z.string(),
     fees: z.string().nullable().optional(),
+    invigilator: invigilatorSchema.nullable().optional(),
+    invigilator_id: z.number().nullable().optional(),
     invigilators: z.array(invigilatorSchema).optional(),
     office: bookingOfficeSchema,
     office_id: z.number(),
@@ -371,28 +394,77 @@ export const bookingResponseSchema = z
 
 export const examTypeSchema = z
   .object({
+    exam_color: z.string().nullable().optional(),
     exam_type_id: z.number(),
     exam_type_name: z.string().nullable().optional(),
     group_exam_ind: z.number().nullable().optional(),
+    ita_ind: z.number().nullable().optional(),
     number_of_hours: z.number().nullable().optional(),
     number_of_minutes: z.number().nullable().optional(),
+    pesticide_exam_ind: z.number().nullable().optional(),
+  })
+  .passthrough()
+
+export const examCandidateSchema = z
+  .object({
+    examinee_email: z.string().nullable().optional(),
+    examinee_name: z.string().nullable().optional(),
+    exam_type_id: z.union([z.number(), z.string()]).nullable().optional(),
+    fees: z.string().nullable().optional(),
+    payee_email: z.string().nullable().optional(),
+    payee_ind: z.union([z.number(), z.string()]).nullable().optional(),
+    payee_name: z.string().nullable().optional(),
+    receipt: z.string().nullable().optional(),
+    receipt_number: z.string().nullable().optional(),
   })
   .passthrough()
 
 export const examSchema = z
   .object({
+    bcmp_job_id: z.string().nullable().optional(),
     booking: bookingSchema.nullable().optional(),
     booking_id: z.number().nullable().optional(),
+    candidates_list: z
+      .union([z.array(examCandidateSchema), examCandidateSchema])
+      .nullable()
+      .optional(),
+    deleted_date: z.string().nullable().optional(),
     event_id: z.string().nullable().optional(),
+    exam_destroyed_date: z.string().nullable().optional(),
     exam_id: z.number(),
     exam_method: z.string().nullable().optional(),
     exam_name: z.string().nullable().optional(),
+    exam_received: z.number().nullable().optional(),
+    exam_received_date: z.string().nullable().optional(),
+    exam_returned_date: z.string().nullable().optional(),
+    exam_returned_ind: z.number().nullable().optional(),
+    exam_returned_tracking_number: z.string().nullable().optional(),
     exam_type: examTypeSchema,
     exam_type_id: z.number().nullable().optional(),
+    exam_written_ind: z.number().nullable().optional(),
+    examinee_email: z.string().nullable().optional(),
     examinee_name: z.string().nullable().optional(),
+    examinee_phone: z.string().nullable().optional(),
     expiry_date: z.string().nullable().optional(),
+    fees: z.string().nullable().optional(),
+    invigilator: invigilatorSchema.nullable().optional(),
+    invigilator_id: z.number().nullable().optional(),
+    is_pesticide: z.number().nullable().optional(),
+    notes: z.string().nullable().optional(),
     number_of_students: z.number().nullable().optional(),
+    office: bookingOfficeSchema.optional(),
     office_id: z.number().nullable().optional(),
+    offsite_location: z.string().nullable().optional(),
+    payee_email: z.string().nullable().optional(),
+    payee_ind: z.number().nullable().optional(),
+    payee_name: z.string().nullable().optional(),
+    payee_phone: z.string().nullable().optional(),
+    receipt: z.string().nullable().optional(),
+    receipt_number: z.string().nullable().optional(),
+    receipt_sent_ind: z.number().nullable().optional(),
+    sbc_managed_ind: z.number().nullable().optional(),
+    session_number: z.number().nullable().optional(),
+    upload_received_ind: z.number().nullable().optional(),
   })
   .passthrough()
 
@@ -406,6 +478,13 @@ export const examsResponseSchema = z
 export const examResponseSchema = z
   .object({
     exam: examSchema,
+    errors: z.unknown().optional(),
+  })
+  .passthrough()
+
+export const examTypesResponseSchema = z
+  .object({
+    exam_types: z.array(examTypeSchema),
     errors: z.unknown().optional(),
   })
   .passthrough()
@@ -458,3 +537,4 @@ export type Invigilator = z.infer<typeof invigilatorSchema>
 export type Booking = z.infer<typeof bookingSchema>
 export type Exam = z.infer<typeof examSchema>
 export type ExamType = z.infer<typeof examTypeSchema>
+export type ExamCandidate = z.infer<typeof examCandidateSchema>

@@ -169,7 +169,7 @@ export default function BookingEventModal({
   async function invalidate() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.exams }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.exams.all }),
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
     ])
   }

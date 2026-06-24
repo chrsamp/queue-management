@@ -21,6 +21,11 @@ import {
   sendWalkinLineReminder,
   updateCsr,
   updateCitizen,
+  downloadExamDocument,
+  downloadExamExport,
+  getExams,
+  updateExam,
+  uploadCompletedExamDocument,
   updateServiceRequest,
 } from './endpoints'
 
@@ -53,6 +58,89 @@ describe('updateCsr', () => {
         receptionist_ind: 0,
       },
       method: 'PUT',
+      schema: expect.anything(),
+      signal: undefined,
+    })
+  })
+})
+
+describe('exam endpoints', () => {
+  test('loads exams with an office number filter', async () => {
+    const exams = [{ exam_id: 1 }]
+    const client = {
+      get: vi.fn().mockResolvedValue({ exams, errors: {} }),
+    } as unknown as ApiClient
+
+    await expect(getExams(client, undefined, 94)).resolves.toEqual(exams)
+    expect(client.get).toHaveBeenCalledWith('/exams/?office_number=94', {
+      schema: expect.anything(),
+      signal: undefined,
+    })
+  })
+
+  test('updates exam details through the legacy exam endpoint', async () => {
+    const client = {
+      request: vi.fn().mockResolvedValue({ exam: { exam_id: 4 }, errors: {} }),
+    } as unknown as ApiClient
+
+    await updateExam(client, 4, { exam_received_date: null })
+
+    expect(client.request).toHaveBeenCalledWith('/exams/4/', {
+      body: { exam_received_date: null },
+      method: 'PUT',
+      schema: expect.anything(),
+      signal: undefined,
+    })
+  })
+
+  test('uses binary helpers for exam document and report downloads', async () => {
+    const blob = new Blob(['x'])
+    const client = {
+      requestBlob: vi.fn().mockResolvedValue(blob),
+    } as unknown as ApiClient
+
+    await expect(downloadExamDocument(client, 7)).resolves.toBe(blob)
+    await expect(
+      downloadExamExport(client, {
+        endDate: '2026-06-30',
+        examType: 'ita',
+        startDate: '2026-06-01',
+      }),
+    ).resolves.toBe(blob)
+
+    expect(client.requestBlob).toHaveBeenNthCalledWith(
+      1,
+      '/exams/7/download/',
+      { signal: undefined },
+    )
+    expect(client.requestBlob).toHaveBeenNthCalledWith(
+      2,
+      '/exams/export/?start_date=2026-06-01&end_date=2026-06-30&exam_type=ita',
+      { signal: undefined },
+    )
+  })
+
+  test('uploads completed exam documents via presigned URL before transfer', async () => {
+    const file = new Blob(['pdf'], { type: 'application/pdf' })
+    const client = {
+      get: vi.fn().mockResolvedValue({ url: 'https://storage.example/upload' }),
+      putPresignedBlob: vi.fn().mockResolvedValue(undefined),
+      request: vi.fn().mockResolvedValue({ bcmp: {}, errors: {} }),
+    } as unknown as ApiClient
+
+    await uploadCompletedExamDocument(client, 9, file)
+
+    expect(client.get).toHaveBeenCalledWith('/exams/9/upload/', {
+      schema: expect.anything(),
+      signal: undefined,
+    })
+    expect(client.putPresignedBlob).toHaveBeenCalledWith(
+      'https://storage.example/upload',
+      file,
+      undefined,
+    )
+    expect(client.request).toHaveBeenCalledWith('/exams/9/transfer/', {
+      method: 'POST',
       schema: expect.anything(),
       signal: undefined,
     })

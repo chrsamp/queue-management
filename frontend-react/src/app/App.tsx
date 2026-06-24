@@ -32,6 +32,7 @@ import OfficeSwitcher from '@/components/OfficeSwitcher'
 import Select from '@/components/Select'
 import { queryKeys } from '@/query/query-keys'
 import AppointmentsWorkspace from '@/appointments/AppointmentsWorkspace'
+import ExamsWorkspace from '@/exams/ExamsWorkspace'
 import QueueWorkspace from '@/queue/QueueWorkspace'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -125,6 +126,10 @@ function App({ adminBaseUrl, queryClient, supportUrl }: AppProps) {
             path="/booking"
           />
           <Route
+            element={<ExamsRoute supportUrl={supportUrl} />}
+            path="/exams"
+          />
+          <Route
             element={
               <AdminRoute adminBaseUrl={adminBaseUrl} supportUrl={supportUrl} />
             }
@@ -209,6 +214,17 @@ function BookingsRoute({ supportUrl }: { supportUrl: string }) {
   }
 
   return <AuthenticatedBookings key={location.key} supportUrl={supportUrl} />
+}
+
+function ExamsRoute({ supportUrl }: { supportUrl: string }) {
+  const auth = useAuth()
+  const location = useLocation()
+
+  if (!auth.authenticated) {
+    return <UnauthenticatedStaffRoute title="Exams" />
+  }
+
+  return <AuthenticatedExams key={location.key} supportUrl={supportUrl} />
 }
 
 function UnauthenticatedStaffRoute({ title }: { title: string }) {
@@ -430,6 +446,65 @@ function AuthenticatedBookings({ supportUrl }: { supportUrl: string }) {
       username={csr.username}
     />
   )
+}
+
+function AuthenticatedExams({ supportUrl }: { supportUrl: string }) {
+  const apiClient = useApiClient()
+  const clearWorkflow = useWorkflowStore((state) => state.clearWorkflow)
+  const currentOffice = useWorkflowStore((state) => state.currentOffice)
+  const setCurrentCsr = useWorkflowStore((state) => state.setCurrentCsr)
+
+  const currentCsrQuery = useQuery({
+    queryFn: ({ signal }) => getCurrentCsr(apiClient, signal),
+    queryKey: queryKeys.csrs.me,
+    refetchOnMount: 'always',
+    retry: false,
+  })
+
+  useEffect(() => {
+    if (currentCsrQuery.data) {
+      setCurrentCsr(currentCsrQuery.data.csr)
+    } else if (currentCsrQuery.isError) {
+      clearWorkflow()
+    }
+  }, [
+    clearWorkflow,
+    currentCsrQuery.data,
+    currentCsrQuery.isError,
+    setCurrentCsr,
+  ])
+
+  if (currentCsrQuery.isPending) {
+    return (
+      <section className="mx-auto max-w-5xl p-6">
+        <p className="text-bc-body text-bc-secondary m-0">
+          Loading your staff profile...
+        </p>
+      </section>
+    )
+  }
+
+  if (currentCsrQuery.isError) {
+    return (
+      <UserNotConfigured
+        error={currentCsrQuery.error}
+        supportUrl={supportUrl}
+      />
+    )
+  }
+
+  const csr = currentCsrQuery.data.csr
+  const office = currentOffice ?? csr.office
+
+  if (office.exams_enabled_ind !== 1) {
+    return (
+      <section className="mx-auto flex max-w-5xl flex-col gap-4 p-6">
+        <h2 className="text-bc-h4 mt-0 mb-0 font-bold">Coming Soon!</h2>
+      </section>
+    )
+  }
+
+  return <ExamsWorkspace csr={csr} office={office} />
 }
 
 function getRouteErrorMessage(error: unknown, fallback: string) {

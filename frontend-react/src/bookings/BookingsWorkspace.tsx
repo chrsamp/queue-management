@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Calendar,
   dateFnsLocalizer,
@@ -22,6 +22,7 @@ import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { queryKeys } from '@/query/query-keys'
+import { useWorkflowStore } from '@/store/workflow-store'
 
 import BookingBlackoutModal from './BookingBlackoutModal'
 import BookingEventModal from './BookingEventModal'
@@ -68,6 +69,12 @@ export default function BookingsWorkspace({
   username,
 }: BookingsWorkspaceProps) {
   const apiClient = useApiClient()
+  const clearExamSchedulingRequest = useWorkflowStore(
+    (state) => state.clearExamSchedulingRequest,
+  )
+  const examSchedulingRequest = useWorkflowStore(
+    (state) => state.examSchedulingRequest,
+  )
   const [date, setDate] = useState(new Date())
   const [view, setView] = useState<View>('work_week')
   const [search, setSearch] = useState('')
@@ -98,7 +105,7 @@ export default function BookingsWorkspace({
   })
   const examsQuery = useQuery({
     queryFn: ({ signal }) => getExams(apiClient, signal),
-    queryKey: queryKeys.exams,
+    queryKey: queryKeys.exams.all,
   })
   const invigilatorsQuery = useQuery({
     queryFn: ({ signal }) => getInvigilators(apiClient, signal),
@@ -141,6 +148,15 @@ export default function BookingsWorkspace({
     bookingsQuery.isError || roomsQuery.isError || examsQuery.isError
       ? 'Unable to load room booking data.'
       : null
+
+  useEffect(() => {
+    if (!examSchedulingRequest) {
+      return
+    }
+
+    openExamScheduling(examSchedulingRequest)
+    clearExamSchedulingRequest()
+  }, [examSchedulingRequest, clearExamSchedulingRequest])
 
   function resetScheduling() {
     setSchedulingMode(null)

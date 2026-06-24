@@ -17,7 +17,11 @@ export const queryKeys = {
     me: ['csrs', 'me'] as const,
   },
   offices: ['offices'] as const,
-  exams: ['exams'] as const,
+  examTypes: ['exam-types'] as const,
+  exams: {
+    all: ['exams'] as const,
+    office: (officeNumber: number | string) => ['exams', officeNumber] as const,
+  },
   invigilators: ['invigilators'] as const,
   rooms: (officeId: number) => ['rooms', officeId] as const,
   services: (officeId: number) => ['services', officeId] as const,

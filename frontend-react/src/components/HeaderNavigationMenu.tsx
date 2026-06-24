@@ -45,6 +45,9 @@ export default function HeaderNavigationMenu({
       case 'booking':
         void navigate('/booking')
         return
+      case 'exams':
+        void navigate('/exams')
+        return
       case 'day-agenda':
         setShowDayAgenda(!showDayAgenda)
         return
@@ -82,6 +85,15 @@ export default function HeaderNavigationMenu({
               textValue="Appointments"
             >
               Appointments
+            </MenuItem>
+          )}
+          {examsEnabled && (
+            <MenuItem
+              className={menuItemClassName}
+              id="exams"
+              textValue="Exams"
+            >
+              Exams
             </MenuItem>
           )}
           {examsEnabled && (

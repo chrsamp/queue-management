@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { Csr, CsrState, Office } from '@/api/schemas'
+import type { Csr, CsrState, Exam, Office } from '@/api/schemas'
 
 export type GlobalAlertVariant =
   | 'black'
@@ -38,6 +38,7 @@ interface WorkflowState {
   currentCsrState: CsrState | null
   currentOffice: Office | null
   currentReceptionist: boolean | null
+  examSchedulingRequest: Exam | null
   realtimeConnectionStatus: RealtimeConnectionStatus
   realtimeLastError: string | null
   realtimeLastEvent: string | null
@@ -52,6 +53,7 @@ interface WorkflowState {
   clearGlobalAlert: () => void
   clearCurrentOffice: () => void
   clearServeCitizen: () => void
+  clearExamSchedulingRequest: () => void
   clearTerminalServeCitizen: (citizenId: number) => void
   closeServiceModal: () => void
   openServiceModal: () => void
@@ -68,6 +70,7 @@ interface WorkflowState {
   setCurrentCsr: (csr: Csr) => void
   setCurrentCsrState: (csrState: CsrState) => void
   setCurrentOffice: (office: Office) => void
+  setExamSchedulingRequest: (exam: Exam) => void
   setGlobalAlert: (alert: GlobalAlert) => void
   setRealtimeConnectionStatus: (status: RealtimeConnectionStatus) => void
   setRealtimeError: (message: string | null) => void
@@ -90,6 +93,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   currentCsrState: null,
   currentOffice: null,
   currentReceptionist: null,
+  examSchedulingRequest: null,
   realtimeConnectionStatus: 'idle',
   realtimeLastError: null,
   realtimeLastEvent: null,
@@ -113,6 +117,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       currentCsrState: null,
       currentOffice: null,
       currentReceptionist: null,
+      examSchedulingRequest: null,
       realtimeConnectionStatus: 'idle',
       realtimeLastError: null,
       realtimeLastEvent: null,
@@ -125,6 +130,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       terminalClearedCitizenId: null,
     }),
   clearCurrentOffice: () => set({ currentOffice: null }),
+  clearExamSchedulingRequest: () => set({ examSchedulingRequest: null }),
   clearGlobalAlert: () => set({ globalAlert: null }),
   clearServeCitizen: () =>
     set({
@@ -180,6 +186,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
     }),
   setCurrentCsrState: (csrState) => set({ currentCsrState: csrState }),
   setCurrentOffice: (office) => set({ currentOffice: office }),
+  setExamSchedulingRequest: (exam) => set({ examSchedulingRequest: exam }),
   setGlobalAlert: (alert) => set({ globalAlert: alert }),
   setRealtimeConnectionStatus: (status) =>
     set({ realtimeConnectionStatus: status }),

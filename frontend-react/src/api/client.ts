@@ -19,6 +19,14 @@ export interface ApiRequestOptions<TSchema extends z.ZodType> {
   timeoutMs?: number
 }
 
+export interface ApiBlobRequestOptions {
+  authenticated?: boolean
+  body?: unknown
+  method?: string
+  signal?: AbortSignal
+  timeoutMs?: number
+}
+
 const defaultTimeoutMs = 30000
 
 export class ApiClient {
@@ -115,6 +123,129 @@ export class ApiClient {
       }
 
       return parsed.data
+    } catch (error) {
+      throw this.normalizeError(error, controller.signal)
+    } finally {
+      window.clearTimeout(timeoutId)
+      signal?.removeEventListener('abort', abortListener)
+    }
+  }
+
+  async requestBlob(
+    path: string,
+    {
+      authenticated = true,
+      body: requestBody,
+      method = 'GET',
+      signal,
+      timeoutMs = this.defaultTimeoutMs,
+    }: ApiBlobRequestOptions = {},
+  ): Promise<Blob> {
+    const response = await this.fetchRaw(path, {
+      authenticated,
+      body: requestBody,
+      method,
+      signal,
+      timeoutMs,
+    })
+
+    return response.blob()
+  }
+
+  async putPresignedBlob(
+    url: string,
+    file: Blob,
+    signal?: AbortSignal,
+    timeoutMs = this.defaultTimeoutMs,
+  ) {
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+    const abortListener = () => controller.abort()
+
+    signal?.addEventListener('abort', abortListener, { once: true })
+
+    try {
+      const response = await fetch(url, {
+        body: file,
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+        method: 'PUT',
+        signal: controller.signal,
+      })
+
+      if (!response.ok) {
+        throw new ApiError({
+          details: await this.readBody(response),
+          kind: getApiErrorKind(response.status),
+          message: `Upload failed with status ${response.status}`,
+          status: response.status,
+        })
+      }
+    } catch (error) {
+      throw this.normalizeError(error, controller.signal)
+    } finally {
+      window.clearTimeout(timeoutId)
+      signal?.removeEventListener('abort', abortListener)
+    }
+  }
+
+  private async fetchRaw(
+    path: string,
+    {
+      authenticated = true,
+      body: requestBody,
+      method = 'GET',
+      signal,
+      timeoutMs = this.defaultTimeoutMs,
+    }: Omit<ApiBlobRequestOptions, 'schema'>,
+  ): Promise<Response> {
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+    const abortListener = () => controller.abort()
+
+    signal?.addEventListener('abort', abortListener, { once: true })
+
+    try {
+      const headers = new Headers()
+      const requestPayload =
+        requestBody === undefined ? undefined : JSON.stringify(requestBody)
+
+      if (requestPayload !== undefined) {
+        headers.set('Content-Type', 'application/json')
+      }
+
+      if (authenticated) {
+        await this.authService.refreshToken()
+        const token = this.authService.getSnapshot().token
+
+        if (!token) {
+          throw new ApiError({
+            kind: 'unauthorized',
+            message: 'Authentication is required',
+            status: 401,
+          })
+        }
+
+        headers.set('Authorization', `Bearer ${token}`)
+      }
+
+      const response = await fetch(this.buildUrl(path), {
+        body: requestPayload,
+        credentials: 'include',
+        headers,
+        method,
+        signal: controller.signal,
+      })
+
+      if (!response.ok) {
+        throw new ApiError({
+          details: await this.readBody(response),
+          kind: getApiErrorKind(response.status),
+          message: `API request failed with status ${response.status}`,
+          status: response.status,
+        })
+      }
+
+      return response
     } catch (error) {
       throw this.normalizeError(error, controller.signal)
     } finally {

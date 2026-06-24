@@ -13,14 +13,18 @@ import {
   csrStatesResponseSchema,
   csrUpdateResponseSchema,
   csrsResponseSchema,
+  bcmpRequestResponseSchema,
+  bcmpStatusResponseSchema,
   citizensResponseSchema,
   examResponseSchema,
   examsResponseSchema,
+  examTypesResponseSchema,
   invigilatorsResponseSchema,
   officesResponseSchema,
   roomsResponseSchema,
   serviceRequestResponseSchema,
   servicesResponseSchema,
+  uploadUrlResponseSchema,
 } from './schemas'
 
 export function getOffices(client: ApiClient, signal?: AbortSignal) {
@@ -550,10 +554,195 @@ export function getInvigilators(client: ApiClient, signal?: AbortSignal) {
     .then((response) => response.invigilators)
 }
 
-export function getExams(client: ApiClient, signal?: AbortSignal) {
+export function getOffsiteInvigilators(client: ApiClient, signal?: AbortSignal) {
   return client
-    .get('/exams/', { schema: examsResponseSchema, signal })
+    .get('/invigilators/offsite/', {
+      schema: invigilatorsResponseSchema,
+      signal,
+    })
+    .then((response) => response.invigilators)
+}
+
+export function getExams(
+  client: ApiClient,
+  signal?: AbortSignal,
+  officeNumber?: number | string | null,
+) {
+  const params = officeNumber ? `?office_number=${officeNumber}` : ''
+
+  return client
+    .get(`/exams/${params}`, { schema: examsResponseSchema, signal })
     .then((response) => response.exams)
+}
+
+export function getExamTypes(client: ApiClient, signal?: AbortSignal) {
+  return client
+    .get('/exam_types/', { schema: examTypesResponseSchema, signal })
+    .then((response) => response.exam_types)
+}
+
+export type ExamPayload = Record<string, unknown>
+
+export function createExam(
+  client: ApiClient,
+  payload: ExamPayload,
+  signal?: AbortSignal,
+) {
+  return client
+    .request('/exams/', {
+      body: payload,
+      method: 'POST',
+      schema: examResponseSchema,
+      signal,
+    })
+    .then((response) => response.exam)
+}
+
+export function requestBcmpExam(
+  client: ApiClient,
+  payload: ExamPayload,
+  signal?: AbortSignal,
+) {
+  return client.request('/exams/bcmp/', {
+    body: payload,
+    method: 'POST',
+    schema: bcmpRequestResponseSchema,
+    signal,
+  })
+}
+
+export function updateExam(
+  client: ApiClient,
+  examId: number,
+  payload: ExamPayload,
+  signal?: AbortSignal,
+) {
+  return client
+    .request(`/exams/${examId}/`, {
+      body: payload,
+      method: 'PUT',
+      schema: examResponseSchema,
+      signal,
+    })
+    .then((response) => response.exam)
+}
+
+export function deleteExam(
+  client: ApiClient,
+  examId: number,
+  signal?: AbortSignal,
+) {
+  return client.request(`/exams/${examId}/`, {
+    method: 'DELETE',
+    schema: z.unknown(),
+    signal,
+  })
+}
+
+export function refreshBcmpExamStatus(client: ApiClient, signal?: AbortSignal) {
+  return client.request('/exams/bcmp_status/', {
+    method: 'POST',
+    schema: bcmpStatusResponseSchema,
+    signal,
+  })
+}
+
+export function getExamUploadUrl(
+  client: ApiClient,
+  examId: number,
+  signal?: AbortSignal,
+) {
+  return client
+    .get(`/exams/${examId}/upload/`, {
+      schema: uploadUrlResponseSchema,
+      signal,
+    })
+    .then((response) => response.url)
+}
+
+export function transferExamToBcmp(
+  client: ApiClient,
+  examId: number,
+  signal?: AbortSignal,
+) {
+  return client.request(`/exams/${examId}/transfer/`, {
+    method: 'POST',
+    schema: bcmpRequestResponseSchema,
+    signal,
+  })
+}
+
+export async function uploadCompletedExamDocument(
+  client: ApiClient,
+  examId: number,
+  file: Blob,
+  signal?: AbortSignal,
+) {
+  const url = await getExamUploadUrl(client, examId, signal)
+  await client.putPresignedBlob(url, file, signal)
+  return transferExamToBcmp(client, examId, signal)
+}
+
+export function downloadExamDocument(
+  client: ApiClient,
+  examId: number,
+  signal?: AbortSignal,
+) {
+  return client.requestBlob(`/exams/${examId}/download/`, { signal })
+}
+
+export function downloadExamExport(
+  client: ApiClient,
+  {
+    endDate,
+    examType,
+    startDate,
+  }: {
+    endDate: string
+    examType: string
+    startDate: string
+  },
+  signal?: AbortSignal,
+) {
+  return client.requestBlob(
+    `/exams/export/?start_date=${startDate}&end_date=${endDate}&exam_type=${examType}`,
+    { signal },
+  )
+}
+
+export function emailExamInvigilator(
+  client: ApiClient,
+  examId: number,
+  payload: {
+    invigilator_email?: string | null
+    invigilator_id: number
+    invigilator_name?: string | null
+    invigilator_phone?: string | null
+  },
+  signal?: AbortSignal,
+) {
+  return client.request(`/exams/${examId}/email_invigilator/`, {
+    body: payload,
+    method: 'POST',
+    schema: z.unknown(),
+    signal,
+  })
+}
+
+export function updateInvigilatorShadowCount(
+  client: ApiClient,
+  invigilatorId: number,
+  params: { add: boolean; subtract: boolean },
+  signal?: AbortSignal,
+) {
+  return client.request(
+    `/invigilator/${invigilatorId}/?add=${params.add ? 'True' : 'False'}&subtract=${params.subtract ? 'True' : 'False'}`,
+    {
+      method: 'PUT',
+      schema: z.unknown(),
+      signal,
+    },
+  )
 }
 
 export function updateExamBooking(
