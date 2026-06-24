@@ -259,6 +259,7 @@ function AuthenticatedQueue({ supportUrl }: { supportUrl: string }) {
       }
       isLoading={citizensQuery.isPending}
       office={office}
+      csr={csr}
       csrId={csr.csr_id}
     />
   )

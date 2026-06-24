@@ -23,6 +23,14 @@ export const smartboardSchema = z
   })
   .passthrough()
 
+export const quickServiceSchema = z
+  .object({
+    deleted: z.unknown().nullable().optional(),
+    service_id: z.number(),
+    service_name: z.string(),
+  })
+  .passthrough()
+
 export const roleSchema = z
   .object({
     role_id: z.number(),
@@ -48,8 +56,8 @@ export const officeSchema = z
     counters: z.array(counterSchema),
     timeslots: z.array(z.unknown()),
     sb: smartboardSchema.nullable().optional(),
-    quick_list: z.array(z.unknown()).optional(),
-    back_office_list: z.array(z.unknown()).optional(),
+    quick_list: z.array(quickServiceSchema).optional(),
+    back_office_list: z.array(quickServiceSchema).optional(),
     check_in_notification: z.number().nullable().optional(),
   })
   .passthrough()
@@ -186,6 +194,62 @@ export const citizensResponseSchema = z
   })
   .passthrough()
 
+export const categorySchema = z
+  .object({
+    service_id: z.number(),
+    service_name: z.string(),
+  })
+  .passthrough()
+
+export const channelSchema = z
+  .object({
+    channel_id: z.number(),
+    channel_name: z.string(),
+  })
+  .passthrough()
+
+export const serviceSchema = z
+  .object({
+    actual_service_ind: z.number().nullable().optional(),
+    display_dashboard_ind: z.number().nullable().optional(),
+    parent: serviceParentSchema.nullable().optional(),
+    parent_id: z.number().nullable().optional(),
+    service_desc: z.string().nullable().optional(),
+    service_id: z.number(),
+    service_name: z.string(),
+  })
+  .passthrough()
+
+export const categoriesResponseSchema = z
+  .object({
+    categories: z.array(categorySchema),
+    errors: errorsSchema.optional(),
+  })
+  .passthrough()
+
+export const channelsResponseSchema = z
+  .object({
+    channels: z.array(channelSchema),
+    errors: errorsSchema.optional(),
+  })
+  .passthrough()
+
+export const servicesResponseSchema = z
+  .object({
+    services: z.array(serviceSchema),
+    errors: errorsSchema.optional(),
+  })
+  .passthrough()
+
+export const addCitizenResponseSchema = z
+  .object({
+    citizen: citizenSchema,
+    errors: errorsSchema.optional(),
+  })
+  .passthrough()
+
+export const serviceRequestResponseSchema = z.unknown()
+
 export type Office = z.infer<typeof officeSchema>
 export type Csr = z.infer<typeof csrSchema>
 export type CsrMe = z.infer<typeof csrMeResponseSchema>
@@ -193,3 +257,7 @@ export type CsrState = z.infer<typeof csrStateSchema>
 export type Citizen = z.infer<typeof citizenSchema>
 export type ServiceRequest = z.infer<typeof serviceRequestSchema>
 export type Period = z.infer<typeof periodSchema>
+export type QuickService = z.infer<typeof quickServiceSchema>
+export type Category = z.infer<typeof categorySchema>
+export type Channel = z.infer<typeof channelSchema>
+export type Service = z.infer<typeof serviceSchema>

@@ -1,8 +1,12 @@
+import type { ComponentProps } from 'react'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-import type { Citizen, Office, ServiceRequest } from '@/api/schemas'
+import type { ApiClient } from '@/api/client'
+import { ApiProvider } from '@/api/ApiProvider'
+import type { Citizen, Csr, Office, ServiceRequest } from '@/api/schemas'
 
 import QueueWorkspace from './QueueWorkspace'
 
@@ -27,6 +31,65 @@ const receptionOffice = {
     timezone_name: 'America/Vancouver',
   },
 } satisfies Office
+
+const csr = {
+  counter: 1,
+  counter_id: 1,
+  csr_id: 10,
+  csr_state: null,
+  csr_state_id: 1,
+  finance_designate: null,
+  ita2_designate: null,
+  office: receptionOffice,
+  office_id: receptionOffice.office_id,
+  pesticide_designate: null,
+  qt_xn_csr_ind: null,
+  receptionist_ind: 1,
+  role: {
+    role_code: 'CSR',
+    role_desc: 'CSR',
+    role_id: 1,
+  },
+  role_id: 1,
+  username: 'csr.user',
+} satisfies Csr
+
+function renderQueueWorkspace(
+  props: Omit<ComponentProps<typeof QueueWorkspace>, 'csr'> & {
+    csr?: Csr
+  },
+) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  })
+  const client = {
+    get: vi.fn((path: string) => {
+      if (path === '/categories/') {
+        return Promise.resolve({ categories: [], errors: {} })
+      }
+      if (path === '/channels/') {
+        return Promise.resolve({ channels: [], errors: {} })
+      }
+      if (path.startsWith('/services/')) {
+        return Promise.resolve({ services: [], errors: {} })
+      }
+      return Promise.resolve({})
+    }),
+    request: vi.fn(),
+  } as unknown as ApiClient
+
+  return render(
+    <ApiProvider client={client}>
+      <QueryClientProvider client={queryClient}>
+        <QueueWorkspace {...props} csr={props.csr ?? csr} />
+      </QueryClientProvider>
+    </ApiProvider>,
+  )
+}
 
 function serviceRequest(periodName: string) {
   return {
@@ -86,12 +149,10 @@ afterEach(() => {
 
 describe('QueueWorkspace', () => {
   test('shows waiting and hold tables for reception offices', () => {
-    render(
-      <QueueWorkspace
-        citizens={[citizen(1, 'Waiting'), citizen(2, 'On hold')]}
-        office={receptionOffice}
-      />,
-    )
+    renderQueueWorkspace({
+      citizens: [citizen(1, 'Waiting'), citizen(2, 'On hold')],
+      office: receptionOffice,
+    })
 
     expect(
       screen.queryByRole('heading', { name: 'Queue' }),
@@ -116,18 +177,16 @@ describe('QueueWorkspace', () => {
   })
 
   test('shows only the hold table for non-reception offices', () => {
-    render(
-      <QueueWorkspace
-        citizens={[citizen(1, 'Waiting'), citizen(2, 'On hold')]}
-        office={{
+    renderQueueWorkspace({
+      citizens: [citizen(1, 'Waiting'), citizen(2, 'On hold')],
+      office: {
           ...receptionOffice,
           sb: {
             sb_id: 1,
             sb_type: 'nocallonsmartboard',
           },
-        }}
-      />,
-    )
+        },
+    })
 
     expect(screen.queryByText(/Citizens Waiting:/)).not.toBeInTheDocument()
     expect(screen.getByText('Citizens on Hold: 1')).toBeVisible()
@@ -152,15 +211,13 @@ describe('QueueWorkspace', () => {
       reminder_flag: 1,
     })
 
-    const { rerender } = render(
-      <QueueWorkspace
-        citizens={[notifiedCitizen]}
-        office={{
+    const { unmount } = renderQueueWorkspace({
+      citizens: [notifiedCitizen],
+      office: {
           ...receptionOffice,
           check_in_notification: 1,
-        }}
-      />,
-    )
+        },
+    })
 
     const waitingTable = screen.getByRole('table', {
       name: 'Citizens waiting',
@@ -173,9 +230,11 @@ describe('QueueWorkspace', () => {
     ).toBeVisible()
     expect(within(waitingTable).getByText('First sent')).toBeVisible()
 
-    rerender(
-      <QueueWorkspace citizens={[notifiedCitizen]} office={receptionOffice} />,
-    )
+    unmount()
+    renderQueueWorkspace({
+      citizens: [notifiedCitizen],
+      office: receptionOffice,
+    })
 
     expect(
       within(
@@ -185,7 +244,7 @@ describe('QueueWorkspace', () => {
   })
 
   test('renders empty states inside visible tables', () => {
-    render(<QueueWorkspace citizens={[]} office={receptionOffice} />)
+    renderQueueWorkspace({ citizens: [], office: receptionOffice })
 
     expect(
       within(screen.getByRole('table', { name: 'Citizens waiting' })).getByText(
@@ -199,12 +258,43 @@ describe('QueueWorkspace', () => {
     ).toBeVisible()
   })
 
+  test('shows add citizen and back office split buttons with quick-service menus', async () => {
+    const user = userEvent.setup()
+
+    renderQueueWorkspace({
+      citizens: [],
+      office: {
+        ...receptionOffice,
+        back_office_list: [
+          { deleted: null, service_id: 2, service_name: 'Staff review' },
+        ],
+        quick_list: [
+          { deleted: null, service_id: 1, service_name: 'Licence renewal' },
+          {
+            deleted: '2026-01-01',
+            service_id: 3,
+            service_name: 'Deleted service',
+          },
+        ],
+      },
+    })
+
+    expect(screen.getByRole('button', { name: 'Add Citizen' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Back Office' })).toBeVisible()
+
+    await user.click(
+      screen.getByRole('button', { name: 'Add Citizen quick services' }),
+    )
+
+    expect(screen.getByRole('menuitem', { name: 'Licence renewal' })).toBeVisible()
+    expect(screen.queryByRole('menuitem', { name: 'Deleted service' })).not.toBeInTheDocument()
+  })
+
   test('sorts the time column by queue start date', async () => {
     const user = userEvent.setup()
 
-    render(
-      <QueueWorkspace
-        citizens={[
+    renderQueueWorkspace({
+      citizens: [
           citizen(1, 'Waiting', {
             start_time: '2026-06-23T17:00:00Z',
           }),
@@ -214,10 +304,9 @@ describe('QueueWorkspace', () => {
           citizen(3, 'Waiting', {
             start_time: 'not a date',
           }),
-        ]}
-        office={receptionOffice}
-      />,
-    )
+        ],
+      office: receptionOffice,
+    })
 
     const waitingTable = screen.getByRole('table', {
       name: 'Citizens waiting',

@@ -10,8 +10,9 @@ import {
   type ReactNode,
 } from 'react'
 
-import type { Citizen, Office } from '@/api/schemas'
+import type { Citizen, Csr, Office } from '@/api/schemas'
 
+import QueueActions from './QueueActions'
 import QueueTable from './QueueTable'
 import {
   getHoldCitizens,
@@ -22,6 +23,7 @@ import {
 
 interface QueueWorkspaceProps {
   citizens: Citizen[]
+  csr: Csr
   csrId?: number | null
   errorMessage?: string | null
   isLoading?: boolean
@@ -47,6 +49,7 @@ function getInitialWaitingRatio(csrId: number | null | undefined) {
 
 export default function QueueWorkspace({
   citizens,
+  csr,
   csrId = null,
   errorMessage = null,
   isLoading = false,
@@ -170,6 +173,7 @@ export default function QueueWorkspace({
 
   return (
     <section className="mx-auto flex min-h-[calc(100vh-var(--spacing-bc-header-height))] max-w-7xl flex-col p-6">
+      <QueueActions citizens={citizens} csr={csr} office={office} />
       {isLoading ? (
         <QueueStatusMessage message="Loading queue..." />
       ) : errorMessage ? (
