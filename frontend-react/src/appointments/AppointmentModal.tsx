@@ -11,12 +11,14 @@ import {
   updateAppointment,
   updateRecurringAppointment,
 } from '@/api/endpoints'
-import type { Office, Service } from '@/api/schemas'
+import type { Category, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
+import ServicePicker from '@/components/ServicePicker'
+import { cx } from '@/lib/cx'
 import { queryKeys } from '@/query/query-keys'
 
 import {
@@ -32,6 +34,7 @@ import {
 } from './appointment-utils'
 
 interface AppointmentModalProps {
+  categories: Category[]
   clickedEvent: AppointmentCalendarEvent | null
   clickedTime: Date | null
   isOpen: boolean
@@ -43,6 +46,7 @@ interface AppointmentModalProps {
 }
 
 export default function AppointmentModal({
+  categories,
   clickedEvent,
   clickedTime,
   isOpen,
@@ -60,6 +64,10 @@ export default function AppointmentModal({
   const [dateValue, setDateValue] = useState('')
   const [timeValue, setTimeValue] = useState('')
   const [length, setLength] = useState(15)
+  const [serviceCategoryId, setServiceCategoryId] = useState<number | null>(
+    null,
+  )
+  const [serviceSearch, setServiceSearch] = useState('')
   const [selectedServiceId, setSelectedServiceId] = useState<number | ''>('')
   const [editSeries, setEditSeries] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -78,6 +86,7 @@ export default function AppointmentModal({
   const blackout = clickedEvent?.blackout_flag === 'Y'
   const draft = Boolean(clickedEvent?.is_draft)
   const support = roleCode === 'SUPPORT'
+  const showServicePicker = !stat && !blackout
   const appointmentStart = clickedEvent?.start ?? clickedTime ?? null
   const rescheduleAllowed =
     clickedEvent && appointmentStart ? !isPast(appointmentStart) : true
@@ -106,11 +115,16 @@ export default function AppointmentModal({
     setDateValue(formatDateInputValue(start))
     setTimeValue(formatTimeInputValue(start))
     setLength(duration)
+    setServiceCategoryId(null)
+    setServiceSearch(
+      services.find((service) => service.service_id === clickedEvent?.service_id)
+        ?.service_name ?? '',
+    )
     setSelectedServiceId(clickedEvent?.service_id ?? '')
     setEditSeries(false)
     setErrorMessage(null)
     setIsSaving(false)
-  }, [clickedEvent, clickedTime, isOpen])
+  }, [clickedEvent, clickedTime, isOpen, services])
 
   if (!isOpen) {
     return null
@@ -255,7 +269,14 @@ export default function AppointmentModal({
   }
 
   return (
-    <Modal className="max-w-2xl overflow-hidden" isDismissable={false} isOpen>
+    <Modal
+      className={cx(
+        showServicePicker ? 'max-w-4xl' : 'max-w-2xl',
+        'overflow-hidden',
+      )}
+      isDismissable={false}
+      isOpen
+    >
       <Dialog className="p-0" isCloseable={false}>
         <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
           <DialogTitle className="text-bc-h4 m-0 font-bold">
@@ -344,7 +365,29 @@ export default function AppointmentModal({
                   </label>
                 )}
               </div>
-              {!stat && (
+              {showServicePicker && (
+                <div className="flex flex-col gap-1">
+                  <span className="font-bold">Service Required by Citizen</span>
+                  <ServicePicker
+                    categories={categories}
+                    categoryId={serviceCategoryId}
+                    onCategoryChange={setServiceCategoryId}
+                    onSearchChange={setServiceSearch}
+                    onSelectService={(service) => {
+                      setSelectedServiceId(service.service_id)
+                      setServiceSearch(service.service_name)
+                    }}
+                    search={serviceSearch}
+                    selectedServiceId={
+                      typeof selectedServiceId === 'number'
+                        ? selectedServiceId
+                        : null
+                    }
+                    services={services}
+                  />
+                </div>
+              )}
+              {!stat && blackout && (
                 <label className="flex flex-col gap-1">
                   <span className="font-bold">Service Required by Citizen</span>
                   <select

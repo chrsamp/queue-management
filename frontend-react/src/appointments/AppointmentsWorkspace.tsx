@@ -14,6 +14,7 @@ import {
   createDraftAppointment,
   deleteDraftAppointment,
   getAppointments,
+  getCategories,
   getServices,
 } from '@/api/endpoints'
 import type { Office } from '@/api/schemas'
@@ -38,6 +39,7 @@ import {
 
 const locales = { 'en-US': enUS }
 const emptyAppointments: never[] = []
+const emptyCategories: never[] = []
 const emptyServices: never[] = []
 const localizer = dateFnsLocalizer({
   format,
@@ -81,6 +83,11 @@ export default function AppointmentsWorkspace({
     queryFn: ({ signal }) => getServices(apiClient, office.office_id, signal),
     queryKey: queryKeys.services(office.office_id),
   })
+  const categoriesQuery = useQuery({
+    queryFn: ({ signal }) => getCategories(apiClient, signal),
+    queryKey: queryKeys.categories,
+  })
+  const categories = categoriesQuery.data ?? emptyCategories
   const services = servicesQuery.data ?? emptyServices
   const appointments = appointmentsQuery.data ?? emptyAppointments
   const appointmentError = appointmentsQuery.isError
@@ -90,7 +97,12 @@ export default function AppointmentsWorkspace({
           servicesQuery.error,
           'Unable to load appointment services.',
         )
-      : null
+      : categoriesQuery.isError
+        ? getErrorMessage(
+            categoriesQuery.error,
+            'Unable to load service categories.',
+          )
+        : null
   const events = useMemo(
     () =>
       appointments.map((appointment) =>
@@ -256,7 +268,9 @@ export default function AppointmentsWorkspace({
           {appointmentError}
         </AlertBanner>
       )}
-      {appointmentsQuery.isPending || servicesQuery.isPending ? (
+      {appointmentsQuery.isPending ||
+      servicesQuery.isPending ||
+      categoriesQuery.isPending ? (
         <p className="text-bc-secondary m-0" role="status">
           Loading appointments...
         </p>
@@ -311,6 +325,7 @@ export default function AppointmentsWorkspace({
         roleCode={roleCode}
       />
       <AppointmentModal
+        categories={categories}
         clickedEvent={clickedEvent}
         clickedTime={clickedTime}
         isOpen={appointmentModalOpen}

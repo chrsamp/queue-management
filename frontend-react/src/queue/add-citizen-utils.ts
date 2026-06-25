@@ -1,4 +1,8 @@
 import type { Category, Channel, QuickService, Service } from '@/api/schemas'
+import {
+  filterServicePickerServices,
+  getServiceCategoryOptions,
+} from '@/components/service-picker-utils'
 
 export type AddCitizenMode =
   | 'add-citizen'
@@ -38,9 +42,7 @@ export function getCategoryOptions(
   categories: Category[],
   services: Service[],
 ) {
-  const parentIds = new Set(services.map((service) => service.parent_id))
-
-  return categories.filter((category) => parentIds.has(category.service_id))
+  return getServiceCategoryOptions(categories, services)
 }
 
 export function filterServices({
@@ -54,32 +56,11 @@ export function filterServices({
   search: string
   services: Service[]
 }) {
-  const normalizedSearch = search.trim().toLowerCase()
-
-  return getModeServices(services, mode)
-    .filter((service) => !categoryId || service.parent_id === categoryId)
-    .filter((service) => {
-      if (!normalizedSearch) {
-        return true
-      }
-
-      return [
-        service.service_name,
-        service.service_desc ?? '',
-        service.parent?.service_name ?? '',
-      ].some((value) => value.toLowerCase().includes(normalizedSearch))
-    })
-    .sort((left, right) => {
-      const categoryCompare = (left.parent?.service_name ?? '').localeCompare(
-        right.parent?.service_name ?? '',
-      )
-
-      if (categoryCompare !== 0) {
-        return categoryCompare
-      }
-
-      return left.service_name.localeCompare(right.service_name)
-    })
+  return filterServicePickerServices({
+    categoryId,
+    search,
+    services: getModeServices(services, mode),
+  })
 }
 
 export function formatNotificationPhone(value: string) {

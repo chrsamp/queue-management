@@ -15,14 +15,13 @@ import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
+import ServicePicker from '@/components/ServicePicker'
 import { queryKeys } from '@/query/query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 
 import {
   createWalkinUniqueId,
-  filterServices,
   formatNotificationPhone,
-  getCategoryOptions,
   getModeServices,
   isValidNotificationEmail,
   isValidNotificationPhone,
@@ -99,22 +98,6 @@ export default function AddCitizenModal({
     () => (form ? getModeServices(services, form.mode) : []),
     [form, services],
   )
-  const categoryOptions = useMemo(
-    () => getCategoryOptions(categories, modeServices),
-    [categories, modeServices],
-  )
-  const filteredServices = useMemo(
-    () =>
-      form
-        ? filterServices({
-            categoryId: form.categoryId,
-            mode: form.mode,
-            search: form.search,
-            services,
-          })
-        : [],
-    [form, services],
-  )
   const selectedService = form?.selectedServiceId
     ? services.find((service) => service.service_id === form.selectedServiceId)
     : null
@@ -155,6 +138,13 @@ export default function AddCitizenModal({
         form?.notificationPhone || notificationEmail
           ? createWalkinUniqueId()
           : '',
+    })
+  }
+
+  function selectService(service: Service) {
+    updateForm({
+      search: service.service_name,
+      selectedServiceId: service.service_id,
     })
   }
 
@@ -429,101 +419,15 @@ export default function AddCitizenModal({
             </select>
           </div>
 
-          <div className="grid grid-cols-[minmax(0,7fr)_minmax(12rem,3fr)] gap-3">
-            <label className="block">
-              <span className="sr-only">Type service here</span>
-              <input
-                className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 w-full rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
-                onChange={(event) => updateForm({ search: event.target.value })}
-                placeholder="Type service here"
-                ref={searchInputRef}
-                value={form.search}
-              />
-            </label>
-            <select
-              aria-label="Filter by category"
-              className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
-              onChange={(event) =>
-                updateForm({ categoryId: Number(event.target.value) || null })
-              }
-              value={form.categoryId ?? ''}
-            >
-              <option value="">Categories</option>
-              {categoryOptions.map((category) => (
-                <option key={category.service_id} value={category.service_id}>
-                  {category.service_name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="bg-bc-gray-110 px-6 py-4">
-          <div className="border-bc-border max-h-64 overflow-auto border bg-white">
-            <table className="w-full border-collapse text-left">
-              <thead className="bg-bc-secondary text-bc-white sticky top-0">
-                <tr>
-                  {isReception && !serviceModalMode && (
-                    <th className="border-bc-border w-20 border-b px-3 py-2 text-center font-normal">
-                      To Q
-                    </th>
-                  )}
-                  <th className="border-bc-border w-24 border-b px-3 py-2 text-center font-normal">
-                    Serve
-                  </th>
-                  <th className="border-bc-border border-b px-3 py-2 font-normal">
-                    Service
-                  </th>
-                  <th className="border-bc-border border-b px-3 py-2 font-normal">
-                    Category
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredServices.map((service) => {
-                  const selected = service.service_id === form.selectedServiceId
-
-                  return (
-                    <tr
-                      className={
-                        selected
-                          ? 'bg-bc-button-secondary-pressed'
-                          : 'hover:bg-bc-button-secondary-hover'
-                      }
-                      key={service.service_id}
-                    >
-                      {isReception && !serviceModalMode && (
-                        <td className="border-bc-border border-t px-3 py-2 text-center">
-                          <Button
-                            aria-label={`Add ${service.service_name} to queue`}
-                            disabled={baseActionDisabled || !form.channelId}
-                            isIconButton
-                            onClick={() => {
-                              const nextForm = {
-                                ...form,
-                                search: service.service_name,
-                                selectedServiceId: service.service_id,
-                              }
-                              setForm(nextForm)
-                              void handleAddToQueue(nextForm)
-                            }}
-                            size="small"
-                            variant="tertiary"
-                          >
-                            <UserRoundArrowLeft
-                              aria-hidden="true"
-                              className="h-4 w-4"
-                            />
-                          </Button>
-                        </td>
-                      )}
-                      <td className="border-bc-border border-t px-3 py-2 text-center">
+          <ServicePicker
+            actionColumns={[
+              ...(isReception && !serviceModalMode
+                ? [
+                    {
+                      header: 'To Q',
+                      render: (service: Service) => (
                         <Button
-                          aria-label={
-                            serviceModalMode
-                              ? `Apply ${service.service_name}`
-                              : `Begin ${service.service_name}`
-                          }
+                          aria-label={`Add ${service.service_name} to queue`}
                           disabled={baseActionDisabled || !form.channelId}
                           isIconButton
                           onClick={() => {
@@ -533,52 +437,64 @@ export default function AddCitizenModal({
                               selectedServiceId: service.service_id,
                             }
                             setForm(nextForm)
-                            if (serviceModalMode) {
-                              void handleApplyService(nextForm)
-                            } else {
-                              void handleBeginService(nextForm)
-                            }
+                            void handleAddToQueue(nextForm)
                           }}
                           size="small"
                           variant="tertiary"
                         >
-                          <HandHelping aria-hidden="true" className="h-4 w-4" />
+                          <UserRoundArrowLeft
+                            aria-hidden="true"
+                            className="h-4 w-4"
+                          />
                         </Button>
-                      </td>
-                      <td className="border-bc-border border-t px-3 py-2">
-                        <button
-                          className="focus-visible:outline-bc-focus w-full cursor-pointer bg-transparent p-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2"
-                          onClick={() =>
-                            updateForm({
-                              search: service.service_name,
-                              selectedServiceId: service.service_id,
-                            })
-                          }
-                          title={service.service_desc ?? undefined}
-                          type="button"
-                        >
-                          {service.service_name}
-                        </button>
-                      </td>
-                      <td className="border-bc-border border-t px-3 py-2">
-                        {service.parent?.service_name ?? ''}
-                      </td>
-                    </tr>
-                  )
-                })}
-                {filteredServices.length === 0 && (
-                  <tr>
-                    <td
-                      className="text-bc-secondary px-3 py-6 text-center"
-                      colSpan={isReception && !serviceModalMode ? 4 : 3}
-                    >
-                      No services match the current filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                      ),
+                      widthClassName: 'w-20',
+                    },
+                  ]
+                : []),
+              {
+                header: 'Serve',
+                render: (service) => (
+                  <Button
+                    aria-label={
+                      serviceModalMode
+                        ? `Apply ${service.service_name}`
+                        : `Begin ${service.service_name}`
+                    }
+                    disabled={baseActionDisabled || !form.channelId}
+                    isIconButton
+                    onClick={() => {
+                      const nextForm = {
+                        ...form,
+                        search: service.service_name,
+                        selectedServiceId: service.service_id,
+                      }
+                      setForm(nextForm)
+                      if (serviceModalMode) {
+                        void handleApplyService(nextForm)
+                      } else {
+                        void handleBeginService(nextForm)
+                      }
+                    }}
+                    size="small"
+                    variant="tertiary"
+                  >
+                    <HandHelping aria-hidden="true" className="h-4 w-4" />
+                  </Button>
+                ),
+                widthClassName: 'w-24',
+              },
+            ]}
+            categories={categories}
+            categoryId={form.categoryId}
+            onCategoryChange={(categoryId) => updateForm({ categoryId })}
+            onSearchChange={(search) => updateForm({ search })}
+            onSelectService={selectService}
+            search={form.search}
+            searchInputRef={searchInputRef}
+            selectedServiceId={form.selectedServiceId}
+            services={modeServices}
+          />
         </div>
 
         <div className="border-bc-border flex flex-wrap items-center justify-between gap-3 border-t px-6 py-4">
