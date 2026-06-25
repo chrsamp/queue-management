@@ -26,7 +26,9 @@ export function getActivePeriod(serviceRequest: ServiceRequest | undefined) {
 }
 
 export function getActiveServiceRequests(citizen: Citizen) {
-  return [...citizen.service_reqs].sort((left, right) => right.sr_id - left.sr_id)
+  return [...citizen.service_reqs].sort(
+    (left, right) => right.sr_id - left.sr_id,
+  )
 }
 
 export function getActiveServiceForCsr(
@@ -36,7 +38,8 @@ export function getActiveServiceForCsr(
 ) {
   return citizen.service_reqs.find((serviceRequest) =>
     serviceRequest.periods.some(
-      (period) => isActivePeriod(period) && isPeriodForCsr(period, csrId, username),
+      (period) =>
+        isActivePeriod(period) && isPeriodForCsr(period, csrId, username),
     ),
   )
 }
@@ -73,11 +76,15 @@ export function getActiveCitizenForCsr({
 }
 
 export function getWaitingCitizens(citizens: Citizen[]) {
-  return citizens.filter((citizen) => hasActivePeriodNamed(citizen, waitingPeriodName))
+  return citizens.filter((citizen) =>
+    hasActivePeriodNamed(citizen, waitingPeriodName),
+  )
 }
 
 export function getHoldCitizens(citizens: Citizen[]) {
-  return citizens.filter((citizen) => hasActivePeriodNamed(citizen, holdPeriodName))
+  return citizens.filter((citizen) =>
+    hasActivePeriodNamed(citizen, holdPeriodName),
+  )
 }
 
 export function getPriorityLabel(priority: number | null | undefined) {

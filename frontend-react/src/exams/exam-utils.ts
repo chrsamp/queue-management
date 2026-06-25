@@ -179,11 +179,18 @@ export function isPastScheduledExam(exam: Exam, now = new Date()) {
     return false
   }
 
-  return isBefore(startOfDay(parseDate(exam.booking.start_time)), startOfDay(now))
+  return isBefore(
+    startOfDay(parseDate(exam.booking.start_time)),
+    startOfDay(now),
+  )
 }
 
 export function getExamStatus(exam: Exam, now = new Date()): ExamStatus {
-  if (isPesticideExam(exam) && !exam.exam_received_date && !exam.exam_returned_date) {
+  if (
+    isPesticideExam(exam) &&
+    !exam.exam_received_date &&
+    !exam.exam_returned_date
+  ) {
     return {
       color: '#d8292f',
       label: 'Requires attention',
@@ -278,7 +285,9 @@ export function stillRequires(exam: Exam) {
   }
 
   if (!exam.exam_received_date) {
-    output.push(isPesticideExam(exam) ? 'Print Materials' : 'Receipt of Materials')
+    output.push(
+      isPesticideExam(exam) ? 'Print Materials' : 'Receipt of Materials',
+    )
   }
 
   if (isMonthlySessionExam(exam)) {
@@ -369,7 +378,9 @@ export function filterExams({
   const term = filters.search.trim().toLowerCase()
   let filtered = filters.showAllPesticide
     ? exams
-    : exams.filter((exam) => String(exam.office?.office_number) === String(officeNumber))
+    : exams.filter(
+        (exam) => String(exam.office?.office_number) === String(officeNumber),
+      )
 
   if (filters.examType === 'individual') {
     filtered = filtered.filter((exam) => !isGroupExam(exam))
@@ -380,7 +391,9 @@ export function filterExams({
   if (filters.quickAction === 'returned') {
     filtered = filtered.filter((exam) => Boolean(exam.exam_returned_date))
   } else if (filters.quickAction === 'expired') {
-    filtered = filtered.filter((exam) => isExpired(exam, now) && !exam.exam_returned_date)
+    filtered = filtered.filter(
+      (exam) => isExpired(exam, now) && !exam.exam_returned_date,
+    )
   } else if (filters.quickAction === 'ready') {
     filtered = filtered.filter(
       (exam) =>
@@ -515,7 +528,8 @@ export function buildExamPayload({
       payload.exam_type_id =
         draft.exam_type_id ??
         examTypes.find(
-          (type) => type.group_exam_ind && !type.ita_ind && !type.pesticide_exam_ind,
+          (type) =>
+            type.group_exam_ind && !type.ita_ind && !type.pesticide_exam_ind,
         )?.exam_type_id
     }
   } else {

@@ -345,8 +345,7 @@ test.describe('mocked queue workflows', () => {
     ).toBeVisible()
     await page.waitForFunction(() =>
       Boolean(
-        (globalThis as { __QMS_E2E_REALTIME__?: unknown })
-          .__QMS_E2E_REALTIME__,
+        (globalThis as { __QMS_E2E_REALTIME__?: unknown }).__QMS_E2E_REALTIME__,
       ),
     )
     await page.evaluate(

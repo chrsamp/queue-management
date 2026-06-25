@@ -64,10 +64,9 @@ describe('add citizen utilities', () => {
   })
 
   test('builds category options from visible services', () => {
-    expect(getCategoryOptions(categories, services).map((item) => item.service_name)).toEqual([
-      'Permits',
-      'Accounts',
-    ])
+    expect(
+      getCategoryOptions(categories, services).map((item) => item.service_name),
+    ).toEqual(['Permits', 'Accounts'])
   })
 
   test('filters services by mode, category, and search', () => {

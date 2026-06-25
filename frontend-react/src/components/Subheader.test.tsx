@@ -39,7 +39,9 @@ describe('Subheader', () => {
     ).toBeVisible()
     expect(screen.getByText('Active')).toBeVisible()
     expect(screen.getByText('Counter 1')).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Show Day Agenda' })).toBeVisible()
+    expect(
+      screen.getByRole('button', { name: 'Show Day Agenda' }),
+    ).toBeVisible()
     expect(screen.getByRole('button', { name: 'GA Panel' })).toBeVisible()
   })
 })

@@ -176,9 +176,7 @@ describe('booking-utils', () => {
 
   test('calculates exam duration and expiry restriction', () => {
     expect(getExamDurationMinutes(exam)).toBe(150)
-    expect(isAfterExamExpiry(new Date('2026-06-30T12:00:00'), exam)).toBe(
-      false,
-    )
+    expect(isAfterExamExpiry(new Date('2026-06-30T12:00:00'), exam)).toBe(false)
     expect(isAfterExamExpiry(new Date('2026-07-01T09:00:00'), exam)).toBe(true)
   })
 })

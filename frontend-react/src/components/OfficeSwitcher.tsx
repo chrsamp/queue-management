@@ -111,8 +111,7 @@ export default function OfficeSwitcher() {
 
     const selectedOffice =
       officeItems.find((item) => item.office.office_id === Number(key))
-        ?.office ??
-      null
+        ?.office ?? null
 
     if (!selectedOffice || selectedOffice.office_id === currentOfficeId) {
       return
@@ -132,7 +131,9 @@ export default function OfficeSwitcher() {
             ? 'Saving office...'
             : undefined
       }
-      errorMessage={officesQuery.isError ? getErrorMessage(officesQuery.error) : ''}
+      errorMessage={
+        officesQuery.isError ? getErrorMessage(officesQuery.error) : ''
+      }
       isDisabled={officesQuery.isLoading || updateOfficeMutation.isPending}
       isInvalid={officesQuery.isError}
       items={officeItems}

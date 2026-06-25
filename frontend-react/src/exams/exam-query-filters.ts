@@ -17,7 +17,9 @@ const quickActionFilters = [
   'returned',
 ] as const
 
-export function getInitialExamFilters(searchParams: URLSearchParams): ExamFilters {
+export function getInitialExamFilters(
+  searchParams: URLSearchParams,
+): ExamFilters {
   const examType = searchParams.get('examType')
   const quickAction = searchParams.get('quickAction')
   const parsedQuickAction = quickActionFilters.includes(

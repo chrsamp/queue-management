@@ -19,7 +19,9 @@ export async function checkInAppointment({
   beginService: boolean
 }) {
   if (!appointment.citizen_id || !appointment.service_id) {
-    throw new Error('The appointment is missing citizen or service information.')
+    throw new Error(
+      'The appointment is missing citizen or service information.',
+    )
   }
 
   const checkedInTime = new Date().toISOString()

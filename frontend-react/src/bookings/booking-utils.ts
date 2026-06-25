@@ -42,7 +42,9 @@ export const offsiteResource: RoomResource = {
 export const bookingWorkdayStart = { hours: 8, minutes: 30 }
 export const bookingWorkdayEnd = { hours: 17, minutes: 0 }
 
-export function examsEnabled(office: { exams_enabled_ind?: number | null } | null) {
+export function examsEnabled(
+  office: { exams_enabled_ind?: number | null } | null,
+) {
   return office?.exams_enabled_ind === 1
 }
 

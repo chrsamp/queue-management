@@ -507,17 +507,18 @@ describe('QueueWorkspace', () => {
       await screen.findByRole('heading', { name: 'Serve Citizen' }),
     ).toBeVisible()
 
-    await user.click(
-      screen.getByRole('button', { name: 'Begin Service' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Begin Service' }))
 
     await waitFor(() => {
-      expect(client.request).toHaveBeenCalledWith('/citizens/1/begin_service/', {
-        body: {},
-        method: 'POST',
-        schema: expect.anything(),
-        signal: undefined,
-      })
+      expect(client.request).toHaveBeenCalledWith(
+        '/citizens/1/begin_service/',
+        {
+          body: {},
+          method: 'POST',
+          schema: expect.anything(),
+          signal: undefined,
+        },
+      )
     })
   })
 
@@ -533,22 +534,28 @@ describe('QueueWorkspace', () => {
     await user.click(screen.getByText('A1'))
 
     await waitFor(() => {
-      expect(client.request).toHaveBeenCalledWith('/citizens/1/begin_service/', {
-        body: {},
-        method: 'POST',
-        schema: expect.anything(),
-        signal: undefined,
-      })
+      expect(client.request).toHaveBeenCalledWith(
+        '/citizens/1/begin_service/',
+        {
+          body: {},
+          method: 'POST',
+          schema: expect.anything(),
+          signal: undefined,
+        },
+      )
     })
 
     await user.click(screen.getByRole('button', { name: 'Place on Hold' }))
 
     await waitFor(() => {
-      expect(client.request).toHaveBeenCalledWith('/citizens/1/place_on_hold/', {
-        method: 'POST',
-        schema: expect.anything(),
-        signal: undefined,
-      })
+      expect(client.request).toHaveBeenCalledWith(
+        '/citizens/1/place_on_hold/',
+        {
+          method: 'POST',
+          schema: expect.anything(),
+          signal: undefined,
+        },
+      )
     })
   })
 
@@ -575,12 +582,15 @@ describe('QueueWorkspace', () => {
 
     await user.click(screen.getByRole('button', { name: 'Begin Service' }))
     await waitFor(() => {
-      expect(client.request).toHaveBeenCalledWith('/citizens/1/begin_service/', {
-        body: {},
-        method: 'POST',
-        schema: expect.anything(),
-        signal: undefined,
-      })
+      expect(client.request).toHaveBeenCalledWith(
+        '/citizens/1/begin_service/',
+        {
+          body: {},
+          method: 'POST',
+          schema: expect.anything(),
+          signal: undefined,
+        },
+      )
     })
 
     rerender(
@@ -595,10 +605,14 @@ describe('QueueWorkspace', () => {
       </ApiProvider>,
     )
     await user.click(screen.getByRole('button', { name: 'Minimize' }))
-    expect(screen.queryByRole('heading', { name: 'Serve Citizen' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Serve Citizen' }),
+    ).not.toBeInTheDocument()
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Serve Now' })).not.toBeDisabled()
+      expect(
+        screen.getByRole('button', { name: 'Serve Now' }),
+      ).not.toBeDisabled()
     })
     await user.click(screen.getByRole('button', { name: 'Serve Now' }))
     expect(screen.getByRole('heading', { name: 'Serve Citizen' })).toBeVisible()
@@ -651,7 +665,9 @@ describe('QueueWorkspace', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Serve Now' })).not.toBeDisabled()
+      expect(
+        screen.getByRole('button', { name: 'Serve Now' }),
+      ).not.toBeDisabled()
     })
     await user.click(screen.getByRole('button', { name: 'Serve Now' }))
     await user.click(screen.getByRole('button', { name: 'Finish' }))

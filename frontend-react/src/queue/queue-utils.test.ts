@@ -111,9 +111,9 @@ describe('queue-utils', () => {
       }),
     ).toBe(false)
     expect(isNotificationEnabled(office)).toBe(true)
-    expect(isNotificationEnabled({ ...office, check_in_notification: null })).toBe(
-      false,
-    )
+    expect(
+      isNotificationEnabled({ ...office, check_in_notification: null }),
+    ).toBe(false)
   })
 
   test('splits waiting and hold citizens from active period state', () => {
@@ -275,9 +275,8 @@ describe('queue-utils', () => {
         username: 'csr.user',
       })?.serviceRequest.sr_id,
     ).toBe(1)
-    expect(getActiveServiceRequests(activeCitizen).map((item) => item.sr_id)).toEqual([
-      3,
-      1,
-    ])
+    expect(
+      getActiveServiceRequests(activeCitizen).map((item) => item.sr_id),
+    ).toEqual([3, 1])
   })
 })

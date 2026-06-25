@@ -7,8 +7,10 @@ import {
 
 import { cx } from '@/lib/cx'
 
-export interface SubheaderProps
-  extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
+export interface SubheaderProps extends Omit<
+  HTMLAttributes<HTMLElement>,
+  'children'
+> {
   ariaLabel?: string
   children?: ReactNode
   className?: string
@@ -47,7 +49,9 @@ export default function Subheader({
         aria-label={ariaLabel}
         className={cx(
           'box-border flex w-full flex-1 flex-wrap items-center justify-between gap-4',
-          size === 'small' ? 'min-h-bc-subheader-small py-0.5' : 'min-h-bc-subheader-medium py-2',
+          size === 'small'
+            ? 'min-h-bc-subheader-small py-0.5'
+            : 'min-h-bc-subheader-medium py-2',
           containerClassName,
         )}
         {...props}
@@ -87,10 +91,7 @@ function SubheaderList({
 
         return [
           <li
-            className={cx(
-              'flex items-center',
-              size === 'medium' && 'px-2',
-            )}
+            className={cx('flex items-center', size === 'medium' && 'px-2')}
             key={`item-${String(baseKey)}`}
           >
             {item}

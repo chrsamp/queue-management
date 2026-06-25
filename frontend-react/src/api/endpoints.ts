@@ -307,7 +307,9 @@ export function getAppointments(client: ApiClient, signal?: AbortSignal) {
   return client
     .get('/appointments/', { schema: appointmentsResponseSchema, signal })
     .then((response) =>
-      response.appointments.filter((appointment) => !appointment.checked_in_time),
+      response.appointments.filter(
+        (appointment) => !appointment.checked_in_time,
+      ),
     )
 }
 
@@ -427,7 +429,10 @@ export function getRooms(
   signal?: AbortSignal,
 ) {
   return client
-    .get(`/rooms/?office_id=${officeId}`, { schema: roomsResponseSchema, signal })
+    .get(`/rooms/?office_id=${officeId}`, {
+      schema: roomsResponseSchema,
+      signal,
+    })
     .then((response) => response.rooms)
 }
 
@@ -554,7 +559,10 @@ export function getInvigilators(client: ApiClient, signal?: AbortSignal) {
     .then((response) => response.invigilators)
 }
 
-export function getOffsiteInvigilators(client: ApiClient, signal?: AbortSignal) {
+export function getOffsiteInvigilators(
+  client: ApiClient,
+  signal?: AbortSignal,
+) {
   return client
     .get('/invigilators/offsite/', {
       schema: invigilatorsResponseSchema,

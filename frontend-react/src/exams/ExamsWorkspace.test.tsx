@@ -275,9 +275,11 @@ describe('ExamsWorkspace', () => {
         expect.anything(),
       ),
     )
-    const groupExamPayload = vi.mocked(updateExam).mock.calls.find(
-      ([, examId]) => examId === groupExam.exam_id,
-    )?.[2] as Record<string, unknown>
+    const groupExamPayload = vi
+      .mocked(updateExam)
+      .mock.calls.find(
+        ([, examId]) => examId === groupExam.exam_id,
+      )?.[2] as Record<string, unknown>
 
     expect(groupExamPayload).toBeDefined()
     expect(groupExamPayload).not.toHaveProperty('exam_type_id')

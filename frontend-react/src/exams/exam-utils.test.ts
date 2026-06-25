@@ -90,7 +90,10 @@ describe('exam status and filters', () => {
   })
 
   test('marks scheduled/received exams with invigilation as ready', () => {
-    const invigilator = { invigilator_id: 4, invigilator_name: 'Alex' } as Invigilator
+    const invigilator = {
+      invigilator_id: 4,
+      invigilator_name: 'Alex',
+    } as Invigilator
     const exam = {
       ...baseExam,
       booking: {

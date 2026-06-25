@@ -11,10 +11,7 @@ export function getAvailableQuickItems(items: QuickService[] | undefined) {
   return (items ?? []).filter((item) => item.deleted === null)
 }
 
-export function getDefaultChannelId(
-  channels: Channel[],
-  mode: AddCitizenMode,
-) {
+export function getDefaultChannelId(channels: Channel[], mode: AddCitizenMode) {
   if (mode === 'back-office') {
     const backOfficeChannel = channels.find(
       (channel) => channel.channel_name.toLowerCase() === 'back office',
@@ -30,7 +27,9 @@ export function getDefaultChannelId(
 
 export function getModeServices(services: Service[], mode: AddCitizenMode) {
   return services.filter((service) =>
-    mode === 'add-citizen' || mode === 'add-next-service' || mode === 'edit-service'
+    mode === 'add-citizen' ||
+    mode === 'add-next-service' ||
+    mode === 'edit-service'
       ? service.display_dashboard_ind === 1
       : service.display_dashboard_ind === 0,
   )
