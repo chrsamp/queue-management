@@ -123,21 +123,6 @@ export function diffMinutes(start: Date, end: Date) {
   return Math.round((end.getTime() - start.getTime()) / 60000)
 }
 
-export function getNextAppointmentDate(date: Date, direction: 'next' | 'prev') {
-  const next = new Date(date)
-  next.setDate(next.getDate() + (direction === 'next' ? 1 : -1))
-
-  if (direction === 'next' && next.getDay() === 6) {
-    next.setDate(next.getDate() + 2)
-  }
-
-  if (direction === 'prev' && next.getDay() === 0) {
-    next.setDate(next.getDate() - 2)
-  }
-
-  return next
-}
-
 export function utcToOfficeDate(value: string, timezone: string) {
   const zoned = new TZDate(value, timezone)
 

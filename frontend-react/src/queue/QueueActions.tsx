@@ -1,12 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
-import {
-  Menu,
-  MenuItem,
-  MenuTrigger,
-  Popover,
-  type Key,
-} from 'react-aria-components'
+import { type Key } from 'react-aria-components'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
@@ -23,6 +16,7 @@ import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
+import SplitAction from '@/components/SplitAction'
 import { cx } from '@/lib/cx'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -304,14 +298,21 @@ export default function QueueActions({
         <div className="ml-auto flex flex-wrap items-center gap-3">
           <SplitAction
             disabled={isBusy}
-            items={backOfficeItems}
+            items={backOfficeItems.map((item) => ({
+              id: item.service_id,
+              label: item.service_name,
+            }))}
             label="Back Office"
             onAction={(key) => handleQuickAction('back-office', key)}
             onPrimary={() => void openModal('back-office')}
+            variant="secondary"
           />
           <SplitAction
             disabled={isBusy}
-            items={quickListItems}
+            items={quickListItems.map((item) => ({
+              id: item.service_id,
+              label: item.service_name,
+            }))}
             label="Add Citizen"
             onAction={(key) => handleQuickAction('add-citizen', key)}
             onPrimary={() => void openModal('add-citizen')}
@@ -334,66 +335,6 @@ export default function QueueActions({
         state={modalState}
       />
     </>
-  )
-}
-
-function SplitAction({
-  disabled,
-  items,
-  label,
-  onAction,
-  onPrimary,
-}: {
-  disabled: boolean
-  items: Array<{ service_id: number; service_name: string }>
-  label: string
-  onAction: (key: Key) => void
-  onPrimary: () => void
-}) {
-  const hasMenu = items.length > 0
-
-  return (
-    <div className="inline-flex items-stretch">
-      <Button
-        className={cx(hasMenu && 'rounded-r-none')}
-        disabled={disabled}
-        onClick={onPrimary}
-      >
-        {label}
-      </Button>
-      {hasMenu && (
-        <MenuTrigger>
-          <Button
-            aria-label={`${label} quick services`}
-            className="border-l-bc-button-primary-hover rounded-l-none border-l"
-            disabled={disabled}
-            isIconButton
-          >
-            <ChevronDown aria-hidden="true" className="h-4 w-4" />
-          </Button>
-          <Popover
-            className="border-bc-border bg-bc-white shadow-bc-popover z-50 min-w-64 overflow-hidden rounded-sm border p-1"
-            offset={4}
-          >
-            <Menu
-              className="max-h-80 overflow-auto outline-hidden"
-              items={items}
-              onAction={onAction}
-            >
-              {(item) => (
-                <MenuItem
-                  className="data-[focused]:bg-bc-button-secondary-hover data-[hovered]:bg-bc-button-secondary-hover text-bc-body cursor-pointer rounded-sm px-3 py-2 outline-hidden"
-                  id={item.service_id}
-                  textValue={item.service_name}
-                >
-                  {item.service_name}
-                </MenuItem>
-              )}
-            </Menu>
-          </Popover>
-        </MenuTrigger>
-      )}
-    </div>
   )
 }
 

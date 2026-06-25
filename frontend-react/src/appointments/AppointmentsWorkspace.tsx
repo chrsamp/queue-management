@@ -20,6 +20,7 @@ import type { Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
+import SplitAction from '@/components/SplitAction'
 import { queryKeys } from '@/query/query-keys'
 
 import AppointmentBlackoutModal from './AppointmentBlackoutModal'
@@ -29,13 +30,11 @@ import {
   addMinutes,
   appointmentToCalendarEvent,
   formatDateInputValue,
-  getNextAppointmentDate,
   getNextValidAppointmentStart,
   isPast,
   officeDateToUtcIso,
   type AppointmentCalendarEvent,
 } from './appointment-utils'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const locales = { 'en-US': enUS }
 const emptyAppointments: never[] = []
@@ -130,6 +129,12 @@ export default function AppointmentsWorkspace({
   }
 
   async function handleSelectSlot({ start }: SlotInfo) {
+    if (view === 'month') {
+      setDate(start)
+      setView('day')
+      return
+    }
+
     if (isPast(start)) {
       return
     }
@@ -157,22 +162,15 @@ export default function AppointmentsWorkspace({
   }
 
   function handleSelectEvent(event: AppointmentCalendarEvent) {
-    setClickedEvent({ ...event, color: '#e91e63' })
-    setClickedTime(null)
-    setCheckInModalOpen(true)
-  }
-
-  function navigate(direction: 'next' | 'prev') {
-    if (view === 'day') {
-      setDate((current) => getNextAppointmentDate(current, direction))
+    if (view === 'month') {
+      setDate(event.start)
+      setView('day')
       return
     }
 
-    setDate((current) => {
-      const next = new Date(current)
-      next.setDate(next.getDate() + (direction === 'next' ? 7 : -7))
-      return next
-    })
+    setClickedEvent({ ...event, color: '#e91e63' })
+    setClickedTime(null)
+    setCheckInModalOpen(true)
   }
 
   function openEditModal(editSeries: boolean) {
@@ -184,69 +182,59 @@ export default function AppointmentsWorkspace({
     }
   }
 
+  function openNewAppointment() {
+    setClickedEvent(null)
+    setClickedTime(getNextValidAppointmentStart())
+    setAppointmentModalOpen(true)
+  }
+
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden p-6">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setDate(new Date())}>Today</Button>
-          <Button
-            onClick={() => setView(view === 'day' ? 'work_week' : 'day')}
-            variant="secondary"
-          >
-            {view === 'day' ? 'Week View' : 'Day View'}
-          </Button>
-          <Button
-            onClick={() => setBlackoutModalOpen(true)}
-            variant="secondary"
-          >
-            Create Blackout
-          </Button>
-          <Button
-            onClick={() => {
-              setClickedEvent(null)
-              setClickedTime(getNextValidAppointmentStart())
-              setAppointmentModalOpen(true)
-            }}
-          >
-            New Appointment
-          </Button>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => navigate('prev')} variant="secondary">
-            <ChevronLeft />
-          </Button>
-          <h2 className="text-bc-h4 m-0 min-w-64 text-center font-bold">
-            {format(date, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
-          </h2>
-          <Button onClick={() => navigate('next')} variant="secondary">
-            <ChevronRight />
-          </Button>
+      <div className="flex items-center justify-between gap-3">
+        <form
+          className="flex shrink-0 flex-wrap items-center gap-2"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <label className="font-bold" htmlFor="appointment-search">
+            Filter Appointments
+          </label>
+          <input
+            className="border-bc-border rounded-sm border px-3 py-2"
+            id="appointment-search"
+            onChange={(event) => setSearch(event.target.value)}
+            value={search}
+          />
+          {search && (
+            <Button
+              onClick={() => setSearch('')}
+              size="small"
+              variant="secondary"
+            >
+              Clear
+            </Button>
+          )}
+        </form>
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            <SplitAction
+              items={[
+                { id: 'appointment', label: 'Appointment' },
+                { id: 'blackout', label: 'Blackout' },
+              ]}
+              label="Create new..."
+              onAction={(key) => {
+                if (key === 'appointment') {
+                  openNewAppointment()
+                }
+
+                if (key === 'blackout') {
+                  setBlackoutModalOpen(true)
+                }
+              }}
+            />
+          </div>
         </div>
       </div>
-
-      <form
-        className="flex shrink-0 flex-wrap items-center gap-2"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <label className="font-bold" htmlFor="appointment-search">
-          Filter Appointments
-        </label>
-        <input
-          className="border-bc-border rounded-sm border px-3 py-2"
-          id="appointment-search"
-          onChange={(event) => setSearch(event.target.value)}
-          value={search}
-        />
-        {search && (
-          <Button
-            onClick={() => setSearch('')}
-            size="small"
-            variant="secondary"
-          >
-            Clear
-          </Button>
-        )}
-      </form>
 
       {errorMessage && (
         <AlertBanner
@@ -309,9 +297,8 @@ export default function AppointmentsWorkspace({
             startAccessor="start"
             step={15}
             timeslots={1}
-            toolbar={false}
             view={view}
-            views={['work_week', 'day']}
+            views={['day', 'work_week', 'month', 'agenda']}
           />
         </div>
       )}

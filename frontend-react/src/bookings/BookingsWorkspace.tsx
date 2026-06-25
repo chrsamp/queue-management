@@ -22,6 +22,7 @@ import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
+import SplitAction from '@/components/SplitAction'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -38,7 +39,6 @@ import {
   type BookingCalendarEvent,
   type RoomResource,
 } from './booking-utils'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const locales = { 'en-US': enUS }
 const localizer = dateFnsLocalizer({
@@ -279,100 +279,81 @@ export default function BookingsWorkspace({
     resetScheduling()
   }
 
-  function navigate(direction: 'next' | 'prev') {
-    setDate((current) => {
-      const next = new Date(current)
-      const amount = view === 'day' ? 1 : view === 'month' ? 30 : 7
-      next.setDate(next.getDate() + (direction === 'next' ? amount : -amount))
-      return next
-    })
-  }
-
   return (
     <section className="flex h-full min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden p-6">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={() => setDate(new Date())}>Today</Button>
-          <Button
-            onClick={() => setView(view === 'day' ? 'work_week' : 'day')}
-            variant="secondary"
-          >
-            {view === 'day' ? 'Week View' : 'Day View'}
-          </Button>
-          <Button
-            onClick={() => setView(view === 'month' ? 'work_week' : 'month')}
-            variant="secondary"
-          >
-            {view === 'month' ? 'Week View' : 'Month View'}
-          </Button>
-          <Button onClick={() => setExamPickerOpen(true)} variant="secondary">
-            Exam Event
-          </Button>
-          <Button onClick={openOtherScheduling} variant="secondary">
-            Non-Exam Event
-          </Button>
-          <Button onClick={() => setBlackoutModalOpen(true)}>
-            Create Blackout
-          </Button>
-          {schedulingMode && (
-            <Button onClick={resetScheduling} variant="secondary">
-              Cancel Scheduling
+      <div className="flex items-center justify-between gap-3">
+        <form
+          className="flex shrink-0 flex-wrap items-center gap-3"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <label className="font-bold" htmlFor="booking-search">
+            Filter Exams
+          </label>
+          <input
+            className="border-bc-border rounded-sm border px-3 py-2"
+            id="booking-search"
+            onChange={(event) => setSearch(event.target.value)}
+            value={search}
+          />
+          {search && (
+            <Button
+              onClick={() => setSearch('')}
+              size="small"
+              variant="secondary"
+            >
+              Clear
             </Button>
           )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => navigate('prev')} variant="secondary">
-            <ChevronLeft />
-          </Button>
-          <h2 className="text-bc-h4 m-0 min-w-64 text-center font-bold">
-            {format(date, view === 'day' ? 'MMMM d, yyyy' : 'MMMM yyyy')}
-          </h2>
-          <Button onClick={() => navigate('next')} variant="secondary">
-            <ChevronRight />
-          </Button>
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="font-bold">Show Bookings in</span>
+            {(['onsite', 'offsite', 'both'] as const).map((mode) => (
+              <Button
+                key={mode}
+                onClick={() => setLocationMode(mode)}
+                size="small"
+                variant={locationMode === mode ? 'primary' : 'secondary'}
+              >
+                {mode === 'onsite'
+                  ? 'On-site'
+                  : mode === 'offsite'
+                    ? 'Off-site'
+                    : 'Both'}
+              </Button>
+            ))}
+          </div>
+        </form>
+
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            <SplitAction
+              items={[
+                { id: 'exam', label: 'Exam Event' },
+                { id: 'other', label: 'Non-Exam Event' },
+                { id: 'blackout', label: 'Blackout' },
+              ]}
+              label="Create new..."
+              onAction={(key) => {
+                if (key === 'exam') {
+                  setExamPickerOpen(true)
+                }
+
+                if (key === 'other') {
+                  openOtherScheduling()
+                }
+
+                if (key === 'blackout') {
+                  setBlackoutModalOpen(true)
+                }
+              }}
+            />
+            {schedulingMode && (
+              <Button onClick={resetScheduling} variant="secondary">
+                Cancel Scheduling
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-
-      <form
-        className="flex shrink-0 flex-wrap items-center gap-3"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <label className="font-bold" htmlFor="booking-search">
-          Filter Exams
-        </label>
-        <input
-          className="border-bc-border rounded-sm border px-3 py-2"
-          id="booking-search"
-          onChange={(event) => setSearch(event.target.value)}
-          value={search}
-        />
-        {search && (
-          <Button
-            onClick={() => setSearch('')}
-            size="small"
-            variant="secondary"
-          >
-            Clear
-          </Button>
-        )}
-        <div className="flex flex-wrap items-center gap-1">
-          <span className="font-bold">Show Bookings in</span>
-          {(['onsite', 'offsite', 'both'] as const).map((mode) => (
-            <Button
-              key={mode}
-              onClick={() => setLocationMode(mode)}
-              size="small"
-              variant={locationMode === mode ? 'primary' : 'secondary'}
-            >
-              {mode === 'onsite'
-                ? 'On-site'
-                : mode === 'offsite'
-                  ? 'Off-site'
-                  : 'Both'}
-            </Button>
-          ))}
-        </div>
-      </form>
 
       {(errorMessage || routeError) && (
         <AlertBanner

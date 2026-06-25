@@ -5,7 +5,6 @@ export type AddCitizenMode =
   | 'add-next-service'
   | 'back-office'
   | 'edit-service'
-  | 'simplified'
 
 export function getAvailableQuickItems(items: QuickService[] | undefined) {
   return (items ?? []).filter((item) => item.deleted === null)

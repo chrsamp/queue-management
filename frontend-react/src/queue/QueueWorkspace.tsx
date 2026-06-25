@@ -381,7 +381,7 @@ export default function QueueWorkspace({
 
               <button
                 aria-label="Resize queue tables"
-                className="text-bc-secondary my-1 flex h-6 shrink-0 cursor-row-resize items-center justify-center font-bold"
+                className="text-bc-secondary hover:bg-bc-light-gray my-1 flex h-6 shrink-0 cursor-row-resize items-center justify-center rounded-lg font-bold"
                 onKeyDown={handleResizeKeyDown}
                 onPointerCancel={handleResizePointerEnd}
                 onPointerDown={handleResizePointerDown}

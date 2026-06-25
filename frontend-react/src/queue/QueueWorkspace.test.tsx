@@ -349,6 +349,12 @@ describe('QueueWorkspace', () => {
     expect(screen.getByRole('button', { name: 'Back Office' })).toHaveClass(
       'rounded-r-none',
     )
+    expect(screen.getByRole('button', { name: 'Add Citizen' })).toHaveClass(
+      'bg-bc-button-primary',
+    )
+    expect(screen.getByRole('button', { name: 'Back Office' })).toHaveClass(
+      'bg-bc-white',
+    )
 
     await user.click(
       screen.getByRole('button', { name: 'Add Citizen quick services' }),

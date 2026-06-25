@@ -303,9 +303,7 @@ export default function AddCitizenModal({
         ? 'Add Next Service'
         : form.mode === 'edit-service'
           ? 'Edit Service'
-          : form.mode === 'simplified'
-            ? 'Begin Tracking'
-            : 'Add Citizen'
+          : 'Add Citizen'
   const waitingCount = getWaitingCitizens(citizens).length
 
   return (

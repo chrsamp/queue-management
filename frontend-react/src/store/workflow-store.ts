@@ -52,7 +52,6 @@ interface WorkflowState {
   serviceBegun: boolean
   showServiceModal: boolean
   showDayAgenda: boolean
-  showTimeTrackingIcon: boolean
   terminalClearedCitizenId: number | null
   clearWorkflow: () => void
   clearGlobalAlert: (id?: string) => void
@@ -85,7 +84,6 @@ interface WorkflowState {
   setRealtimeRoomStatus: (status: RealtimeRoomStatus) => void
   setServeModalAlert: (message: string | null) => void
   setShowDayAgenda: (show: boolean) => void
-  setShowTimeTrackingIcon: (show: boolean) => void
 }
 
 export const useWorkflowStore = create<WorkflowState>((set) => ({
@@ -110,7 +108,6 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   serviceBegun: false,
   showServiceModal: false,
   showDayAgenda: false,
-  showTimeTrackingIcon: false,
   terminalClearedCitizenId: null,
   clearWorkflow: () =>
     set({
@@ -135,7 +132,6 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       serviceBegun: false,
       showServiceModal: false,
       showDayAgenda: false,
-      showTimeTrackingIcon: false,
       terminalClearedCitizenId: null,
     }),
   clearCurrentOffice: () => set({ currentOffice: null }),
@@ -163,7 +159,6 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       serveModalAlert: null,
       serviceBegun: false,
       showServiceModal: false,
-      showTimeTrackingIcon: false,
       terminalClearedCitizenId: null,
     }),
   clearTerminalServeCitizen: (citizenId) =>
@@ -174,15 +169,10 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       serveModalAlert: null,
       serviceBegun: false,
       showServiceModal: false,
-      showTimeTrackingIcon: false,
       terminalClearedCitizenId: citizenId,
     }),
   closeServiceModal: () => set({ showServiceModal: false }),
-  openServiceModal: () =>
-    set({
-      showServiceModal: true,
-      showTimeTrackingIcon: false,
-    }),
+  openServiceModal: () => set({ showServiceModal: true }),
   setActiveServiceCitizen: (citizenId, serviceRequestId, serviceBegun) =>
     set({
       activeCitizenId: citizenId,
@@ -236,5 +226,4 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   setRealtimeRoomStatus: (status) => set({ realtimeRoomStatus: status }),
   setServeModalAlert: (message) => set({ serveModalAlert: message }),
   setShowDayAgenda: (show) => set({ showDayAgenda: show }),
-  setShowTimeTrackingIcon: (show) => set({ showTimeTrackingIcon: show }),
 }))

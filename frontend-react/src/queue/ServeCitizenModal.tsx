@@ -42,7 +42,6 @@ interface ServeCitizenModalProps {
   citizen: Citizen | null
   citizens: Citizen[]
   office: Office
-  simplified?: boolean
 }
 
 interface ServeCitizenForm {
@@ -57,15 +56,12 @@ export default function ServeCitizenModal({
   citizen,
   citizens,
   office,
-  simplified = false,
 }: ServeCitizenModalProps) {
   const apiClient = useApiClient()
   const queryClient = useQueryClient()
-  const activeCitizenId = useWorkflowStore((state) => state.activeCitizenId)
   const activeServiceRequestId = useWorkflowStore(
     (state) => state.activeServiceRequestId,
   )
-  const clearServeCitizen = useWorkflowStore((state) => state.clearServeCitizen)
   const clearTerminalServeCitizen = useWorkflowStore(
     (state) => state.clearTerminalServeCitizen,
   )
@@ -78,9 +74,6 @@ export default function ServeCitizenModal({
   )
   const setServeModalAlert = useWorkflowStore(
     (state) => state.setServeModalAlert,
-  )
-  const setShowTimeTrackingIcon = useWorkflowStore(
-    (state) => state.setShowTimeTrackingIcon,
   )
   const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
   const [isMinimized, setIsMinimized] = useState(false)
@@ -210,13 +203,12 @@ export default function ServeCitizenModal({
   }
 
   function handleMinimize() {
-    if (!serviceBegun && !simplified) {
+    if (!serviceBegun) {
       setIsMinimized((current) => !current)
       return
     }
 
     closeServiceModal()
-    setShowTimeTrackingIcon(true)
   }
 
   function openServiceForm(mode: 'add-next-service' | 'edit-service') {
@@ -262,7 +254,7 @@ export default function ServeCitizenModal({
         <Dialog className="p-0" isCloseable={false}>
           <div className="border-bc-border bg-bc-light-gray flex items-center justify-between border-b px-6 py-4">
             <DialogTitle className="text-bc-h4 text-bc-secondary m-0 font-bold">
-              {simplified ? 'TheQ Time Tracking' : 'Serve Citizen'}
+              Serve Citizen
             </DialogTitle>
             <Button
               disabled={isPerformingAction}
@@ -288,107 +280,94 @@ export default function ServeCitizenModal({
                   </AlertBanner>
                 )}
 
-                {!simplified && (
-                  <div className="grid grid-cols-[minmax(12rem,1fr)_auto_minmax(0,2fr)] gap-4">
-                    <div>
-                      {citizen.citizen_name && (
-                        <p className="m-0 font-bold">{citizen.citizen_name}</p>
-                      )}
-                      <p className="m-0">
-                        Ticket #: <strong>{citizen.ticket_number}</strong>
-                      </p>
-                      <p className="m-0">
-                        Channel:{' '}
-                        <strong>
-                          {activeService?.channel?.channel_name ?? ''}
-                        </strong>
-                      </p>
-                      <p className="m-0">
-                        Created At:{' '}
-                        <strong>{formatQueueTime(citizen.start_time)}</strong>
-                      </p>
-                    </div>
-                    <label
-                      className="text-bc-small text-bc-secondary pt-2 font-bold"
-                      htmlFor="serve-citizen-comments"
-                    >
-                      Comments:
-                    </label>
-                    <textarea
-                      className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus min-h-24 rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
-                      id="serve-citizen-comments"
-                      maxLength={1000}
-                      onChange={(event) =>
-                        updateForm({ comments: event.target.value })
-                      }
-                      value={form.comments}
-                    />
+                <div className="grid grid-cols-[minmax(12rem,1fr)_auto_minmax(0,2fr)] gap-4">
+                  <div>
+                    {citizen.citizen_name && (
+                      <p className="m-0 font-bold">{citizen.citizen_name}</p>
+                    )}
+                    <p className="m-0">
+                      Ticket #: <strong>{citizen.ticket_number}</strong>
+                    </p>
+                    <p className="m-0">
+                      Channel:{' '}
+                      <strong>{activeService?.channel?.channel_name ?? ''}</strong>
+                    </p>
+                    <p className="m-0">
+                      Created At:{' '}
+                      <strong>{formatQueueTime(citizen.start_time)}</strong>
+                    </p>
                   </div>
-                )}
+                  <label
+                    className="text-bc-small text-bc-secondary pt-2 font-bold"
+                    htmlFor="serve-citizen-comments"
+                  >
+                    Comments:
+                  </label>
+                  <textarea
+                    className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus min-h-24 rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
+                    id="serve-citizen-comments"
+                    maxLength={1000}
+                    onChange={(event) =>
+                      updateForm({ comments: event.target.value })
+                    }
+                    value={form.comments}
+                  />
+                </div>
 
-                {!simplified && (
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <div className="flex gap-2">
-                      {isReceptionOffice(office) && (
-                        <Button
-                          className={cx(
-                            !serviceBegun &&
-                              'animate-pulse border border-yellow-700 bg-yellow-300 text-black hover:bg-yellow-300',
-                          )}
-                          disabled={beginDisabled}
-                          onClick={() =>
-                            void runLifecycle(
-                              () =>
-                                beginCitizenService(
-                                  apiClient,
-                                  citizen.citizen_id,
-                                ),
-                              { reminder: true, serviceBegun: true },
-                            )
-                          }
-                          id="serve-citizen-begin-service-button"
-                        >
-                          Begin Service
-                        </Button>
-                      )}
-                      {isReceptionOffice(office) && (
-                        <Button
-                          disabled={actionDisabled}
-                          onClick={() =>
-                            void runLifecycle(
-                              () =>
-                                addCitizenToQueue(
-                                  apiClient,
-                                  citizen.citizen_id,
-                                ),
-                              { clear: true },
-                            )
-                          }
-                          variant="secondary"
-                          id="serve-citizen-return-to-queue-button"
-                        >
-                          Return to Queue
-                        </Button>
-                      )}
-                    </div>
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div className="flex gap-2">
                     {isReceptionOffice(office) && (
                       <Button
-                        danger
+                        className={cx(
+                          !serviceBegun &&
+                            'animate-pulse border border-yellow-700 bg-yellow-300 text-black hover:bg-yellow-300',
+                        )}
+                        disabled={beginDisabled}
+                        onClick={() =>
+                          void runLifecycle(
+                            () =>
+                              beginCitizenService(apiClient, citizen.citizen_id),
+                            { reminder: true, serviceBegun: true },
+                          )
+                        }
+                        id="serve-citizen-begin-service-button"
+                      >
+                        Begin Service
+                      </Button>
+                    )}
+                    {isReceptionOffice(office) && (
+                      <Button
                         disabled={actionDisabled}
                         onClick={() =>
                           void runLifecycle(
                             () =>
-                              markCitizenLeft(apiClient, citizen.citizen_id),
-                            { clear: true, reminder: true },
+                              addCitizenToQueue(apiClient, citizen.citizen_id),
+                            { clear: true },
                           )
                         }
-                        id="serve-citizen-citizen-left-button"
+                        variant="secondary"
+                        id="serve-citizen-return-to-queue-button"
                       >
-                        Citizen Left
+                        Return to Queue
                       </Button>
                     )}
                   </div>
-                )}
+                  {isReceptionOffice(office) && (
+                    <Button
+                      danger
+                      disabled={actionDisabled}
+                      onClick={() =>
+                        void runLifecycle(
+                          () => markCitizenLeft(apiClient, citizen.citizen_id),
+                          { clear: true, reminder: true },
+                        )
+                      }
+                      id="serve-citizen-citizen-left-button"
+                    >
+                      Citizen Left
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <ServiceRequestsTable
@@ -408,140 +387,99 @@ export default function ServeCitizenModal({
                 serviceRequests={serviceRequests}
               />
 
-              {!simplified ? (
-                <div className="bg-bc-secondary flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-                  <div className="flex flex-wrap items-center gap-3">
-                    {isReceptionOffice(office) && (
-                      <select
-                        aria-label="Counter"
-                        className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
-                        onChange={(event) =>
-                          updateForm({
-                            counterId: Number(event.target.value) || null,
-                          })
-                        }
-                        value={form.counterId ?? ''}
-                      >
-                        {[...office.counters]
-                          .sort((left, right) =>
-                            left.counter_name.localeCompare(right.counter_name),
-                          )
-                          .map((counter) => (
-                            <option
-                              key={counter.counter_id}
-                              value={counter.counter_id}
-                            >
-                              {counter.counter_name}
-                            </option>
-                          ))}
-                      </select>
-                    )}
+              <div className="bg-bc-secondary flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  {isReceptionOffice(office) && (
                     <select
-                      aria-label="Priority"
+                      aria-label="Counter"
                       className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
                       onChange={(event) =>
-                        updateForm({ priority: Number(event.target.value) })
+                        updateForm({
+                          counterId: Number(event.target.value) || null,
+                        })
                       }
-                      value={form.priority}
+                      value={form.counterId ?? ''}
                     >
-                      <option value={1}>High Priority</option>
-                      <option value={2}>Default Priority</option>
-                      <option value={3}>Low Priority</option>
+                      {[...office.counters]
+                        .sort((left, right) =>
+                          left.counter_name.localeCompare(right.counter_name),
+                        )
+                        .map((counter) => (
+                          <option
+                            key={counter.counter_id}
+                            value={counter.counter_id}
+                          >
+                            {counter.counter_name}
+                          </option>
+                        ))}
                     </select>
-                    <Button
-                      disabled={serviceActionDisabled}
-                      onClick={() => openServiceForm('add-next-service')}
-                    >
-                      Add Next Service
-                    </Button>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <label className="text-bc-white flex items-center gap-2">
-                      <input
-                        checked={form.accurateTimeInd === 0}
-                        disabled={!serviceBegun || isPerformingAction}
-                        onChange={(event) =>
-                          updateForm({
-                            accurateTimeInd: event.target.checked ? 0 : 1,
-                          })
-                        }
-                        type="checkbox"
-                      />
-                      Inaccurate Time
-                    </label>
-                    <Button
-                      disabled={serviceActionDisabled}
-                      onClick={() =>
-                        void runLifecycle(
-                          () =>
-                            finishCitizenService(
-                              apiClient,
-                              citizen.citizen_id,
-                              form.accurateTimeInd === 0,
-                            ),
-                          { clear: true },
-                        )
-                      }
-                      id="serve-citizen-finish-button"
-                    >
-                      Finish
-                    </Button>
-                    <Button
-                      disabled={serviceActionDisabled}
-                      onClick={() =>
-                        void runLifecycle(
-                          () =>
-                            placeCitizenOnHold(apiClient, citizen.citizen_id),
-                          { clear: true },
-                        )
-                      }
-                      variant="secondary"
-                      id="serve-citizen-place-on-hold-button"
-                    >
-                      Place on Hold
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-end gap-2 border-t px-6 py-4">
-                  {activeCitizenId && (
-                    <Button onClick={() => openServiceForm('add-next-service')}>
-                      Add Next Service
-                    </Button>
                   )}
-                  <Button
-                    disabled={isPerformingAction}
-                    onClick={() =>
-                      activeCitizenId
-                        ? void runLifecycle(
-                            () =>
-                              finishCitizenService(
-                                apiClient,
-                                citizen.citizen_id,
-                                true,
-                              ),
-                            { clear: true },
-                          )
-                        : openServiceModal()
+                  <select
+                    aria-label="Priority"
+                    className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
+                    onChange={(event) =>
+                      updateForm({ priority: Number(event.target.value) })
                     }
-                    variant={activeCitizenId ? 'secondary' : 'primary'}
+                    value={form.priority}
                   >
-                    {activeCitizenId ? 'Finish' : 'Begin'}
-                  </Button>
+                    <option value={1}>High Priority</option>
+                    <option value={2}>Default Priority</option>
+                    <option value={3}>Low Priority</option>
+                  </select>
                   <Button
-                    danger={!activeCitizenId}
-                    onClick={() =>
-                      activeCitizenId
-                        ? closeServiceModal()
-                        : clearServeCitizen()
-                    }
-                    variant={activeCitizenId ? 'primary' : 'secondary'}
+                    disabled={serviceActionDisabled}
+                    onClick={() => openServiceForm('add-next-service')}
                   >
-                    {activeCitizenId ? 'Continue' : 'Cancel'}
+                    Add Next Service
                   </Button>
                 </div>
-              )}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="text-bc-white flex items-center gap-2">
+                    <input
+                      checked={form.accurateTimeInd === 0}
+                      disabled={!serviceBegun || isPerformingAction}
+                      onChange={(event) =>
+                        updateForm({
+                          accurateTimeInd: event.target.checked ? 0 : 1,
+                        })
+                      }
+                      type="checkbox"
+                    />
+                    Inaccurate Time
+                  </label>
+                  <Button
+                    disabled={serviceActionDisabled}
+                    onClick={() =>
+                      void runLifecycle(
+                        () =>
+                          finishCitizenService(
+                            apiClient,
+                            citizen.citizen_id,
+                            form.accurateTimeInd === 0,
+                          ),
+                        { clear: true },
+                      )
+                    }
+                    id="serve-citizen-finish-button"
+                  >
+                    Finish
+                  </Button>
+                  <Button
+                    disabled={serviceActionDisabled}
+                    onClick={() =>
+                      void runLifecycle(
+                        () => placeCitizenOnHold(apiClient, citizen.citizen_id),
+                        { clear: true },
+                      )
+                    }
+                    variant="secondary"
+                    id="serve-citizen-place-on-hold-button"
+                  >
+                    Place on Hold
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </Dialog>
