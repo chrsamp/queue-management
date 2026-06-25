@@ -1,10 +1,25 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { io, type Socket } from 'socket.io-client'
 
-import { citizenSchema, type Citizen } from '@/api/schemas'
+import {
+  appointmentSchema,
+  bookingSchema,
+  citizenSchema,
+  type Citizen,
+} from '@/api/schemas'
 import { queryKeys } from '@/query/query-keys'
 import { getActiveCitizenForCsr } from '@/queue/queue-utils'
 import { useWorkflowStore } from '@/store/workflow-store'
+
+import {
+  extractRealtimeId,
+  refreshAppointmentQueries,
+  refreshBookingQueries,
+  removeAppointmentCache,
+  removeBookingCache,
+  upsertAppointmentCache,
+  upsertBookingCache,
+} from './realtime-query-handlers'
 
 export interface RealtimeConfig {
   reconnectionDelayMax: number
@@ -134,8 +149,8 @@ export class RealtimeService {
     })
 
     socket.on('update_customer_list', (payload: unknown) => {
-      this.recordDeferredEvent('update_customer_list', payload)
-      void this.queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      this.recordHandledEvent('update_customer_list', payload)
+      this.refreshCitizenQueries()
     })
 
     socket.on('update_active_citizen', (payload: unknown) => {
@@ -173,45 +188,27 @@ export class RealtimeService {
     })
 
     socket.on('appointment_create', (payload: unknown) => {
-      this.recordDeferredEvent('appointment_create', payload)
-      void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.appointments.all,
-      })
+      this.handleAppointmentUpsert('appointment_create', payload)
     })
 
     socket.on('appointment_update', (payload: unknown) => {
-      this.recordDeferredEvent('appointment_update', payload)
-      void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.appointments.all,
-      })
+      this.handleAppointmentUpsert('appointment_update', payload)
     })
 
     socket.on('appointment_delete', (payload: unknown) => {
-      this.recordDeferredEvent('appointment_delete', payload)
-      void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.appointments.all,
-      })
+      this.handleAppointmentDelete(payload)
     })
 
     socket.on('booking_create', (payload: unknown) => {
-      this.recordDeferredEvent('booking_create', payload)
-      void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.bookings.all,
-      })
+      this.handleBookingUpsert('booking_create', payload)
     })
 
     socket.on('booking_update', (payload: unknown) => {
-      this.recordDeferredEvent('booking_update', payload)
-      void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.bookings.all,
-      })
+      this.handleBookingUpsert('booking_update', payload)
     })
 
     socket.on('booking_delete', (payload: unknown) => {
-      this.recordDeferredEvent('booking_delete', payload)
-      void this.queryClient.invalidateQueries({
-        queryKey: queryKeys.bookings.all,
-      })
+      this.handleBookingDelete(payload)
     })
   }
 
@@ -301,12 +298,71 @@ export class RealtimeService {
     })
   }
 
-  private recordDeferredEvent(eventName: string, payload: unknown) {
+  private handleAppointmentUpsert(eventName: string, payload: unknown) {
+    this.recordHandledEvent(eventName, payload)
+
+    const parsed = appointmentSchema.safeParse(payload)
+
+    if (parsed.success) {
+      upsertAppointmentCache(this.queryClient, parsed.data)
+    } else {
+      console.warn(
+        `socket received invalid "${eventName}" payload`,
+        parsed.error,
+      )
+    }
+
+    refreshAppointmentQueries(this.queryClient)
+  }
+
+  private handleAppointmentDelete(payload: unknown) {
+    this.recordHandledEvent('appointment_delete', payload)
+
+    const id = extractRealtimeId(payload, 'appointment_id')
+
+    if (id !== null) {
+      removeAppointmentCache(this.queryClient, id)
+    } else {
+      console.warn('socket received invalid "appointment_delete" payload')
+    }
+
+    refreshAppointmentQueries(this.queryClient)
+  }
+
+  private handleBookingUpsert(eventName: string, payload: unknown) {
+    this.recordHandledEvent(eventName, payload)
+
+    const parsed = bookingSchema.safeParse(payload)
+
+    if (parsed.success) {
+      upsertBookingCache(this.queryClient, parsed.data)
+    } else {
+      console.warn(
+        `socket received invalid "${eventName}" payload`,
+        parsed.error,
+      )
+    }
+
+    refreshBookingQueries(this.queryClient)
+  }
+
+  private handleBookingDelete(payload: unknown) {
+    this.recordHandledEvent('booking_delete', payload)
+
+    const id = extractRealtimeId(payload, 'booking_id')
+
+    if (id !== null) {
+      removeBookingCache(this.queryClient, id)
+    } else {
+      console.warn('socket received invalid "booking_delete" payload')
+    }
+
+    refreshBookingQueries(this.queryClient)
+  }
+
+  private recordHandledEvent(eventName: string, payload: unknown) {
     this.recordEvent(eventName)
-    console.info(
-      `socket received: "${eventName}"; React handling is deferred to a future route implementation`,
-      payload,
-    )
+    console.info(`socket received: "${eventName}"`, payload)
   }
 
   private recordEvent(eventName: string) {

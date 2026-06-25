@@ -1,10 +1,24 @@
 import type { QueryClient } from '@tanstack/react-query'
 
-import { citizenSchema, type Citizen } from '@/api/schemas'
+import {
+  appointmentSchema,
+  bookingSchema,
+  citizenSchema,
+  type Citizen,
+} from '@/api/schemas'
 import { queryKeys } from '@/query/query-keys'
 import { getActiveCitizenForCsr } from '@/queue/queue-utils'
 import type { RealtimeServiceHandle } from '@/realtime/RealtimeProvider'
 import type { RealtimeServiceOptions } from '@/realtime/realtime-service'
+import {
+  extractRealtimeId,
+  refreshAppointmentQueries,
+  refreshBookingQueries,
+  removeAppointmentCache,
+  removeBookingCache,
+  upsertAppointmentCache,
+  upsertBookingCache,
+} from '@/realtime/realtime-query-handlers'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 declare global {
@@ -29,6 +43,46 @@ export function createE2eRealtimeService({
     if (eventName === 'csr_update') {
       void queryClient.invalidateQueries({ queryKey: queryKeys.csrs.me })
       void queryClient.invalidateQueries({ queryKey: queryKeys.csrs.all })
+      return
+    }
+
+    if (eventName === 'get_Csr_State_IDs') {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.csrStates })
+      return
+    }
+
+    if (eventName === 'update_customer_list') {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.activeCitizen })
+      return
+    }
+
+    if (eventName === 'update_offices_cache') {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.offices })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.csrs.me })
+      return
+    }
+
+    if (
+      eventName === 'appointment_create' ||
+      eventName === 'appointment_update'
+    ) {
+      applyAppointmentUpsert(queryClient, payload)
+      return
+    }
+
+    if (eventName === 'appointment_delete') {
+      applyAppointmentDelete(queryClient, payload)
+      return
+    }
+
+    if (eventName === 'booking_create' || eventName === 'booking_update') {
+      applyBookingUpsert(queryClient, payload)
+      return
+    }
+
+    if (eventName === 'booking_delete') {
+      applyBookingDelete(queryClient, payload)
     }
   }
 
@@ -46,6 +100,46 @@ export function createE2eRealtimeService({
       useWorkflowStore.getState().setRealtimeConnectionStatus('connected')
     },
   }
+}
+
+function applyAppointmentUpsert(queryClient: QueryClient, payload: unknown) {
+  const parsed = appointmentSchema.safeParse(payload)
+
+  if (parsed.success) {
+    upsertAppointmentCache(queryClient, parsed.data)
+  }
+
+  refreshAppointmentQueries(queryClient)
+}
+
+function applyAppointmentDelete(queryClient: QueryClient, payload: unknown) {
+  const id = extractRealtimeId(payload, 'appointment_id')
+
+  if (id !== null) {
+    removeAppointmentCache(queryClient, id)
+  }
+
+  refreshAppointmentQueries(queryClient)
+}
+
+function applyBookingUpsert(queryClient: QueryClient, payload: unknown) {
+  const parsed = bookingSchema.safeParse(payload)
+
+  if (parsed.success) {
+    upsertBookingCache(queryClient, parsed.data)
+  }
+
+  refreshBookingQueries(queryClient)
+}
+
+function applyBookingDelete(queryClient: QueryClient, payload: unknown) {
+  const id = extractRealtimeId(payload, 'booking_id')
+
+  if (id !== null) {
+    removeBookingCache(queryClient, id)
+  }
+
+  refreshBookingQueries(queryClient)
 }
 
 function applyUpdateActiveCitizen(queryClient: QueryClient, payload: unknown) {

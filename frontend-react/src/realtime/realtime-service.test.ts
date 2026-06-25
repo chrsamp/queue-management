@@ -1,7 +1,13 @@
 import { QueryClient } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
-import type { Citizen, Csr, ServiceRequest } from '@/api/schemas'
+import type {
+  Appointment,
+  Booking,
+  Citizen,
+  Csr,
+  ServiceRequest,
+} from '@/api/schemas'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -114,6 +120,64 @@ function citizen(
     ticket_number: `A${id}`,
     ...overrides,
   } satisfies Citizen
+}
+
+function appointment(
+  id: number,
+  overrides: Partial<Appointment> = {},
+): Appointment {
+  return {
+    appointment_id: id,
+    blackout_flag: null,
+    checked_in_time: null,
+    citizen_id: 200 + id,
+    citizen_name: `Appointment ${id}`,
+    comments: null,
+    contact_information: null,
+    end_time: '2026-06-23T17:30:00Z',
+    is_draft: false,
+    office: csr.office,
+    office_id: 1,
+    online_flag: false,
+    recurring_uuid: null,
+    service: null,
+    service_id: null,
+    start_time: '2026-06-23T17:00:00Z',
+    stat_flag: false,
+    ...overrides,
+  }
+}
+
+function booking(id: number, overrides: Partial<Booking> = {}): Booking {
+  return {
+    blackout_flag: null,
+    blackout_notes: null,
+    booking_contact_information: null,
+    booking_id: id,
+    booking_name: `Booking ${id}`,
+    end_time: '2026-06-24T18:00:00Z',
+    fees: null,
+    invigilator: null,
+    invigilator_id: null,
+    invigilators: [],
+    office: csr.office,
+    office_id: 1,
+    recurring_uuid: null,
+    room: {
+      capacity: 10,
+      color: '#005ea8',
+      deleted: null,
+      office_id: 1,
+      room_id: 7,
+      room_name: 'Room 7',
+    },
+    room_id: 7,
+    sbc_staff_invigilated: null,
+    shadow_invigilator_id: null,
+    start_time: '2026-06-24T17:00:00Z',
+    stat_flag: false,
+    ...overrides,
+  }
 }
 
 function createMockSocket() {
@@ -325,26 +389,144 @@ describe('StaffSocketService', () => {
     expect(socket.emit).toHaveBeenCalledWith('clear_csr_user_id', 42)
   })
 
-  test('logs deferred queue and appointment events while invalidating future keys', () => {
+  test('refreshes queue data for update_customer_list without deferred logs', () => {
     createMockSocket()
     const { invalidateQueries, service } = createService()
 
     service.connect()
     socketMocks.listeners.update_customer_list({ success: true })
-    socketMocks.listeners.appointment_create({ appointment_id: 1 })
-    socketMocks.listeners.appointment_update({ appointment_id: 1 })
-    socketMocks.listeners.appointment_delete(1)
 
     expect(console.info).toHaveBeenCalledWith(
-      expect.stringContaining('update_customer_list'),
+      'socket received: "update_customer_list"',
       { success: true },
+    )
+    expect(console.info).not.toHaveBeenCalledWith(
+      expect.stringContaining('React handling is deferred'),
+      expect.anything(),
     )
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: queryKeys.citizens,
     })
     expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.activeCitizen,
+    })
+  })
+
+  test('upserts appointment create and update events into matching office caches', () => {
+    createMockSocket()
+    const { invalidateQueries, queryClient, service } = createService()
+    queryClient.setQueryData<Appointment[]>(queryKeys.appointments.office(1), [
+      appointment(1),
+    ])
+    queryClient.setQueryData<Appointment[]>(queryKeys.appointments.office(2), [
+      appointment(2, { office_id: 2 }),
+      appointment(1, { office_id: 2 }),
+    ])
+
+    service.connect()
+    socketMocks.listeners.appointment_create(appointment(4))
+    socketMocks.listeners.appointment_update(
+      appointment(1, { citizen_name: 'Updated appointment' }),
+    )
+
+    expect(
+      queryClient.getQueryData<Appointment[]>(queryKeys.appointments.office(1)),
+    ).toMatchObject([
+      { appointment_id: 1, citizen_name: 'Updated appointment' },
+      { appointment_id: 4 },
+    ])
+    expect(
+      queryClient.getQueryData<Appointment[]>(queryKeys.appointments.office(2)),
+    ).toEqual([appointment(2, { office_id: 2 })])
+    expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: queryKeys.appointments.all,
     })
+  })
+
+  test('removes appointment delete events by id or recurring series', () => {
+    createMockSocket()
+    const { queryClient, service } = createService()
+    queryClient.setQueryData<Appointment[]>(queryKeys.appointments.office(1), [
+      appointment(1),
+      appointment(2, { recurring_uuid: 'series-1' }),
+      appointment(3, { recurring_uuid: 'series-1' }),
+    ])
+
+    service.connect()
+    socketMocks.listeners.appointment_delete(1)
+    socketMocks.listeners.appointment_delete('series-1')
+
+    expect(
+      queryClient.getQueryData<Appointment[]>(queryKeys.appointments.office(1)),
+    ).toEqual([])
+  })
+
+  test('invalid appointment payloads fall back to refetch without deferred logs', () => {
+    createMockSocket()
+    const { invalidateQueries, service } = createService()
+
+    service.connect()
+    socketMocks.listeners.appointment_create({ appointment_id: 1 })
+
+    expect(console.info).toHaveBeenCalledWith(
+      'socket received: "appointment_create"',
+      { appointment_id: 1 },
+    )
+    expect(console.info).not.toHaveBeenCalledWith(
+      expect.stringContaining('React handling is deferred'),
+      expect.anything(),
+    )
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.appointments.all,
+    })
+  })
+
+  test('upserts booking create and update events and refreshes affected routes', () => {
+    createMockSocket()
+    const { invalidateQueries, queryClient, service } = createService()
+    queryClient.setQueryData<Booking[]>(queryKeys.bookings.office(1), [
+      booking(1),
+    ])
+
+    service.connect()
+    socketMocks.listeners.booking_create(booking(2))
+    socketMocks.listeners.booking_update(
+      booking(1, { booking_name: 'Updated booking' }),
+    )
+
+    expect(
+      queryClient.getQueryData<Booking[]>(queryKeys.bookings.office(1)),
+    ).toMatchObject([
+      { booking_id: 1, booking_name: 'Updated booking' },
+      { booking_id: 2 },
+    ])
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.bookings.all,
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.exams.all,
+    })
+    expect(invalidateQueries).toHaveBeenCalledWith({
+      queryKey: queryKeys.appointments.all,
+    })
+  })
+
+  test('removes booking delete events by id or recurring series', () => {
+    createMockSocket()
+    const { queryClient, service } = createService()
+    queryClient.setQueryData<Booking[]>(queryKeys.bookings.office(1), [
+      booking(1),
+      booking(2, { recurring_uuid: 'series-2' }),
+      booking(3, { recurring_uuid: 'series-2' }),
+    ])
+
+    service.connect()
+    socketMocks.listeners.booking_delete({ booking_id: 1 })
+    socketMocks.listeners.booking_delete('series-2')
+
+    expect(
+      queryClient.getQueryData<Booking[]>(queryKeys.bookings.office(1)),
+    ).toEqual([])
   })
 
   test('upserts update_active_citizen payloads into the citizen cache', () => {
