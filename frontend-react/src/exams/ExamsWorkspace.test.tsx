@@ -6,7 +6,14 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { ApiProvider } from '@/api/ApiProvider'
 import type { ApiClient } from '@/api/client'
-import type { Csr, Exam, ExamType, Invigilator, Office } from '@/api/schemas'
+import type {
+  Booking,
+  Csr,
+  Exam,
+  ExamType,
+  Invigilator,
+  Office,
+} from '@/api/schemas'
 
 import {
   createBooking,
@@ -165,6 +172,16 @@ const groupExam = {
   offsite_location: null,
 } as Exam
 
+const createdBooking = {
+  booking_id: 99,
+  booking_name: 'Created booking',
+  end_time: '2026-07-21T20:00:00Z',
+  invigilators: [],
+  office,
+  office_id: office.office_id,
+  start_time: '2026-07-21T17:00:00Z',
+} as Booking
+
 describe('exam workspace query filters', () => {
   test('hydrates Office Exam Manager action item filters from the URL', () => {
     expect(
@@ -197,7 +214,7 @@ describe('exam workspace query filters', () => {
 
 describe('ExamsWorkspace', () => {
   beforeEach(() => {
-    vi.mocked(createBooking).mockResolvedValue({ booking_id: 99 })
+    vi.mocked(createBooking).mockResolvedValue(createdBooking)
     vi.mocked(createExam).mockResolvedValue({ exam_id: 99 } as Exam)
     vi.mocked(deleteBooking).mockResolvedValue(undefined)
     vi.mocked(deleteExam).mockResolvedValue(undefined)
@@ -213,12 +230,18 @@ describe('ExamsWorkspace', () => {
     vi.mocked(getInvigilators).mockResolvedValue([invigilator])
     vi.mocked(getOffices).mockResolvedValue([office])
     vi.mocked(getOffsiteInvigilators).mockResolvedValue([])
-    vi.mocked(refreshBcmpExamStatus).mockResolvedValue(undefined)
-    vi.mocked(requestBcmpExam).mockResolvedValue(undefined)
-    vi.mocked(updateBooking).mockResolvedValue({ booking_id: 50 })
+    vi.mocked(refreshBcmpExamStatus).mockResolvedValue({ exams_updated: [] })
+    vi.mocked(requestBcmpExam).mockResolvedValue({})
+    vi.mocked(updateBooking).mockResolvedValue({
+      ...createdBooking,
+      booking_id: 50,
+      booking_name: 'Group booking',
+      end_time: '2026-07-20T20:00:00Z',
+      start_time: '2026-07-20T17:00:00Z',
+    })
     vi.mocked(updateExam).mockResolvedValue({} as Exam)
     vi.mocked(updateInvigilatorShadowCount).mockResolvedValue(undefined)
-    vi.mocked(uploadCompletedExamDocument).mockResolvedValue(undefined)
+    vi.mocked(uploadCompletedExamDocument).mockResolvedValue({})
   })
 
   test('does not carry a single exam type into a later group booking update', async () => {

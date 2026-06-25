@@ -20,7 +20,7 @@ test('authentication smoke', async ({ page }) => {
 
   await expect(page).toHaveTitle('Queue Management')
   await expect(
-    page.getByRole('heading', { name: 'Queue Management' }),
+    page.getByRole('heading', { level: 1, name: 'Queue Management' }),
   ).toBeVisible()
   expect(staffProfileRequests).toBe(0)
 

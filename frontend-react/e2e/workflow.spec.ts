@@ -235,6 +235,12 @@ async function installMockRoutes(page: Page, roleCode = 'GA') {
       body: JSON.stringify({}),
     })
   })
+  await page.route('**/api/v1/send-reminder/line-walkin/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({}),
+    })
+  })
   await page.route('**/api/v1/citizens/1/place_on_hold/', async (route) => {
     citizens = [citizen(1, 'On hold')]
     await route.fulfill({
@@ -317,6 +323,9 @@ test.describe('mocked queue workflows', () => {
     ).toBeVisible()
 
     await page.getByRole('button', { name: 'Begin Service' }).click()
+    await expect(
+      page.getByRole('button', { name: 'Place on Hold' }),
+    ).toBeEnabled()
     await page.getByRole('button', { name: 'Place on Hold' }).click()
 
     await expect(
@@ -331,6 +340,15 @@ test.describe('mocked queue workflows', () => {
     await installMockRoutes(page)
 
     await page.goto('/queue')
+    await expect(
+      page.getByRole('button', { name: 'Receptionist Counter' }),
+    ).toBeVisible()
+    await page.waitForFunction(() =>
+      Boolean(
+        (globalThis as { __QMS_E2E_REALTIME__?: unknown })
+          .__QMS_E2E_REALTIME__,
+      ),
+    )
     await page.evaluate(
       (payload) => {
         const target = globalThis as unknown as {
@@ -353,6 +371,7 @@ test.describe('mocked queue workflows', () => {
     const mocks = await installMockRoutes(page)
 
     await page.goto('/queue')
+    await expect(page.getByRole('button', { name: 'GA Panel' })).toBeEnabled()
     await page.getByRole('button', { name: 'GA Panel' }).click()
 
     await expect(page.getByRole('dialog', { name: 'GA Panel' })).toBeVisible()
