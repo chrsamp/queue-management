@@ -29,7 +29,6 @@ import { useWorkflowStore } from '@/store/workflow-store'
 import BookingBlackoutModal from './BookingBlackoutModal'
 import BookingEventModal from './BookingEventModal'
 import {
-  addMinutes,
   bookingToCalendarEvent,
   buildRoomResources,
   canSelectBookingSlot,
@@ -39,6 +38,7 @@ import {
   type BookingCalendarEvent,
   type RoomResource,
 } from './booking-utils'
+import { addMinutes } from '@/lib/datetime'
 
 const locales = { 'en-US': enUS }
 const localizer = dateFnsLocalizer({

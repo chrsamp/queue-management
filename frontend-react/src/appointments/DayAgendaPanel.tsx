@@ -14,7 +14,8 @@ import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 import { checkInAppointment } from './appointment-checkin'
-import { getServiceName, utcToOfficeDate } from './appointment-utils'
+import { getServiceName } from './appointment-utils'
+import { utcToOfficeDate } from '@/lib/datetime'
 
 const emptyServices: never[] = []
 const emptyAppointments: never[] = []

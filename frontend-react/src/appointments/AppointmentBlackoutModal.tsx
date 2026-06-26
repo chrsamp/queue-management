@@ -18,14 +18,16 @@ import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import {
-  addMinutes,
   buildRecurringWindows,
   countOverlappingAppointments,
-  formatDateInputValue,
   isWithinAppointmentHours,
+} from './appointment-utils'
+import {
+  addMinutes,
+  formatDateInputValue,
   mergeDateAndTime,
   officeDateToUtcIso,
-} from './appointment-utils'
+} from '@/lib/datetime'
 
 interface AppointmentBlackoutModalProps {
   appointments: Appointment[]

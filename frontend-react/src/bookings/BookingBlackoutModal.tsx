@@ -18,16 +18,18 @@ import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import {
-  addMinutes,
   buildRecurringBookingWindows,
   createUuid,
-  formatDateInputValue,
   isWithinBookingHours,
-  mergeDateAndTime,
-  officeDateToUtcIso,
   offsiteResource,
   type BookingWindow,
 } from './booking-utils'
+import {
+  addMinutes,
+  formatDateInputValue,
+  mergeDateAndTime,
+  officeDateToUtcIso,
+} from '@/lib/datetime'
 
 interface BookingBlackoutModalProps {
   isOpen: boolean

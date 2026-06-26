@@ -23,16 +23,18 @@ import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import {
+  getAppointmentLengthOptions,
+  isWithinAppointmentHours,
+  type AppointmentCalendarEvent,
+} from './appointment-utils'
+import {
   addMinutes,
   formatDateInputValue,
   formatTimeInputValue,
-  getAppointmentLengthOptions,
   isPast,
-  isWithinAppointmentHours,
   mergeDateAndTime,
   officeDateToUtcIso,
-  type AppointmentCalendarEvent,
-} from './appointment-utils'
+} from '@/lib/datetime'
 
 interface AppointmentModalProps {
   categories: Category[]

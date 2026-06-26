@@ -3,10 +3,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { Appointment, Service } from '@/api/schemas'
 
 import { buildAgendaRows } from './DayAgendaPanel'
+import { officeDateToUtcIso } from '@/lib/datetime'
 import {
   appointmentToCalendarEvent,
   getNextValidAppointmentStart,
-  officeDateToUtcIso,
 } from './appointment-utils'
 
 const office = {

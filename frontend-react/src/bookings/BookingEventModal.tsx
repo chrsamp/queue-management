@@ -22,19 +22,21 @@ import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import {
+  getExamDurationMinutes,
+  isAfterExamExpiry,
+  isWithinBookingHours,
+  type BookingCalendarEvent,
+  type RoomResource,
+} from './booking-utils'
+import {
   addMinutes,
   diffMinutes,
   formatDateInputValue,
   formatTimeInputValue,
-  getExamDurationMinutes,
-  isAfterExamExpiry,
   isPast,
-  isWithinBookingHours,
   mergeDateAndTime,
   officeDateToUtcIso,
-  type BookingCalendarEvent,
-  type RoomResource,
-} from './booking-utils'
+} from '@/lib/datetime'
 
 interface BookingEventModalProps {
   event: BookingCalendarEvent | null

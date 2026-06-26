@@ -29,14 +29,16 @@ import AppointmentBlackoutModal from './AppointmentBlackoutModal'
 import AppointmentCheckInModal from './AppointmentCheckInModal'
 import AppointmentModal from './AppointmentModal'
 import {
-  addMinutes,
   appointmentToCalendarEvent,
-  formatDateInputValue,
   getNextValidAppointmentStart,
-  isPast,
-  officeDateToUtcIso,
   type AppointmentCalendarEvent,
 } from './appointment-utils'
+import {
+  addMinutes,
+  formatDateInputValue,
+  isPast,
+  officeDateToUtcIso,
+} from '@/lib/datetime'
 
 const locales = { 'en-US': enUS }
 const emptyAppointments: never[] = []

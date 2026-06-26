@@ -33,7 +33,7 @@ import {
 } from '@/api/endpoints'
 import type { Csr, Exam, ExamType, Invigilator, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
-import { officeDateToUtcIso } from '@/bookings/booking-utils'
+import { officeDateToUtcIso } from '@/lib/datetime'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
