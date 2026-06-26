@@ -393,6 +393,7 @@ export default function BookingsWorkspace({
           onSelectEvent={handleSelectEvent}
           onSelectSlot={handleSelectSlot}
           onView={setView}
+          resourceGroupingLayout
           resourceIdAccessor="id"
           resources={visibleResources}
           resourceTitleAccessor="title"
