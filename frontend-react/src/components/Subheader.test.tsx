@@ -21,7 +21,7 @@ describe('Subheader', () => {
         ariaLabel="Queue controls"
         endItems={[
           <Button key="agenda" size="small" variant="secondary">
-            Show Day Agenda
+            Show Agenda
           </Button>,
           <Button key="ga" size="small" variant="secondary">
             GA Panel
@@ -40,7 +40,7 @@ describe('Subheader', () => {
     expect(screen.getByText('Active')).toBeVisible()
     expect(screen.getByText('Counter 1')).toBeVisible()
     expect(
-      screen.getByRole('button', { name: 'Show Day Agenda' }),
+      screen.getByRole('button', { name: 'Show Agenda' }),
     ).toBeVisible()
     expect(screen.getByRole('button', { name: 'GA Panel' })).toBeVisible()
   })

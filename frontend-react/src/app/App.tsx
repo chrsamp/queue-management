@@ -37,6 +37,7 @@ import OfficeSwitcher from '@/components/OfficeSwitcher'
 import Select from '@/components/Select'
 import Subheader from '@/components/Subheader'
 import { queryKeys } from '@/query/query-keys'
+import AgendaPanel from '@/appointments/AgendaPanel'
 import AppointmentsWorkspace from '@/appointments/AppointmentsWorkspace'
 import ExamsWorkspace from '@/exams/ExamsWorkspace'
 import { appointmentsEnabled } from '@/appointments/appointment-utils'
@@ -213,12 +214,12 @@ function QueueSubheader({
 }) {
   const apiClient = useApiClient()
   const currentCsrId = useWorkflowStore((state) => state.currentCsrId)
-  const showDayAgenda = useWorkflowStore((state) => state.showDayAgenda)
-  const setShowDayAgenda = useWorkflowStore((state) => state.setShowDayAgenda)
+  const showAgenda = useWorkflowStore((state) => state.showAgenda)
+  const setShowAgenda = useWorkflowStore((state) => state.setShowAgenda)
   const [isGaPanelOpen, setIsGaPanelOpen] = useState(false)
   const canOpenGaPanel =
     currentRoleCode === 'GA' || currentRoleCode === 'SUPPORT'
-  const canShowDayAgenda =
+  const canShowAgenda =
     currentOffice !== null && appointmentsEnabled(currentOffice)
 
   const citizensQuery = useQuery({
@@ -235,14 +236,14 @@ function QueueSubheader({
           <CounterSwitcher key="counter" />,
         ]
   const endItems = [
-    canShowDayAgenda ? (
+    canShowAgenda ? (
       <Button
-        key="day-agenda"
-        onClick={() => setShowDayAgenda(!showDayAgenda)}
+        key="agenda"
+        onClick={() => setShowAgenda(!showAgenda)}
         size="small"
         variant="secondary"
       >
-        {showDayAgenda ? 'Hide Day Agenda' : 'Show Day Agenda'}
+        Agenda
       </Button>
     ) : null,
     canOpenGaPanel && currentOffice ? (
@@ -266,6 +267,13 @@ function QueueSubheader({
         size="medium"
         startItems={startItems}
       />
+      {canShowAgenda && currentOffice && (
+        <AgendaPanel
+          isOpen={showAgenda}
+          office={currentOffice}
+          onClose={() => setShowAgenda(false)}
+        />
+      )}
       {canOpenGaPanel && currentOffice && (
         <GaPanel
           citizens={citizensQuery.data ?? []}

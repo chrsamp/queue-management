@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { format } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 
@@ -9,6 +8,8 @@ import type { Appointment, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -20,11 +21,17 @@ import { useCheckInAppointmentMutation } from './appointment-mutations'
 const emptyServices: never[] = []
 const emptyAppointments: never[] = []
 
-interface DayAgendaPanelProps {
+interface AgendaPanelProps {
+  isOpen: boolean
   office: Office
+  onClose: () => void
 }
 
-export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
+export default function AgendaPanel({
+  isOpen,
+  office,
+  onClose,
+}: AgendaPanelProps) {
   const apiClient = useApiClient()
   const activeCitizenId = useWorkflowStore((state) => state.activeCitizenId)
   const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
@@ -47,7 +54,7 @@ export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
   })
   const services = servicesQuery.data ?? emptyServices
   const agendaError = appointmentsQuery.isError
-    ? getErrorMessage(appointmentsQuery.error, 'Unable to load day agenda.')
+    ? getErrorMessage(appointmentsQuery.error, 'Unable to load agenda.')
     : servicesQuery.isError
       ? getErrorMessage(
           servicesQuery.error,
@@ -68,7 +75,7 @@ export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
   async function handleCheckIn(appointment: Appointment) {
     if (activeCitizenId || showServiceModal) {
       setGlobalAlert({
-        id: 'day-agenda-active-service',
+        id: 'agenda-active-service',
         message:
           'Already have appointment in progress.  Please close ticket then check-in citizen',
         role: 'alert',
@@ -92,117 +99,129 @@ export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
     }
   }
 
+  if (!isOpen) {
+    return null
+  }
+
   return (
-    <aside className="flex max-w-[42rem] min-w-[28rem] flex-col gap-3">
-      <h2 className="text-bc-h4 m-0 text-center font-bold">Day Agenda View</h2>
-      <form
-        className="flex flex-wrap items-center gap-2"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <label className="font-bold" htmlFor="day-agenda-search">
-          Filter Appointments
-        </label>
-        <input
-          className="border-bc-border rounded-sm border px-3 py-2"
-          id="day-agenda-search"
-          onChange={(event) => setSearch(event.target.value)}
-          value={search}
-        />
-        {search && (
-          <Button
-            onClick={() => setSearch('')}
+    <ModalLayout
+      className="max-w-6xl"
+      header={
+        <DialogTitle className="text-bc-h4 m-0 font-bold">Agenda</DialogTitle>
+      }
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-4 p-6">
+        <form
+          className="flex flex-wrap items-center gap-2"
+          onSubmit={(event) => event.preventDefault()}
+        >
+          <label className="font-bold" htmlFor="agenda-search">
+            Filter Appointments
+          </label>
+          <input
+            className="border-bc-border rounded-sm border px-3 py-2"
+            id="agenda-search"
+            onChange={(event) => setSearch(event.target.value)}
+            value={search}
+          />
+          {search && (
+            <Button
+              onClick={() => setSearch('')}
+              size="small"
+              variant="secondary"
+            >
+              Clear
+            </Button>
+          )}
+        </form>
+        {errorMessage && (
+          <AlertBanner
+            isCloseable={false}
+            role="alert"
             size="small"
-            variant="secondary"
+            variant="danger"
           >
-            Clear
-          </Button>
+            {errorMessage}
+          </AlertBanner>
         )}
-      </form>
-      {errorMessage && (
-        <AlertBanner
-          isCloseable={false}
-          role="alert"
-          size="small"
-          variant="danger"
-        >
-          {errorMessage}
-        </AlertBanner>
-      )}
-      {agendaError && (
-        <AlertBanner
-          isCloseable={false}
-          role="alert"
-          size="small"
-          variant="danger"
-        >
-          {agendaError}
-        </AlertBanner>
-      )}
-      {appointmentsQuery.isPending || servicesQuery.isPending ? (
-        <p className="text-bc-secondary m-0" role="status">
-          Loading day agenda...
-        </p>
-      ) : agendaError ? null : (
-        <div className="border-bc-border overflow-auto border bg-white">
-          <table
-            className="text-bc-small w-full border-collapse"
-            aria-label="Day agenda appointments"
+        {agendaError && (
+          <AlertBanner
+            isCloseable={false}
+            role="alert"
+            size="small"
+            variant="danger"
           >
-            <thead className="bg-bc-light-gray">
-              <tr>
-                <ColumnHeader>Time</ColumnHeader>
-                <ColumnHeader>Citizen Name</ColumnHeader>
-                <ColumnHeader>Service</ColumnHeader>
-                <ColumnHeader>Comments</ColumnHeader>
-                <ColumnHeader>Check-In</ColumnHeader>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
+            {agendaError}
+          </AlertBanner>
+        )}
+        {appointmentsQuery.isPending || servicesQuery.isPending ? (
+          <p className="text-bc-secondary m-0" role="status">
+            Loading agenda...
+          </p>
+        ) : agendaError ? null : (
+          <div className="border-bc-border max-h-[65vh] overflow-auto border bg-white">
+            <table
+              className="text-bc-small w-full min-w-lg border-collapse"
+              aria-label="Agenda appointments"
+            >
+              <thead className="bg-bc-light-gray">
                 <tr>
-                  <td className="text-bc-secondary px-3 py-4" colSpan={5}>
-                    No appointments found.
-                  </td>
+                  <ColumnHeader>Time</ColumnHeader>
+                  <ColumnHeader>Citizen Name</ColumnHeader>
+                  <ColumnHeader>Service</ColumnHeader>
+                  <ColumnHeader>Comments</ColumnHeader>
+                  <ColumnHeader>Check-In</ColumnHeader>
                 </tr>
-              ) : (
-                rows.map((row) => (
-                  <tr
-                    className="even:bg-bc-light-gray/45"
-                    key={row.appointment.appointment_id}
-                  >
-                    <TableCell>{format(row.start, 'p')}</TableCell>
-                    <TableCell>{row.appointment.citizen_name}</TableCell>
-                    <TableCell>{row.serviceName}</TableCell>
-                    <TableCell>
-                      <span
-                        className="block max-w-56 truncate"
-                        title={row.appointment.comments ?? ''}
-                      >
-                        {row.appointment.comments}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        disabled={
-                          loadingAppointmentId ===
-                          row.appointment.appointment_id
-                        }
-                        onClick={() => void handleCheckIn(row.appointment)}
-                        size="small"
-                      >
-                        {loadingAppointmentId === row.appointment.appointment_id
-                          ? 'Checking In'
-                          : 'Check-In'}
-                      </Button>
-                    </TableCell>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr>
+                    <td className="text-bc-secondary px-3 py-4" colSpan={5}>
+                      No appointments found.
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </aside>
+                ) : (
+                  rows.map((row) => (
+                    <tr
+                      className="even:bg-bc-light-gray/45"
+                      key={row.appointment.appointment_id}
+                    >
+                      <TableCell>{format(row.start, 'p')}</TableCell>
+                      <TableCell>{row.appointment.citizen_name}</TableCell>
+                      <TableCell>{row.serviceName}</TableCell>
+                      <TableCell>
+                        <span
+                          className="block max-w-56 truncate"
+                          title={row.appointment.comments ?? ''}
+                        >
+                          {row.appointment.comments}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          disabled={
+                            loadingAppointmentId ===
+                            row.appointment.appointment_id
+                          }
+                          onClick={() => void handleCheckIn(row.appointment)}
+                          size="small"
+                        >
+                          {loadingAppointmentId ===
+                          row.appointment.appointment_id
+                            ? 'Checking In'
+                            : 'Check-In'}
+                        </Button>
+                      </TableCell>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </ModalLayout>
   )
 }
 

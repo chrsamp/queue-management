@@ -15,8 +15,7 @@ import type { Citizen, Office } from '@/api/schemas'
 import AlertBanner from '@/components/AlertBanner'
 import { getErrorMessage } from '@/lib/errors'
 import { useWorkflowStore } from '@/store/workflow-store'
-import DayAgendaPanel from '@/appointments/DayAgendaPanel'
-import { appointmentsEnabled } from '@/appointments/appointment-utils'
+
 
 import QueueActions from './QueueActions'
 import QueueTable from './QueueTable'
@@ -85,7 +84,6 @@ export default function QueueWorkspace({
   const setActiveServiceCitizen = useWorkflowStore(
     (state) => state.setActiveServiceCitizen,
   )
-  const showDayAgenda = useWorkflowStore((state) => state.showDayAgenda)
   const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
   const terminalClearedCitizenId = useWorkflowStore(
     (state) => state.terminalClearedCitizenId,
@@ -430,9 +428,6 @@ export default function QueueWorkspace({
             </QueuePanel>
           )}
         </div>
-        {showDayAgenda && appointmentsEnabled(office) && (
-          <DayAgendaPanel office={office} />
-        )}
       </div>
       <ServeCitizenModal citizen={activeCitizen} office={office} />
     </section>

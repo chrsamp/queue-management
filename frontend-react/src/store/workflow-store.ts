@@ -51,7 +51,7 @@ interface WorkflowState {
   serveModalAlert: string | null
   serviceBegun: boolean
   showServiceModal: boolean
-  showDayAgenda: boolean
+  showAgenda: boolean
   terminalClearedCitizenId: number | null
   clearWorkflow: () => void
   clearGlobalAlert: (id?: string) => void
@@ -83,7 +83,7 @@ interface WorkflowState {
   setRealtimeEvent: (eventName: string) => void
   setRealtimeRoomStatus: (status: RealtimeRoomStatus) => void
   setServeModalAlert: (message: string | null) => void
-  setShowDayAgenda: (show: boolean) => void
+  setShowAgenda: (show: boolean) => void
 }
 
 export const isCsrOnBreak = (csrState: CsrState | null): boolean =>
@@ -110,7 +110,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   serveModalAlert: null,
   serviceBegun: false,
   showServiceModal: false,
-  showDayAgenda: false,
+  showAgenda: false,
   terminalClearedCitizenId: null,
   clearWorkflow: () =>
     set({
@@ -134,7 +134,7 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       serveModalAlert: null,
       serviceBegun: false,
       showServiceModal: false,
-      showDayAgenda: false,
+      showAgenda: false,
       terminalClearedCitizenId: null,
     }),
   clearCurrentOffice: () => set({ currentOffice: null }),
@@ -228,5 +228,5 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
   setRealtimeEvent: (eventName) => set({ realtimeLastEvent: eventName }),
   setRealtimeRoomStatus: (status) => set({ realtimeRoomStatus: status }),
   setServeModalAlert: (message) => set({ serveModalAlert: message }),
-  setShowDayAgenda: (show) => set({ showDayAgenda: show }),
+  setShowAgenda: (show) => set({ showAgenda: show }),
 }))

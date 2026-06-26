@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import type { Appointment, Service } from '@/api/schemas'
 
-import { buildAgendaRows } from './DayAgendaPanel'
+import { buildAgendaRows } from './AgendaPanel'
 import { officeDateToUtcIso } from '@/lib/datetime'
 import {
   appointmentToCalendarEvent,
@@ -80,7 +80,7 @@ describe('appointment-utils', () => {
     )
   })
 
-  test('builds day agenda rows for upcoming unchecked appointments', () => {
+  test('builds agenda rows for upcoming unchecked appointments', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-06-24T17:00:00.000Z'))
 
