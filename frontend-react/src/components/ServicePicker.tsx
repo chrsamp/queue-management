@@ -77,7 +77,7 @@ export default function ServicePicker({
         </select>
       </div>
 
-      <div className="bg-bc-gray-110 py-4">
+      <div className="py-4">
         <div className="border-bc-border max-h-64 overflow-auto border bg-white">
           <table className="w-full border-collapse text-left">
             <thead className="bg-bc-secondary text-bc-white sticky top-0">

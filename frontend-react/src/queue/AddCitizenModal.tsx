@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {  HandHelping, UserRoundPlus } from 'lucide-react'
+import { HandHelping, UserRoundPlus } from 'lucide-react'
 
 import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import {
@@ -119,9 +119,7 @@ export default function AddCitizenModal({
     updateForm({
       notificationPhone,
       walkinUniqueId:
-        notificationPhone || form?.notificationEmail
-          ? createUuid()
-          : '',
+        notificationPhone || form?.notificationEmail ? createUuid() : '',
     })
   }
 
@@ -129,9 +127,7 @@ export default function AddCitizenModal({
     updateForm({
       notificationEmail,
       walkinUniqueId:
-        form?.notificationPhone || notificationEmail
-          ? createUuid()
-          : '',
+        form?.notificationPhone || notificationEmail ? createUuid() : '',
     })
   }
 

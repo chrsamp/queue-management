@@ -19,7 +19,6 @@ function getOfficeDescription(office: Office) {
   return `Office #${office.office_number}`
 }
 
-
 export default function OfficeSwitcher() {
   const apiClient = useApiClient()
   const queryClient = useQueryClient()
@@ -84,7 +83,10 @@ export default function OfficeSwitcher() {
     onError: (error) => {
       setGlobalAlert({
         id: 'office-switcher',
-        message: getErrorMessage(error, 'Unable to change offices. Please try again.'),
+        message: getErrorMessage(
+          error,
+          'Unable to change offices. Please try again.',
+        ),
         role: 'alert',
         variant: 'danger',
       })
@@ -125,7 +127,12 @@ export default function OfficeSwitcher() {
             : undefined
       }
       errorMessage={
-        officesQuery.isError ? getErrorMessage(officesQuery.error, 'Unable to change offices. Please try again.') : ''
+        officesQuery.isError
+          ? getErrorMessage(
+              officesQuery.error,
+              'Unable to change offices. Please try again.',
+            )
+          : ''
       }
       isDisabled={officesQuery.isLoading || updateOfficeMutation.isPending}
       isInvalid={officesQuery.isError}

@@ -291,7 +291,9 @@ export default function ServeCitizenModal({
                     </p>
                     <p className="m-0">
                       Channel:{' '}
-                      <strong>{activeService?.channel?.channel_name ?? ''}</strong>
+                      <strong>
+                        {activeService?.channel?.channel_name ?? ''}
+                      </strong>
                     </p>
                     <p className="m-0">
                       Created At:{' '}
@@ -327,7 +329,10 @@ export default function ServeCitizenModal({
                         onClick={() =>
                           void runLifecycle(
                             () =>
-                              beginCitizenService(apiClient, citizen.citizen_id),
+                              beginCitizenService(
+                                apiClient,
+                                citizen.citizen_id,
+                              ),
                             { reminder: true, serviceBegun: true },
                           )
                         }
@@ -519,10 +524,10 @@ function ServiceRequestsTable({
   serviceRequests: ServiceRequest[]
 }) {
   return (
-    <div className="bg-bc-secondary px-6 py-4">
+    <div className="bg-bc-light-gray px-6 py-4">
       <div className="border-bc-border max-h-72 overflow-auto border bg-white">
         <table className="w-full border-collapse text-center">
-          <thead className="bg-bc-gray-80 text-bc-white">
+          <thead className="bg-bc-secondary text-bc-white sticky top-0">
             <tr>
               <th className="border-bc-border border-b px-3 py-2 font-normal">
                 Status
@@ -660,4 +665,3 @@ function findServiceForRequest(
     service_name: service.service_name,
   }
 }
-

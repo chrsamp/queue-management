@@ -273,4 +273,3 @@ function ColumnHeader({ children }: { children: string }) {
 function TableCell({ children }: { children?: ReactNode }) {
   return <td className="border-bc-border border-b px-3 py-2">{children}</td>
 }
-

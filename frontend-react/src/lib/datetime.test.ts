@@ -34,7 +34,9 @@ describe('datetime', () => {
   describe('addMinutes', () => {
     test('adds minutes to a date', () => {
       const date = new Date('2026-01-01T10:00:00Z')
-      expect(addMinutes(date, 30).toISOString()).toBe('2026-01-01T10:30:00.000Z')
+      expect(addMinutes(date, 30).toISOString()).toBe(
+        '2026-01-01T10:30:00.000Z',
+      )
     })
 
     test('handles zero minutes', () => {
@@ -44,7 +46,9 @@ describe('datetime', () => {
 
     test('handles negative minutes', () => {
       const date = new Date('2026-01-01T10:00:00Z')
-      expect(addMinutes(date, -15).toISOString()).toBe('2026-01-01T09:45:00.000Z')
+      expect(addMinutes(date, -15).toISOString()).toBe(
+        '2026-01-01T09:45:00.000Z',
+      )
     })
   })
 
@@ -69,7 +73,10 @@ describe('datetime', () => {
 
   describe('utcToOfficeDate', () => {
     test('converts UTC ISO string to office wall time', () => {
-      const result = utcToOfficeDate('2026-06-24T20:30:00+00:00', 'America/Vancouver')
+      const result = utcToOfficeDate(
+        '2026-06-24T20:30:00+00:00',
+        'America/Vancouver',
+      )
       expect(result.getFullYear()).toBe(2026)
       expect(result.getMonth()).toBe(5)
       expect(result.getDate()).toBe(24)

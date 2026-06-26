@@ -120,8 +120,9 @@ export default function AppointmentModal({
     setLength(duration)
     setServiceCategoryId(null)
     setServiceSearch(
-      services.find((service) => service.service_id === clickedEvent?.service_id)
-        ?.service_name ?? '',
+      services.find(
+        (service) => service.service_id === clickedEvent?.service_id,
+      )?.service_name ?? '',
     )
     setSelectedServiceId(clickedEvent?.service_id ?? '')
     setEditSeries(false)
@@ -473,4 +474,3 @@ export default function AppointmentModal({
     </Modal>
   )
 }
-

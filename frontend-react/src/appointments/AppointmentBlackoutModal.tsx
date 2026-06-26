@@ -542,5 +542,3 @@ export default function AppointmentBlackoutModal({
     </Modal>
   )
 }
-
-

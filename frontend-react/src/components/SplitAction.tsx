@@ -100,7 +100,7 @@ function SplitActionPopover({
       >
         {(item) => (
           <MenuItem
-            className="data-[focused]:bg-bc-button-secondary-hover data-[hovered]:bg-bc-button-secondary-hover text-bc-body cursor-pointer rounded-sm px-3 py-2 outline-hidden data-[disabled]:cursor-not-allowed data-[disabled]:text-bc-disabled-text"
+            className="data-[focused]:bg-bc-button-secondary-hover data-[hovered]:bg-bc-button-secondary-hover text-bc-body data-[disabled]:text-bc-disabled-text cursor-pointer rounded-sm px-3 py-2 outline-hidden data-[disabled]:cursor-not-allowed"
             id={item.id}
             isDisabled={item.disabled}
             textValue={item.label}

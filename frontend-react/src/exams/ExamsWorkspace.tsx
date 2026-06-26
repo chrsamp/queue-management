@@ -2617,4 +2617,3 @@ function setupLabel(setup: ExamSetup) {
       return 'Other'
   }
 }
-
