@@ -21,12 +21,12 @@ import { queryKeys } from '@/query/query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 
 import {
-  createWalkinUniqueId,
   formatNotificationPhone,
   getModeServices,
   isValidNotificationEmail,
   isValidNotificationPhone,
 } from './add-citizen-utils'
+import { createUuid } from '@/lib/uuid'
 import type { AddCitizenModalState } from './add-citizen-modal-state'
 import { getWaitingCitizens, isReceptionOffice } from './queue-utils'
 
@@ -120,7 +120,7 @@ export default function AddCitizenModal({
       notificationPhone,
       walkinUniqueId:
         notificationPhone || form?.notificationEmail
-          ? createWalkinUniqueId()
+          ? createUuid()
           : '',
     })
   }
@@ -130,7 +130,7 @@ export default function AddCitizenModal({
       notificationEmail,
       walkinUniqueId:
         form?.notificationPhone || notificationEmail
-          ? createWalkinUniqueId()
+          ? createUuid()
           : '',
     })
   }

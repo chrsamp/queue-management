@@ -87,11 +87,3 @@ const emailPattern = /^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/
 export function isValidNotificationEmail(value: string) {
   return value === '' || emailPattern.test(value)
 }
-
-export function createWalkinUniqueId() {
-  if ('crypto' in window && typeof window.crypto.randomUUID === 'function') {
-    return window.crypto.randomUUID()
-  }
-
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
-}

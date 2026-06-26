@@ -19,11 +19,11 @@ import { queryKeys } from '@/query/query-keys'
 
 import {
   buildRecurringBookingWindows,
-  createUuid,
   isWithinBookingHours,
   offsiteResource,
   type BookingWindow,
 } from './booking-utils'
+import { createUuid } from '@/lib/uuid'
 import {
   addMinutes,
   formatDateInputValue,
@@ -620,4 +620,3 @@ export default function BookingBlackoutModal({
     </Modal>
   )
 }
-

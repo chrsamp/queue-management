@@ -15,6 +15,7 @@ import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
+import { createUuid } from '@/lib/uuid'
 import { queryKeys } from '@/query/query-keys'
 
 import {
@@ -542,7 +543,4 @@ export default function AppointmentBlackoutModal({
   )
 }
 
-function createUuid() {
-  return globalThis.crypto?.randomUUID?.() ?? String(Date.now())
-}
 

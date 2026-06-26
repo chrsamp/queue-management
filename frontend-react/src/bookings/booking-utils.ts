@@ -1,6 +1,11 @@
 import { RRule, type Weekday } from 'rrule'
 
-import { addMinutes, diffMinutes, isPast, utcToOfficeDate } from '@/lib/datetime'
+import {
+  addMinutes,
+  diffMinutes,
+  isPast,
+  utcToOfficeDate,
+} from '@/lib/datetime'
 
 import type { Booking, Exam, Room } from '@/api/schemas'
 
@@ -258,10 +263,6 @@ export function endOfLocalDay(value: Date) {
     59,
     999,
   )
-}
-
-export function createUuid() {
-  return globalThis.crypto?.randomUUID?.() ?? String(Date.now())
 }
 
 function getBookingEventColor({
