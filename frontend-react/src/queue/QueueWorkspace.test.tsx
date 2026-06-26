@@ -161,6 +161,7 @@ function serviceRequest(periodName: string) {
       service_name: 'Road test',
     },
     quantity: 1,
+    service_id: 1,
     sr_id: 1,
   } satisfies ServiceRequest
 }
@@ -618,6 +619,111 @@ describe('QueueWorkspace', () => {
 
     await user.click(screen.getByRole('button', { name: 'Restore modal' }))
     expect(screen.getByRole('button', { name: 'Finish' })).toBeVisible()
+  })
+
+  test('opens an interactive edit service modal from Serve Citizen and returns on close', async () => {
+    const user = userEvent.setup()
+    useWorkflowStore.getState().setCurrentCsr(csr)
+
+    renderQueueWorkspace({
+      citizens: [citizen(1, 'Being Served')],
+      csrId: csr.csr_id,
+      office: receptionOffice,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Serve Now' }))
+    expect(screen.getByRole('heading', { name: 'Serve Citizen' })).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'edit' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Edit Service' }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('heading', { name: 'Serve Citizen' }),
+    ).not.toBeInTheDocument()
+
+    await user.clear(screen.getByPlaceholderText('Type service here'))
+    await user.type(screen.getByPlaceholderText('Type service here'), 'Licence')
+
+    expect(screen.getByRole('heading', { name: 'Edit Service' })).toBeVisible()
+    expect(screen.getByText('Licence renewal')).toBeVisible()
+
+    await user.click(screen.getByRole('button', { name: 'Close modal' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Serve Citizen' }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('heading', { name: 'Edit Service' }),
+    ).not.toBeInTheDocument()
+  })
+
+  test('applies edit service from the Serve Citizen child modal', async () => {
+    const user = userEvent.setup()
+    useWorkflowStore.getState().setCurrentCsr(csr)
+    const { client } = renderQueueWorkspace({
+      citizens: [citizen(1, 'Being Served')],
+      csrId: csr.csr_id,
+      office: receptionOffice,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Serve Now' }))
+    await user.click(screen.getByRole('button', { name: 'edit' }))
+    await user.click(await screen.findByRole('button', { name: 'Apply' }))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/service_requests/1/', {
+        body: {
+          channel_id: 1,
+          service_id: 1,
+        },
+        method: 'PUT',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+    expect(screen.getByRole('heading', { name: 'Serve Citizen' })).toBeVisible()
+  })
+
+  test('opens and applies Add Next Service from Serve Citizen', async () => {
+    const user = userEvent.setup()
+    useWorkflowStore.getState().setCurrentCsr(csr)
+    const { client } = renderQueueWorkspace({
+      citizens: [citizen(1, 'Being Served')],
+      csrId: csr.csr_id,
+      office: receptionOffice,
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Serve Now' }))
+    await user.click(screen.getByRole('button', { name: 'Add Next Service' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Add Next Service' }),
+    ).toBeVisible()
+    expect(
+      screen.queryByRole('heading', { name: 'Serve Citizen' }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Apply' }))
+
+    await waitFor(() => {
+      expect(client.request).toHaveBeenCalledWith('/service_requests/', {
+        body: {
+          service_request: {
+            channel_id: 1,
+            citizen_id: 1,
+            priority: 2,
+            quantity: 1,
+            service_id: 1,
+          },
+        },
+        method: 'POST',
+        schema: expect.anything(),
+        signal: undefined,
+      })
+    })
+    expect(screen.getByRole('heading', { name: 'Serve Citizen' })).toBeVisible()
   })
 
   test('clears stale active state when the queue data has no active CSR citizen', async () => {
