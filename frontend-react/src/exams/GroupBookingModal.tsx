@@ -1,13 +1,6 @@
 import { useState } from 'react'
 
-import {
-  createBooking,
-  updateBooking,
-  updateExam,
-  updateInvigilatorShadowCount,
-} from '@/api/endpoints'
 import type { Exam, Invigilator } from '@/api/schemas'
-import { useApiClient } from '@/api/use-api-client'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
@@ -33,6 +26,7 @@ import {
   toUtcDateIso,
   type ExamPermissions,
 } from './exam-utils'
+import { useGroupBookingMutation } from './exam-mutations'
 
 export default function GroupBookingModal({
   exam,
@@ -49,7 +43,6 @@ export default function GroupBookingModal({
   onSaved: () => Promise<void>
   permissions: ExamPermissions
 }) {
-  const apiClient = useApiClient()
   const timezone =
     exam.booking?.office.timezone.timezone_name ??
     exam.office?.timezone.timezone_name ??
@@ -75,7 +68,8 @@ export default function GroupBookingModal({
     dateInputValue(exam.exam_received_date),
   )
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const groupBookingMutation = useGroupBookingMutation()
+  const isSaving = groupBookingMutation.isPending
   const fieldDisabled =
     permissions.roleCode !== 'SUPPORT' &&
     ((examTypeForEdit(exam) === 'challenger' &&
@@ -97,7 +91,6 @@ export default function GroupBookingModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
@@ -116,43 +109,29 @@ export default function GroupBookingModal({
         start_time: officeDateToUtcIso(start, timezone),
       }
 
-      let bookingId = exam.booking_id
-      if (exam.booking_id) {
-        await updateBooking(apiClient, exam.booking_id, bookingPayload)
-      } else {
-        const booking = await createBooking(apiClient, bookingPayload)
-        bookingId = booking?.booking_id ?? null
-      }
-
-      await updateExam(apiClient, exam.exam_id, {
-        booking_id: bookingId,
-        event_id: eventId,
-        exam_received_date: toUtcDateIso(examReceivedDate),
-        invigilator_id: selectedInvigilators[0] ?? null,
-        notes,
-        offsite_location: offsiteLocation || exam.offsite_location,
+      await groupBookingMutation.mutateAsync({
+        bookingId: exam.booking_id,
+        bookingPayload,
+        examId: exam.exam_id,
+        examPayload: {
+          event_id: eventId,
+          exam_received_date: toUtcDateIso(examReceivedDate),
+          invigilator_id: selectedInvigilators[0] ?? null,
+          notes,
+          offsite_location: offsiteLocation || exam.offsite_location,
+        },
+        shadowInvigilatorId: shadowInvigilatorId
+          ? Number(shadowInvigilatorId)
+          : null,
+        updateShadowCount:
+          Boolean(shadowInvigilatorId) &&
+          shadowInvigilatorId !== exam.booking?.shadow_invigilator_id,
       })
-
-      if (
-        shadowInvigilatorId &&
-        shadowInvigilatorId !== exam.booking?.shadow_invigilator_id
-      ) {
-        await updateInvigilatorShadowCount(
-          apiClient,
-          Number(shadowInvigilatorId),
-          {
-            add: true,
-            subtract: false,
-          },
-        )
-      }
 
       await onSaved()
       onClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to update booking.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 

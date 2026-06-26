@@ -1,18 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 
-import {
-  createAppointment,
-  deleteAllStatAppointments,
-  deleteAppointment,
-  deleteRecurringAppointments,
-  deleteRecurringStatBookingsForAllOffices,
-  deleteRecurringStatBookingsForCurrentOffice,
-  updateAppointment,
-  updateRecurringAppointment,
-} from '@/api/endpoints'
 import type { Category, Office, Service } from '@/api/schemas'
-import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
@@ -20,7 +8,6 @@ import Modal from '@/components/Modal'
 import ServicePicker from '@/components/ServicePicker'
 import { cx } from '@/lib/cx'
 import { getErrorMessage } from '@/lib/errors'
-import { queryKeys } from '@/query/query-keys'
 
 import {
   getAppointmentLengthOptions,
@@ -35,6 +22,10 @@ import {
   mergeDateAndTime,
   officeDateToUtcIso,
 } from '@/lib/datetime'
+import {
+  useDeleteAppointmentMutation,
+  useSaveAppointmentMutation,
+} from './appointment-mutations'
 
 interface AppointmentModalProps {
   categories: Category[]
@@ -59,8 +50,6 @@ export default function AppointmentModal({
   roleCode,
   services,
 }: AppointmentModalProps) {
-  const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const [citizenName, setCitizenName] = useState('')
   const [contactInformation, setContactInformation] = useState('')
   const [comments, setComments] = useState('')
@@ -74,7 +63,10 @@ export default function AppointmentModal({
   const [selectedServiceId, setSelectedServiceId] = useState<number | ''>('')
   const [editSeries, setEditSeries] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const saveAppointmentMutation = useSaveAppointmentMutation()
+  const deleteAppointmentMutation = useDeleteAppointmentMutation()
+  const isSaving =
+    saveAppointmentMutation.isPending || deleteAppointmentMutation.isPending
 
   const selectedService =
     typeof selectedServiceId === 'number'
@@ -127,7 +119,6 @@ export default function AppointmentModal({
     setSelectedServiceId(clickedEvent?.service_id ?? '')
     setEditSeries(false)
     setErrorMessage(null)
-    setIsSaving(false)
   }, [clickedEvent, clickedTime, isOpen, services])
 
   if (!isOpen) {
@@ -141,12 +132,6 @@ export default function AppointmentModal({
     : clickedEvent?.online_flag
       ? 'Book Service Appointment (Online)'
       : 'Book Service Appointment'
-
-  async function invalidateAppointments() {
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.appointments.all,
-    })
-  }
 
   async function handleClose() {
     await onDraftCleanup()
@@ -180,53 +165,58 @@ export default function AppointmentModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
       if (clickedEvent?.appointment_id) {
-        if (editSeries && clickedEvent.recurring_uuid) {
-          await updateRecurringAppointment(
-            apiClient,
-            clickedEvent.recurring_uuid,
-            {
-              comments,
-            },
-          )
-        } else {
-          await updateAppointment(apiClient, clickedEvent.appointment_id, {
+        await saveAppointmentMutation.mutateAsync({
+          appointmentId: clickedEvent.appointment_id,
+          recurringUuid:
+            editSeries && clickedEvent.recurring_uuid
+              ? clickedEvent.recurring_uuid
+              : undefined,
+          updatePayload:
+            editSeries && clickedEvent.recurring_uuid
+              ? { comments }
+              : {
+                  comments: comments || null,
+                  contact_information: contactInformation || null,
+                  end_time: officeDateToUtcIso(
+                    end,
+                    office.timezone.timezone_name,
+                  ),
+                  service_id: stat
+                    ? clickedEvent.service_id
+                    : Number(selectedServiceId),
+                  start_time: officeDateToUtcIso(
+                    start,
+                    office.timezone.timezone_name,
+                  ),
+                  ...(stat ? {} : { citizen_name: citizenName }),
+                },
+        })
+      } else {
+        await saveAppointmentMutation.mutateAsync({
+          createPayload: {
+            appointment_draft_id: 1,
+            citizen_name: citizenName,
             comments: comments || null,
             contact_information: contactInformation || null,
             end_time: officeDateToUtcIso(end, office.timezone.timezone_name),
-            service_id: stat
-              ? clickedEvent.service_id
-              : Number(selectedServiceId),
+            office_id: office.office_id,
+            service_id: Number(selectedServiceId),
             start_time: officeDateToUtcIso(
               start,
               office.timezone.timezone_name,
             ),
-            ...(stat ? {} : { citizen_name: citizenName }),
-          })
-        }
-      } else {
-        await createAppointment(apiClient, {
-          appointment_draft_id: 1,
-          citizen_name: citizenName,
-          comments: comments || null,
-          contact_information: contactInformation || null,
-          end_time: officeDateToUtcIso(end, office.timezone.timezone_name),
-          office_id: office.office_id,
-          service_id: Number(selectedServiceId),
-          start_time: officeDateToUtcIso(start, office.timezone.timezone_name),
+          },
+          updatePayload: {},
         })
       }
 
-      await invalidateAppointments()
       await handleClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to save appointment.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -235,40 +225,18 @@ export default function AppointmentModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
-      if (!singleOnly && editSeries && clickedEvent.recurring_uuid) {
-        if (stat) {
-          await deleteAllStatAppointments(
-            apiClient,
-            clickedEvent.recurring_uuid,
-          )
-          await deleteRecurringStatBookingsForAllOffices(
-            apiClient,
-            clickedEvent.recurring_uuid,
-          )
-        } else {
-          await deleteRecurringAppointments(
-            apiClient,
-            clickedEvent.recurring_uuid,
-          )
-          await deleteRecurringStatBookingsForCurrentOffice(
-            apiClient,
-            clickedEvent.recurring_uuid,
-          )
-        }
-      } else {
-        await deleteAppointment(apiClient, clickedEvent.appointment_id)
-      }
-
-      await invalidateAppointments()
+      await deleteAppointmentMutation.mutateAsync({
+        appointmentId: clickedEvent.appointment_id,
+        recurringUuid: editSeries ? clickedEvent.recurring_uuid : null,
+        singleOnly,
+        stat,
+      })
       await handleClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to delete appointment.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 

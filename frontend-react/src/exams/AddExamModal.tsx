@@ -1,14 +1,6 @@
 import { useState } from 'react'
 
-import {
-  createBooking,
-  createExam,
-  emailExamInvigilator,
-  requestBcmpExam,
-  updateExam,
-} from '@/api/endpoints'
-import type { ExamType, Invigilator, Office } from '@/api/schemas'
-import { useApiClient } from '@/api/use-api-client'
+import type { Exam, ExamType, Invigilator, Office } from '@/api/schemas'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
@@ -30,6 +22,7 @@ import {
   type ExamDraft,
   type ExamSetup,
 } from './exam-utils'
+import { useAddExamMutation } from './exam-mutations'
 
 export default function AddExamModal({
   examTypes,
@@ -48,7 +41,6 @@ export default function AddExamModal({
   onSaved: () => Promise<void>
   setup: ExamSetup
 }) {
-  const apiClient = useApiClient()
   const [draft, setDraft] = useState<ExamDraft>({
     exam_method: 'paper',
     fees: 'collect',
@@ -59,7 +51,8 @@ export default function AddExamModal({
   })
   const [requestExam, setRequestExam] = useState(setup === 'pesticide')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const addExamMutation = useAddExamMutation()
+  const isSaving = addExamMutation.isPending
   const pesticideTypes = examTypes.filter((type) => type.pesticide_exam_ind)
   const nonPesticideTypes = examTypes.filter(
     (type) =>
@@ -121,66 +114,50 @@ export default function AddExamModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
       const payload = buildExamPayload({ draft, examTypes, office, setup })
+      const shouldCreateBooking =
+        setup === 'challenger' ||
+        setup === 'group' ||
+        (setup === 'pesticide' &&
+          (draft.ind_or_group === 'group' || draft.sbc_managed === 'non-sbc'))
+      const examType = examTypes.find(
+        (type) => type.exam_type_id === Number(payload.exam_type_id),
+      )
+      const buildCreatedExamBookingPayload = (exam: Exam) =>
+        shouldCreateBooking
+          ? buildBookingPayload({
+              draft,
+              examName: exam.exam_name ?? String(payload.exam_name ?? ''),
+              examType: exam.exam_type,
+              office,
+            })
+          : null
 
       if (setup === 'pesticide' && requestExam) {
         if (draft.ind_or_group === 'group') {
           payload.bookdata = buildBookingPayload({
             draft,
             examName: String(payload.exam_name ?? 'Environment'),
-            examType: examTypes.find(
-              (type) => type.exam_type_id === Number(payload.exam_type_id),
-            ),
+            examType,
             office,
           })
         }
-        await requestBcmpExam(apiClient, payload)
-      } else {
-        const exam = await createExam(apiClient, payload)
-
-        if (
-          setup === 'challenger' ||
-          setup === 'group' ||
-          (setup === 'pesticide' &&
-            (draft.ind_or_group === 'group' || draft.sbc_managed === 'non-sbc'))
-        ) {
-          const booking = await createBooking(
-            apiClient,
-            buildBookingPayload({
-              draft,
-              examName: exam.exam_name ?? String(payload.exam_name ?? ''),
-              examType: exam.exam_type,
-              office,
-            }),
-          )
-
-          if (booking?.booking_id) {
-            const updated = await updateExam(apiClient, exam.exam_id, {
-              booking_id: booking.booking_id,
-            })
-
-            if (draft.sbc_managed === 'non-sbc' && updated.invigilator) {
-              await emailExamInvigilator(apiClient, updated.exam_id, {
-                invigilator_email: updated.invigilator.contact_email,
-                invigilator_id: updated.invigilator.invigilator_id,
-                invigilator_name: updated.invigilator.invigilator_name,
-                invigilator_phone: updated.invigilator.contact_phone,
-              })
-            }
-          }
-        }
       }
+
+      await addExamMutation.mutateAsync({
+        buildBookingPayload: buildCreatedExamBookingPayload,
+        emailInvigilator: draft.sbc_managed === 'non-sbc',
+        payload,
+        requestExam: setup === 'pesticide' && requestExam,
+      })
 
       await onSaved()
       onClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to add exam.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 

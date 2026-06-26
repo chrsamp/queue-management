@@ -1,14 +1,13 @@
 import { useState } from 'react'
 
-import { updateExam, uploadCompletedExamDocument } from '@/api/endpoints'
 import type { Exam } from '@/api/schemas'
-import { useApiClient } from '@/api/use-api-client'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
 
 import { Alert, ModalHeader, SelectField } from './ExamModalFields'
+import { useUploadPesticideExamMutation } from './exam-mutations'
 
 export default function UploadPesticideExamModal({
   exam,
@@ -19,7 +18,6 @@ export default function UploadPesticideExamModal({
   onClose: () => void
   onSaved: () => Promise<void>
 }) {
-  const apiClient = useApiClient()
   const printed = Boolean(exam.exam_received_date)
   const [status, setStatus] = useState(
     exam.exam_destroyed_date
@@ -33,7 +31,8 @@ export default function UploadPesticideExamModal({
   const [submitted, setSubmitted] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const uploadExamMutation = useUploadPesticideExamMutation()
+  const isSaving = uploadExamMutation.isPending
 
   async function submit() {
     if (status === 'written' && !file) {
@@ -41,7 +40,6 @@ export default function UploadPesticideExamModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
@@ -52,11 +50,11 @@ export default function UploadPesticideExamModal({
         upload_received_ind: status === 'written' ? 1 : 0,
       }
 
-      if (status === 'written' && file) {
-        await uploadCompletedExamDocument(apiClient, exam.exam_id, file)
-      }
-
-      await updateExam(apiClient, exam.exam_id, putData)
+      await uploadExamMutation.mutateAsync({
+        examId: exam.exam_id,
+        file: status === 'written' ? file : null,
+        payload: putData,
+      })
       await onSaved()
       setSubmitted(true)
     } catch (error) {
@@ -64,7 +62,6 @@ export default function UploadPesticideExamModal({
         getErrorMessage(error, 'File upload failed, please try again.'),
       )
     } finally {
-      setIsSaving(false)
       setConfirm(false)
     }
   }

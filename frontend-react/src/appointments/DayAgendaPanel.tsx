@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { format } from 'date-fns'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import { getAppointments, getServices } from '@/api/endpoints'
 import type { Appointment, Office, Service } from '@/api/schemas'
@@ -13,9 +13,9 @@ import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
-import { checkInAppointment } from './appointment-checkin'
 import { getServiceName } from './appointment-utils'
 import { utcToOfficeDate } from '@/lib/datetime'
+import { useCheckInAppointmentMutation } from './appointment-mutations'
 
 const emptyServices: never[] = []
 const emptyAppointments: never[] = []
@@ -26,7 +26,6 @@ interface DayAgendaPanelProps {
 
 export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
   const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const activeCitizenId = useWorkflowStore((state) => state.activeCitizenId)
   const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
   const setGlobalAlert = useWorkflowStore((state) => state.setGlobalAlert)
@@ -35,6 +34,7 @@ export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
     number | null
   >(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const checkInMutation = useCheckInAppointmentMutation()
 
   const appointmentsQuery = useQuery({
     queryFn: ({ signal }) => getAppointments(apiClient, signal),
@@ -81,15 +81,10 @@ export default function DayAgendaPanel({ office }: DayAgendaPanelProps) {
     setErrorMessage(null)
 
     try {
-      await checkInAppointment({
-        apiClient,
+      await checkInMutation.mutateAsync({
         appointment,
         beginService: false,
       })
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.citizens }),
-      ])
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to check in appointment.'))
     } finally {

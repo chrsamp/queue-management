@@ -3,14 +3,9 @@ import { type Key } from 'react-aria-components'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
-  addCitizen,
-  beginCitizenService,
-  createServiceRequest,
   getCategories,
   getChannels,
   getServices,
-  inviteNextCitizen,
-  updateCitizen,
 } from '@/api/endpoints'
 import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
@@ -37,6 +32,11 @@ import {
   getWaitingCitizens,
   isReceptionOffice,
 } from './queue-utils'
+import {
+  useCreateCitizenDraftMutation,
+  useInviteNextCitizenMutation,
+  useQuickBeginServiceMutation,
+} from './queue-mutations'
 
 interface QueueActionsProps {
   citizens: Citizen[]
@@ -64,8 +64,10 @@ export default function QueueActions({
   const [modalState, setModalState] = useState<AddCitizenModalState | null>(
     null,
   )
-  const [isPerformingAction, setIsPerformingAction] = useState(false)
   const [actionAlert, setActionAlert] = useState<string | null>(null)
+  const createCitizenDraftMutation = useCreateCitizenDraftMutation()
+  const quickBeginServiceMutation = useQuickBeginServiceMutation()
+  const inviteNextMutation = useInviteNextCitizenMutation()
 
   const categoriesQuery = useQuery({
     queryFn: ({ signal }) => getCategories(apiClient, signal),
@@ -83,7 +85,9 @@ export default function QueueActions({
   const quickListItems = getAvailableQuickItems(office.quick_list)
   const backOfficeItems = getAvailableQuickItems(office.back_office_list)
   const isBusy =
-    isPerformingAction ||
+    createCitizenDraftMutation.isPending ||
+    quickBeginServiceMutation.isPending ||
+    inviteNextMutation.isPending ||
     categoriesQuery.isPending ||
     channelsQuery.isPending ||
     servicesQuery.isPending
@@ -118,13 +122,11 @@ export default function QueueActions({
     mode: AddCitizenMode,
     preselectedService?: Pick<Service, 'service_id' | 'service_name'> | null,
   ) {
-    setIsPerformingAction(true)
     setActionAlert(null)
 
     try {
       const { channels } = await ensureReferenceData()
-      const citizen = await addCitizen(
-        apiClient,
+      const citizen = await createCitizenDraftMutation.mutateAsync(
         getWaitingCitizens(citizens).length,
       )
 
@@ -141,8 +143,6 @@ export default function QueueActions({
       setActionAlert(
         getErrorMessage(error, 'An error occurred adding a citizen.'),
       )
-    } finally {
-      setIsPerformingAction(false)
     }
   }
 
@@ -153,15 +153,10 @@ export default function QueueActions({
     mode: AddCitizenMode
     serviceId: number
   }) {
-    setIsPerformingAction(true)
     setActionAlert(null)
 
     try {
       const { channels } = await ensureReferenceData()
-      const citizen = await addCitizen(
-        apiClient,
-        getWaitingCitizens(citizens).length,
-      )
       const sortedCounters = [...office.counters].sort((left, right) =>
         left.counter_name.localeCompare(right.counter_name),
       )
@@ -171,29 +166,16 @@ export default function QueueActions({
         throw new Error('You must select a channel')
       }
 
-      await updateCitizen(apiClient, citizen.citizen_id, {
-        citizen_comments: '',
-        counter_id: sortedCounters[0]?.counter_id ?? null,
-        notification_email: '',
-        notification_phone: '',
-        priority: 2,
-        walkin_unique_id: '',
+      const citizen = await quickBeginServiceMutation.mutateAsync({
+        channelId,
+        citizenWaitingCount: getWaitingCitizens(citizens).length,
+        counterId: sortedCounters[0]?.counter_id ?? null,
+        serviceId,
       })
-      await createServiceRequest(apiClient, {
-        channel_id: channelId,
-        citizen_id: citizen.citizen_id,
-        priority: 2,
-        quantity: 1,
-        service_id: serviceId,
-      })
-      await beginCitizenService(apiClient, citizen.citizen_id)
-      await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
       openServiceModal()
       setActiveServiceCitizen(citizen.citizen_id, null, true)
     } catch (error) {
       setActionAlert(getErrorMessage(error, 'Unable to begin service.'))
-    } finally {
-      setIsPerformingAction(false)
     }
   }
 
@@ -212,12 +194,10 @@ export default function QueueActions({
       return
     }
 
-    setIsPerformingAction(true)
     setActionAlert(null)
 
     try {
-      await inviteNextCitizen(apiClient, currentCounterId)
-      await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      await inviteNextMutation.mutateAsync(currentCounterId)
       openServiceModal()
       setActiveServiceCitizen(
         nextCitizen.citizen_id,
@@ -226,8 +206,6 @@ export default function QueueActions({
       )
     } catch (error) {
       setActionAlert(getErrorMessage(error, 'Unable to invite citizen.'))
-    } finally {
-      setIsPerformingAction(false)
     }
   }
 

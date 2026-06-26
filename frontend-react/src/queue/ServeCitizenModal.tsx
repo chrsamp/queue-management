@@ -1,17 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import {
-  activateServiceRequest,
-  addCitizenToQueue,
-  beginCitizenService,
-  finishCitizenService,
   getCategories,
   getChannels,
   getServices,
-  markCitizenLeft,
-  placeCitizenOnHold,
-  sendWalkinLineReminder,
   updateCitizen,
   updateServiceRequest,
 } from '@/api/endpoints'
@@ -38,6 +31,10 @@ import {
   getActiveServiceRequests,
   isReceptionOffice,
 } from './queue-utils'
+import {
+  useServeCitizenLifecycleMutation,
+  type ServeCitizenLifecycleAction,
+} from './queue-mutations'
 
 interface ServeCitizenModalProps {
   citizen: Citizen | null
@@ -59,7 +56,6 @@ export default function ServeCitizenModal({
   office,
 }: ServeCitizenModalProps) {
   const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const activeServiceRequestId = useWorkflowStore(
     (state) => state.activeServiceRequestId,
   )
@@ -78,9 +74,10 @@ export default function ServeCitizenModal({
   )
   const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
   const [isMinimized, setIsMinimized] = useState(false)
-  const [isPerformingAction, setIsPerformingAction] = useState(false)
   const [serviceFormState, setServiceFormState] =
     useState<AddCitizenModalState | null>(null)
+  const lifecycleMutation = useServeCitizenLifecycleMutation()
+  const isPerformingAction = lifecycleMutation.isPending
 
   const categoriesQuery = useQuery({
     queryFn: ({ signal }) => getCategories(apiClient, signal),
@@ -127,10 +124,6 @@ export default function ServeCitizenModal({
     setForm((current) => ({ ...current, ...updates }))
   }
 
-  async function invalidateCitizens() {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
-  }
-
   async function saveBeforeLifecycle() {
     if (!citizen || !activeService) {
       throw new Error(
@@ -164,7 +157,7 @@ export default function ServeCitizenModal({
   }
 
   async function runLifecycle(
-    action: () => Promise<unknown>,
+    action: ServeCitizenLifecycleAction,
     options: {
       clear?: boolean
       reminder?: boolean
@@ -175,21 +168,16 @@ export default function ServeCitizenModal({
       return
     }
 
-    setIsPerformingAction(true)
-
     try {
-      await saveBeforeLifecycle()
-      await action()
-
-      if (options.reminder) {
-        await sendWalkinLineReminder(apiClient, citizen.citizen_id)
-      }
+      await lifecycleMutation.mutateAsync({
+        action,
+        reminderCitizenId: options.reminder ? citizen.citizen_id : null,
+        save: saveBeforeLifecycle,
+      })
 
       if (options.clear) {
         clearTerminalServeCitizen(citizen.citizen_id)
-        await invalidateCitizens()
       } else {
-        await invalidateCitizens()
         setActiveServiceCitizen(
           citizen.citizen_id,
           activeService?.sr_id ?? null,
@@ -198,8 +186,6 @@ export default function ServeCitizenModal({
       }
     } catch (error) {
       setServeModalAlert(getErrorMessage(error, 'Unable to update citizen.'))
-    } finally {
-      setIsPerformingAction(false)
     }
   }
 
@@ -328,11 +314,10 @@ export default function ServeCitizenModal({
                         disabled={beginDisabled}
                         onClick={() =>
                           void runLifecycle(
-                            () =>
-                              beginCitizenService(
-                                apiClient,
-                                citizen.citizen_id,
-                              ),
+                            {
+                              citizenId: citizen.citizen_id,
+                              type: 'begin-service',
+                            },
                             { reminder: true, serviceBegun: true },
                           )
                         }
@@ -346,8 +331,10 @@ export default function ServeCitizenModal({
                         disabled={actionDisabled}
                         onClick={() =>
                           void runLifecycle(
-                            () =>
-                              addCitizenToQueue(apiClient, citizen.citizen_id),
+                            {
+                              citizenId: citizen.citizen_id,
+                              type: 'add-to-queue',
+                            },
                             { clear: true },
                           )
                         }
@@ -364,7 +351,10 @@ export default function ServeCitizenModal({
                       disabled={actionDisabled}
                       onClick={() =>
                         void runLifecycle(
-                          () => markCitizenLeft(apiClient, citizen.citizen_id),
+                          {
+                            citizenId: citizen.citizen_id,
+                            type: 'citizen-left',
+                          },
                           { clear: true, reminder: true },
                         )
                       }
@@ -382,7 +372,10 @@ export default function ServeCitizenModal({
                 disabled={isPerformingAction}
                 onActivate={(serviceRequestId) =>
                   void runLifecycle(
-                    () => activateServiceRequest(apiClient, serviceRequestId),
+                    {
+                      serviceRequestId,
+                      type: 'activate-service-request',
+                    },
                     { serviceBegun },
                   )
                 }
@@ -458,12 +451,11 @@ export default function ServeCitizenModal({
                     disabled={serviceActionDisabled}
                     onClick={() =>
                       void runLifecycle(
-                        () =>
-                          finishCitizenService(
-                            apiClient,
-                            citizen.citizen_id,
-                            form.accurateTimeInd === 0,
-                          ),
+                        {
+                          citizenId: citizen.citizen_id,
+                          inaccurate: form.accurateTimeInd === 0,
+                          type: 'finish-service',
+                        },
                         { clear: true },
                       )
                     }
@@ -475,7 +467,10 @@ export default function ServeCitizenModal({
                     disabled={serviceActionDisabled}
                     onClick={() =>
                       void runLifecycle(
-                        () => placeCitizenOnHold(apiClient, citizen.citizen_id),
+                        {
+                          citizenId: citizen.citizen_id,
+                          type: 'place-on-hold',
+                        },
                         { clear: true },
                       )
                     }

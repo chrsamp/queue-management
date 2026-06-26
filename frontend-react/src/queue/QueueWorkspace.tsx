@@ -10,14 +10,10 @@ import {
   type ReactNode,
 } from 'react'
 import { GripHorizontal } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
 
 import type { Citizen, Office } from '@/api/schemas'
-import { beginCitizenService, inviteCitizen } from '@/api/endpoints'
-import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import { getErrorMessage } from '@/lib/errors'
-import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 import DayAgendaPanel from '@/appointments/DayAgendaPanel'
 import { appointmentsEnabled } from '@/appointments/appointment-utils'
@@ -33,6 +29,10 @@ import {
   isNotificationEnabled,
   isReceptionOffice,
 } from './queue-utils'
+import {
+  useBeginCitizenFromHoldMutation,
+  useInviteCitizenMutation,
+} from './queue-mutations'
 
 interface QueueWorkspaceProps {
   citizens: Citizen[]
@@ -66,8 +66,6 @@ export default function QueueWorkspace({
   isLoading = false,
   office,
 }: QueueWorkspaceProps) {
-  const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const reception = isReceptionOffice(office)
   const notificationsEnabled = isNotificationEnabled(office)
   const waitingCitizens = getWaitingCitizens(citizens)
@@ -96,6 +94,8 @@ export default function QueueWorkspace({
     getInitialWaitingRatio(csrId),
   )
   const [queueAlert, setQueueAlert] = useState<string | null>(null)
+  const inviteCitizenMutation = useInviteCitizenMutation()
+  const beginCitizenFromHoldMutation = useBeginCitizenFromHoldMutation()
   const resizeStorageKey = useMemo(
     () => (csrId ? `queueWorkspace:${csrId}:waitingRatio` : null),
     [csrId],
@@ -274,8 +274,10 @@ export default function QueueWorkspace({
       setQueueAlert(null)
 
       try {
-        await inviteCitizen(apiClient, citizen.citizen_id, currentCounterId)
-        await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+        await inviteCitizenMutation.mutateAsync({
+          citizenId: citizen.citizen_id,
+          counterId: currentCounterId,
+        })
         openServiceModal()
         setActiveServiceCitizen(
           citizen.citizen_id,
@@ -287,11 +289,10 @@ export default function QueueWorkspace({
       }
     },
     [
-      apiClient,
       currentCounterId,
       hasActiveServiceCitizen,
+      inviteCitizenMutation,
       openServiceModal,
-      queryClient,
       setActiveServiceCitizen,
       showServiceModal,
     ],
@@ -309,8 +310,7 @@ export default function QueueWorkspace({
       setQueueAlert(null)
 
       try {
-        await beginCitizenService(apiClient, citizen.citizen_id)
-        await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+        await beginCitizenFromHoldMutation.mutateAsync(citizen.citizen_id)
         openServiceModal()
         setActiveServiceCitizen(
           citizen.citizen_id,
@@ -322,10 +322,9 @@ export default function QueueWorkspace({
       }
     },
     [
-      apiClient,
+      beginCitizenFromHoldMutation,
       hasActiveServiceCitizen,
       openServiceModal,
-      queryClient,
       setActiveServiceCitizen,
       showServiceModal,
     ],

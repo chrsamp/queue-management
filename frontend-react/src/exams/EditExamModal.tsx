@@ -1,10 +1,6 @@
 import { useState } from 'react'
 
-import {
-  deleteBooking,
-  downloadExamDocument,
-  updateExam,
-} from '@/api/endpoints'
+import { downloadExamDocument } from '@/api/endpoints'
 import type { Exam, ExamType } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import Button from '@/components/Button'
@@ -30,6 +26,7 @@ import {
   toUtcDateIso,
   type ExamPermissions,
 } from './exam-utils'
+import { useUpdateExamMutation } from './exam-mutations'
 
 export default function EditExamModal({
   exam,
@@ -65,8 +62,9 @@ export default function EditExamModal({
   })
   const [confirmBookingDelete, setConfirmBookingDelete] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
   const [examNotReady, setExamNotReady] = useState(false)
+  const updateExamMutation = useUpdateExamMutation()
+  const isSaving = updateExamMutation.isPending
   const type = examTypeForEdit(exam)
   const showAllFields =
     permissions.roleCode === 'GA' ||
@@ -107,14 +105,9 @@ export default function EditExamModal({
   }
 
   async function submitConfirmed() {
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
-      if (confirmBookingDelete && exam.booking_id) {
-        await deleteBooking(apiClient, exam.booking_id)
-      }
-
       const payload: Record<string, unknown> = {}
       Object.entries(fields).forEach(([key, value]) => {
         if (key.endsWith('_date')) {
@@ -128,7 +121,12 @@ export default function EditExamModal({
         payload.exam_received_date = null
       }
 
-      await updateExam(apiClient, exam.exam_id, payload)
+      await updateExamMutation.mutateAsync({
+        deleteBookingId:
+          confirmBookingDelete && exam.booking_id ? exam.booking_id : null,
+        examId: exam.exam_id,
+        payload,
+      })
       await onSaved()
       setGlobalAlert({
         id: 'exam-edit-success',
@@ -146,8 +144,6 @@ export default function EditExamModal({
         variant: 'danger',
       })
       setErrorMessage(getErrorMessage(error, 'Unable to update exam.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 

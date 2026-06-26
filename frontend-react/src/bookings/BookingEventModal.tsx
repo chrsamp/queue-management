@@ -1,25 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 
-import {
-  createBooking,
-  deleteBooking,
-  deleteRecurringBooking,
-  deleteRecurringStatBookingsForAllOffices,
-  deleteRecurringStatBookingsForCurrentOffice,
-  updateBooking,
-  updateExamBooking,
-  updateRecurringBooking,
-  type BookingPayload,
-} from '@/api/endpoints'
+import { type BookingPayload } from '@/api/endpoints'
 import type { Exam, Invigilator, Office, Room } from '@/api/schemas'
-import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
-import { queryKeys } from '@/query/query-keys'
 
 import {
   getExamDurationMinutes,
@@ -37,6 +24,10 @@ import {
   mergeDateAndTime,
   officeDateToUtcIso,
 } from '@/lib/datetime'
+import {
+  useDeleteBookingEventMutation,
+  useSaveBookingEventMutation,
+} from './booking-mutations'
 
 interface BookingEventModalProps {
   event: BookingCalendarEvent | null
@@ -69,8 +60,6 @@ export default function BookingEventModal({
   slotEnd,
   slotStart,
 }: BookingEventModalProps) {
-  const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [contact, setContact] = useState('')
   const [fees, setFees] = useState('false')
@@ -88,7 +77,10 @@ export default function BookingEventModal({
   const [editSeries, setEditSeries] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const saveBookingMutation = useSaveBookingEventMutation()
+  const deleteBookingMutation = useDeleteBookingEventMutation()
+  const isSaving =
+    saveBookingMutation.isPending || deleteBookingMutation.isPending
 
   const support = roleCode === 'SUPPORT'
   const stat = Boolean(event?.stat_flag)
@@ -148,7 +140,6 @@ export default function BookingEventModal({
     setEditSeries(false)
     setConfirmDelete(false)
     setErrorMessage(null)
-    setIsSaving(false)
   }, [event, exam, isOpen, resource, slotEnd, slotStart])
 
   if (!isOpen) {
@@ -170,14 +161,6 @@ export default function BookingEventModal({
     roomOptions.find((option) => option.value === selectedRoomId)?.label ??
     resource?.title ??
     'Offsite'
-
-  async function invalidate() {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.exams.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
-    ])
-  }
 
   function validate() {
     if (!canEdit) {
@@ -260,34 +243,25 @@ export default function BookingEventModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
-      if (mode === 'edit' && event) {
-        if (editSeries && event.recurring_uuid) {
-          await updateRecurringBooking(apiClient, event.recurring_uuid, {
-            blackout_notes: notes || null,
-          })
-        } else {
-          await updateBooking(apiClient, event.id, buildPayload())
-        }
-      } else if (mode === 'reschedule' && event) {
-        await updateBooking(apiClient, event.id, buildPayload())
-      } else {
-        const created = await createBooking(apiClient, buildPayload())
-
-        if (created?.booking_id && exam) {
-          await updateExamBooking(apiClient, exam.exam_id, created.booking_id)
-        }
-      }
-
-      await invalidate()
+      await saveBookingMutation.mutateAsync({
+        bookingId: event?.id,
+        examId: exam?.exam_id,
+        mode:
+          mode === 'edit'
+            ? 'update'
+            : mode === 'reschedule'
+              ? 'reschedule'
+              : 'create',
+        payload: buildPayload(),
+        recurringUuid:
+          mode === 'edit' && editSeries ? event?.recurring_uuid : null,
+      })
       onClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to save booking.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -298,36 +272,18 @@ export default function BookingEventModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
-      if (kind === 'series' && event.recurring_uuid) {
-        await deleteRecurringBooking(apiClient, event.recurring_uuid)
-      } else if (kind === 'stat-current' && event.recurring_uuid) {
-        await deleteRecurringStatBookingsForCurrentOffice(
-          apiClient,
-          event.recurring_uuid,
-        )
-      } else if (kind === 'stat-all' && event.recurring_uuid) {
-        await deleteRecurringStatBookingsForAllOffices(
-          apiClient,
-          event.recurring_uuid,
-        )
-      } else {
-        await deleteBooking(apiClient, event.id)
-      }
-
-      if (event.exam) {
-        await updateExamBooking(apiClient, event.exam.exam_id, null)
-      }
-
-      await invalidate()
+      await deleteBookingMutation.mutateAsync({
+        bookingId: event.id,
+        examId: event.exam?.exam_id,
+        kind,
+        recurringUuid: event.recurring_uuid,
+      })
       onClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to delete booking.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 

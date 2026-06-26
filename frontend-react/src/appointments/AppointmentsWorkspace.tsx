@@ -11,8 +11,6 @@ import { useQuery } from '@tanstack/react-query'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 
 import {
-  createDraftAppointment,
-  deleteDraftAppointment,
   getAppointments,
   getCategories,
   getServices,
@@ -39,6 +37,10 @@ import {
   isPast,
   officeDateToUtcIso,
 } from '@/lib/datetime'
+import {
+  useCreateDraftAppointmentMutation,
+  useDeleteDraftAppointmentMutation,
+} from './appointment-mutations'
 
 const locales = { 'en-US': enUS }
 const emptyAppointments: never[] = []
@@ -77,6 +79,8 @@ export default function AppointmentsWorkspace({
   const [checkInModalOpen, setCheckInModalOpen] = useState(false)
   const [blackoutModalOpen, setBlackoutModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const createDraftMutation = useCreateDraftAppointmentMutation()
+  const deleteDraftMutation = useDeleteDraftAppointmentMutation()
 
   const appointmentsQuery = useQuery({
     queryFn: ({ signal }) => getAppointments(apiClient, signal),
@@ -136,7 +140,7 @@ export default function AppointmentsWorkspace({
     }
 
     try {
-      await deleteDraftAppointment(apiClient, draftId)
+      await deleteDraftMutation.mutateAsync(draftId)
       setDraftId(null)
     } catch {
       setDraftId(null)
@@ -160,7 +164,7 @@ export default function AppointmentsWorkspace({
     const end = addMinutes(start, 15)
 
     try {
-      const draft = await createDraftAppointment(apiClient, {
+      const draft = await createDraftMutation.mutateAsync({
         end_time: officeDateToUtcIso(end, office.timezone.timezone_name),
         office_id: office.office_id,
         start_time: officeDateToUtcIso(start, office.timezone.timezone_name),

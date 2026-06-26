@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { RRule } from 'rrule'
-import { useQueryClient } from '@tanstack/react-query'
 
 import {
   createAppointment,
@@ -16,7 +15,6 @@ import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
 import { createUuid } from '@/lib/uuid'
-import { queryKeys } from '@/query/query-keys'
 
 import {
   buildRecurringWindows,
@@ -29,6 +27,7 @@ import {
   mergeDateAndTime,
   officeDateToUtcIso,
 } from '@/lib/datetime'
+import { useCreateAppointmentBlackoutMutation } from './appointment-mutations'
 
 interface AppointmentBlackoutModalProps {
   appointments: Appointment[]
@@ -60,7 +59,6 @@ export default function AppointmentBlackoutModal({
   username,
 }: AppointmentBlackoutModalProps) {
   const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const [mode, setMode] = useState<BlackoutMode>('single')
   const [dateValue, setDateValue] = useState(formatDateInputValue(new Date()))
   const [startTimeValue, setStartTimeValue] = useState('08:30')
@@ -79,7 +77,8 @@ export default function AppointmentBlackoutModal({
   const [onlyAppointments, setOnlyAppointments] = useState(false)
   const [confirmOverlap, setConfirmOverlap] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const createBlackoutMutation = useCreateAppointmentBlackoutMutation()
+  const isSaving = createBlackoutMutation.isPending
 
   const support = roleCode === 'SUPPORT'
   const windows = useMemo(() => {
@@ -131,7 +130,6 @@ export default function AppointmentBlackoutModal({
     setMode('single')
     setConfirmOverlap(false)
     setErrorMessage(null)
-    setIsSaving(false)
     onClose()
   }
 
@@ -174,13 +172,15 @@ export default function AppointmentBlackoutModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
-      if (mode === 'stat') {
-        await createStatRecords()
-      } else {
+      await createBlackoutMutation.mutateAsync(async () => {
+        if (mode === 'stat') {
+          await createStatRecords()
+          return
+        }
+
         const recurringUuid = mode === 'recurring' ? createUuid() : null
 
         for (const window of windows) {
@@ -201,16 +201,10 @@ export default function AppointmentBlackoutModal({
             ),
           })
         }
-      }
-
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.appointments.all,
       })
       resetAndClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to create blackout.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 

@@ -1,14 +1,13 @@
 import { useState } from 'react'
 
-import { deleteBooking, deleteExam } from '@/api/endpoints'
 import type { Exam } from '@/api/schemas'
-import { useApiClient } from '@/api/use-api-client'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
 
 import { Alert, ModalHeader } from './ExamModalFields'
+import { useDeleteExamMutation } from './exam-mutations'
 
 export default function DeleteExamModal({
   exam,
@@ -19,25 +18,19 @@ export default function DeleteExamModal({
   onClose: () => void
   onSaved: () => Promise<void>
 }) {
-  const apiClient = useApiClient()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const deleteExamMutation = useDeleteExamMutation()
+  const isSaving = deleteExamMutation.isPending
 
   async function handleDelete() {
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
-      await deleteExam(apiClient, exam.exam_id)
-      if (exam.booking_id) {
-        await deleteBooking(apiClient, exam.booking_id)
-      }
+      await deleteExamMutation.mutateAsync(exam)
       await onSaved()
       onClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to delete exam.'))
-    } finally {
-      setIsSaving(false)
     }
   }
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router'
 
 import {
@@ -8,7 +8,6 @@ import {
   getInvigilators,
   getOffices,
   getOffsiteInvigilators,
-  refreshBcmpExamStatus,
 } from '@/api/endpoints'
 import type { Csr, Exam, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
@@ -21,6 +20,10 @@ import ExamModals from './ExamModals'
 import ExamsTable from './ExamsTable'
 import ExamsToolbar from './ExamsToolbar'
 import type { ActiveExamModal } from './exam-modal-types'
+import {
+  useInvalidateExams,
+  useRefreshExamStatusMutation,
+} from './exam-mutations'
 import {
   filterExams,
   formatDate,
@@ -47,7 +50,6 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
   const apiClient = useApiClient()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const queryClient = useQueryClient()
   const permissions = getExamPermissions(csr)
   const setExamSchedulingRequest = useWorkflowStore(
     (state) => state.setExamSchedulingRequest,
@@ -58,12 +60,14 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
   const [activeModal, setActiveModal] = useState<ActiveExamModal>(null)
   const [pageResetToken, setPageResetToken] = useState(0)
   const [routeMessage, setRouteMessage] = useState<string | null>(null)
-  const [isRefreshingStatus, setIsRefreshingStatus] = useState(false)
 
   const officeNumber =
     filters.officeNumber === 'default'
       ? office.office_number
       : filters.officeNumber
+  const invalidateExams = useInvalidateExams()
+  const refreshStatusMutation = useRefreshExamStatusMutation(officeNumber)
+  const isRefreshingStatus = refreshStatusMutation.isPending
   const examsQuery = useQuery({
     queryFn: ({ signal }) =>
       getExams(
@@ -116,34 +120,19 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
     [filteredExams, filters.showAllPesticide],
   )
 
-  async function invalidateExams() {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.exams.all }),
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.exams.office(officeNumber),
-      }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.csrs.me }),
-    ])
-  }
-
   async function handleRefreshStatus() {
-    setIsRefreshingStatus(true)
     setRouteMessage(null)
 
     try {
-      await refreshBcmpExamStatus(apiClient)
+      await refreshStatusMutation.mutateAsync()
       setFilters((current) => ({
         ...current,
         officeNumber: 'pesticide_offsite',
         quickAction: 'awaiting_upload',
         showAllPesticide: false,
       }))
-      await invalidateExams()
     } catch (error) {
       setRouteMessage(getErrorMessage(error, 'Unable to refresh exam status.'))
-    } finally {
-      setIsRefreshingStatus(false)
     }
   }
 
@@ -286,7 +275,7 @@ export default function ExamsWorkspace({ csr, office }: ExamsWorkspaceProps) {
         offices={offices}
         offsiteInvigilators={offsiteInvigilators}
         onClose={() => setActiveModal(null)}
-        onSaved={invalidateExams}
+        onSaved={() => invalidateExams(officeNumber)}
         onSwitchModal={setActiveModal}
         permissions={permissions}
       />

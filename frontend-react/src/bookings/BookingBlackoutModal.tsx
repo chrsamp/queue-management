@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import { RRule } from 'rrule'
-import { useQueryClient } from '@tanstack/react-query'
 
 import {
   createAppointment,
@@ -15,7 +14,6 @@ import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
-import { queryKeys } from '@/query/query-keys'
 
 import {
   buildRecurringBookingWindows,
@@ -30,6 +28,7 @@ import {
   mergeDateAndTime,
   officeDateToUtcIso,
 } from '@/lib/datetime'
+import { useCreateBookingBlackoutMutation } from './booking-mutations'
 
 interface BookingBlackoutModalProps {
   isOpen: boolean
@@ -61,7 +60,6 @@ export default function BookingBlackoutModal({
   username,
 }: BookingBlackoutModalProps) {
   const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const [mode, setMode] = useState<BlackoutMode>('single')
   const [dateValue, setDateValue] = useState(formatDateInputValue(new Date()))
   const [startTimeValue, setStartTimeValue] = useState('08:30')
@@ -83,11 +81,12 @@ export default function BookingBlackoutModal({
   const [onlyThisOffice, setOnlyThisOffice] = useState(false)
   const [onlyBookings, setOnlyBookings] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
   const [progress, setProgress] = useState<{
     done: number
     total: number
   } | null>(null)
+  const createBlackoutMutation = useCreateBookingBlackoutMutation()
+  const isSaving = createBlackoutMutation.isPending
 
   const support = roleCode === 'SUPPORT'
   const roomOptions = [
@@ -145,7 +144,6 @@ export default function BookingBlackoutModal({
   function resetAndClose() {
     setMode('single')
     setErrorMessage(null)
-    setIsSaving(false)
     setProgress(null)
     onClose()
   }
@@ -194,24 +192,19 @@ export default function BookingBlackoutModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
-      if (mode === 'stat') {
-        await createStatRecords()
-      } else {
-        await createBlackoutBookings(windows)
-      }
-
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
-      ])
+      await createBlackoutMutation.mutateAsync(async () => {
+        if (mode === 'stat') {
+          await createStatRecords()
+        } else {
+          await createBlackoutBookings(windows)
+        }
+      })
       resetAndClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to create blackout.'))
-      setIsSaving(false)
     }
   }
 

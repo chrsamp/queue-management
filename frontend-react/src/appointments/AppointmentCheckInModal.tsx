@@ -1,16 +1,13 @@
 import { useState } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
 
 import type { AppointmentCalendarEvent } from './appointment-utils'
-import { checkInAppointment } from './appointment-checkin'
-import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { getErrorMessage } from '@/lib/errors'
-import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
+import { useCheckInAppointmentMutation } from './appointment-mutations'
 
 interface AppointmentCheckInModalProps {
   clickedEvent: AppointmentCalendarEvent | null
@@ -27,13 +24,12 @@ export default function AppointmentCheckInModal({
   onEdit,
   roleCode,
 }: AppointmentCheckInModalProps) {
-  const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const activeCitizenId = useWorkflowStore((state) => state.activeCitizenId)
   const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
   const setGlobalAlert = useWorkflowStore((state) => state.setGlobalAlert)
-  const [isCheckingIn, setIsCheckingIn] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const checkInMutation = useCheckInAppointmentMutation()
+  const isCheckingIn = checkInMutation.isPending
 
   if (!isOpen || !clickedEvent) {
     return null
@@ -63,24 +59,16 @@ export default function AppointmentCheckInModal({
       return
     }
 
-    setIsCheckingIn(true)
     setErrorMessage(null)
 
     try {
-      await checkInAppointment({
-        apiClient,
+      await checkInMutation.mutateAsync({
         appointment: clickedEvent.appointment,
         beginService: false,
       })
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.citizens }),
-      ])
       onClose()
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to check in appointment.'))
-    } finally {
-      setIsCheckingIn(false)
     }
   }
 

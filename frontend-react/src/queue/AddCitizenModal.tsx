@@ -2,23 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { HandHelping, UserRoundPlus } from 'lucide-react'
 
 import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
-import {
-  addCitizenToQueue,
-  beginCitizenService,
-  createServiceRequest,
-  markCitizenLeft,
-  updateCitizen,
-  updateServiceRequest,
-} from '@/api/endpoints'
-import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import ServicePicker from '@/components/ServicePicker'
 import { getErrorMessage } from '@/lib/errors'
-import { queryKeys } from '@/query/query-keys'
-import { useQueryClient } from '@tanstack/react-query'
 
 import {
   formatNotificationPhone,
@@ -29,6 +18,12 @@ import {
 import { createUuid } from '@/lib/uuid'
 import type { AddCitizenModalState } from './add-citizen-modal-state'
 import { getWaitingCitizens, isReceptionOffice } from './queue-utils'
+import {
+  useAddCitizenToQueueMutation,
+  useApplyCitizenServiceMutation,
+  useBeginAddedCitizenServiceMutation,
+  useCancelAddedCitizenMutation,
+} from './queue-mutations'
 
 interface AddCitizenModalProps {
   categories: Category[]
@@ -55,13 +50,19 @@ export default function AddCitizenModal({
   services,
   state,
 }: AddCitizenModalProps) {
-  const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const commentsRef = useRef<HTMLTextAreaElement | null>(null)
   const [form, setForm] = useState(state)
   const [alertMessage, setAlertMessage] = useState<string | null>(null)
-  const [isPerformingAction, setIsPerformingAction] = useState(false)
+  const addToQueueMutation = useAddCitizenToQueueMutation()
+  const beginServiceMutation = useBeginAddedCitizenServiceMutation()
+  const cancelMutation = useCancelAddedCitizenMutation()
+  const applyServiceMutation = useApplyCitizenServiceMutation()
+  const isPerformingAction =
+    addToQueueMutation.isPending ||
+    beginServiceMutation.isPending ||
+    cancelMutation.isPending ||
+    applyServiceMutation.isPending
 
   useEffect(() => {
     // The modal keeps editable local form state and must reset when a new
@@ -69,7 +70,6 @@ export default function AddCitizenModal({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(state)
     setAlertMessage(null)
-    setIsPerformingAction(false)
   }, [state])
 
   useEffect(() => {
@@ -138,31 +138,6 @@ export default function AddCitizenModal({
     })
   }
 
-  async function saveCitizenBase(current: AddCitizenModalState) {
-    await updateCitizen(apiClient, current.citizen.citizen_id, {
-      citizen_comments: current.comments,
-      counter_id: current.counterId,
-      notification_email: current.notificationEmail,
-      notification_phone: current.notificationPhone,
-      priority: current.priority,
-      walkin_unique_id: current.walkinUniqueId,
-    })
-  }
-
-  async function createSelectedServiceRequest(current: AddCitizenModalState) {
-    if (!current.selectedServiceId || !current.channelId) {
-      return
-    }
-
-    await createServiceRequest(apiClient, {
-      channel_id: current.channelId,
-      citizen_id: current.citizen.citizen_id,
-      priority: current.priority,
-      quantity: 1,
-      service_id: current.selectedServiceId,
-    })
-  }
-
   function validateRequired(current: AddCitizenModalState) {
     if (!current.selectedServiceId) {
       setAlertMessage('You must select a service')
@@ -182,18 +157,13 @@ export default function AddCitizenModal({
       return
     }
 
-    setIsPerformingAction(true)
     setAlertMessage(null)
 
     try {
-      await saveCitizenBase(nextForm)
-      await createSelectedServiceRequest(nextForm)
-      await addCitizenToQueue(apiClient, nextForm.citizen.citizen_id)
-      await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      await addToQueueMutation.mutateAsync(nextForm)
       onClose()
     } catch (error) {
       setAlertMessage(getErrorMessage(error, 'Unable to add citizen to queue.'))
-      setIsPerformingAction(false)
     }
   }
 
@@ -202,19 +172,14 @@ export default function AddCitizenModal({
       return
     }
 
-    setIsPerformingAction(true)
     setAlertMessage(null)
 
     try {
-      await saveCitizenBase(nextForm)
-      await createSelectedServiceRequest(nextForm)
-      await beginCitizenService(apiClient, nextForm.citizen.citizen_id)
-      await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      await beginServiceMutation.mutateAsync(nextForm)
       onBeginService?.(nextForm.citizen.citizen_id)
       onClose()
     } catch (error) {
       setAlertMessage(getErrorMessage(error, 'Unable to begin service.'))
-      setIsPerformingAction(false)
     }
   }
 
@@ -230,16 +195,13 @@ export default function AddCitizenModal({
       return
     }
 
-    setIsPerformingAction(true)
     setAlertMessage(null)
 
     try {
-      await markCitizenLeft(apiClient, form.citizen.citizen_id)
-      await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      await cancelMutation.mutateAsync(form.citizen.citizen_id)
       onClose()
     } catch (error) {
       setAlertMessage(getErrorMessage(error, 'Unable to cancel add citizen.'))
-      setIsPerformingAction(false)
     }
   }
 
@@ -248,27 +210,14 @@ export default function AddCitizenModal({
       return
     }
 
-    setIsPerformingAction(true)
     setAlertMessage(null)
 
     try {
-      await saveCitizenBase(nextForm)
-
-      if (nextForm.mode === 'edit-service' && nextForm.activeServiceRequestId) {
-        await updateServiceRequest(apiClient, nextForm.activeServiceRequestId, {
-          channel_id: nextForm.channelId ?? undefined,
-          service_id: nextForm.selectedServiceId ?? undefined,
-        })
-      } else {
-        await createSelectedServiceRequest(nextForm)
-      }
-
-      await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
+      await applyServiceMutation.mutateAsync(nextForm)
       onClose()
       onReturnToServe?.()
     } catch (error) {
       setAlertMessage(getErrorMessage(error, 'Unable to save service.'))
-      setIsPerformingAction(false)
     }
   }
 

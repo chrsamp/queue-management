@@ -1,8 +1,6 @@
 import { useState } from 'react'
 
-import { updateExam } from '@/api/endpoints'
 import type { Exam } from '@/api/schemas'
-import { useApiClient } from '@/api/use-api-client'
 import Button from '@/components/Button'
 import Dialog from '@/components/Dialog'
 import Modal from '@/components/Modal'
@@ -16,6 +14,7 @@ import {
   TextField,
 } from './ExamModalFields'
 import { dateInputValue, todayDateInputValue, toUtcDateIso } from './exam-utils'
+import { useUpdateExamMutation } from './exam-mutations'
 
 export default function ReturnExamModal({
   exam,
@@ -26,7 +25,6 @@ export default function ReturnExamModal({
   onClose: () => void
   onSaved: () => Promise<void>
 }) {
-  const apiClient = useApiClient()
   const [returned, setReturned] = useState(Boolean(exam.exam_returned_date))
   const [written, setWritten] = useState(exam.exam_written_ind ?? 1)
   const [date, setDate] = useState(
@@ -38,7 +36,8 @@ export default function ReturnExamModal({
   const [notes, setNotes] = useState(exam.notes ?? '')
   const [confirm, setConfirm] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
+  const updateExamMutation = useUpdateExamMutation()
+  const isSaving = updateExamMutation.isPending
   const editMode = Boolean(exam.exam_returned_date)
 
   async function submit() {
@@ -47,15 +46,17 @@ export default function ReturnExamModal({
       return
     }
 
-    setIsSaving(true)
     setErrorMessage(null)
 
     try {
-      await updateExam(apiClient, exam.exam_id, {
-        exam_returned_date: returned ? toUtcDateIso(date) : null,
-        exam_returned_tracking_number: returned ? actionTaken : null,
-        exam_written_ind: written,
-        notes: returned ? notes : '',
+      await updateExamMutation.mutateAsync({
+        examId: exam.exam_id,
+        payload: {
+          exam_returned_date: returned ? toUtcDateIso(date) : null,
+          exam_returned_tracking_number: returned ? actionTaken : null,
+          exam_written_ind: written,
+          notes: returned ? notes : '',
+        },
       })
       await onSaved()
       onClose()
@@ -63,8 +64,6 @@ export default function ReturnExamModal({
       setErrorMessage(
         getErrorMessage(error, 'Unable to update return details.'),
       )
-    } finally {
-      setIsSaving(false)
     }
   }
 

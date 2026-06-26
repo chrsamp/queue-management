@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
-import { finishCitizenService, getCsrStates, getCsrs } from '@/api/endpoints'
+import { getCsrStates, getCsrs } from '@/api/endpoints'
 import type { Citizen, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
@@ -21,6 +21,7 @@ import {
   getWaitingCitizens,
   isReceptionOffice,
 } from './queue-utils'
+import { useGaEndServiceMutation } from './queue-mutations'
 
 interface GaPanelProps {
   citizens: Citizen[]
@@ -36,9 +37,9 @@ export default function GaPanel({
   onClose,
 }: GaPanelProps) {
   const apiClient = useApiClient()
-  const queryClient = useQueryClient()
   const [now, setNow] = useState(() => new Date())
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const endServiceMutation = useGaEndServiceMutation()
 
   const csrsQuery = useQuery({
     enabled: isOpen,
@@ -88,11 +89,7 @@ export default function GaPanel({
     setErrorMessage(null)
 
     try {
-      await finishCitizenService(apiClient, row.citizen.citizen_id, true)
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.citizens }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.csrs.all }),
-      ])
+      await endServiceMutation.mutateAsync(row.citizen.citizen_id)
     } catch (error) {
       setErrorMessage(getErrorMessage(error, 'Unable to end service.'))
     }
