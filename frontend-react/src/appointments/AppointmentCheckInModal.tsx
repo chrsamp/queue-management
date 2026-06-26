@@ -84,79 +84,79 @@ export default function AppointmentCheckInModal({
       onClose={onClose}
     >
       <div className="flex flex-col gap-4 p-6">
-          {draft ? (
-            <p className="m-0 font-bold">
-              You cannot edit or delete draft appointments.
-            </p>
-          ) : (
-            <>
-              {errorMessage && (
-                <AlertBanner
-                  isCloseable={false}
-                  role="alert"
-                  size="small"
-                  variant="danger"
+        {draft ? (
+          <p className="m-0 font-bold">
+            You cannot edit or delete draft appointments.
+          </p>
+        ) : (
+          <>
+            {errorMessage && (
+              <AlertBanner
+                isCloseable={false}
+                role="alert"
+                size="small"
+                variant="danger"
+              >
+                {errorMessage}
+              </AlertBanner>
+            )}
+            {!blackout && !stat && (
+              <div>
+                <p className="mb-3">Citizen Has Arrived?</p>
+                <Button
+                  className="w-full"
+                  disabled={isCheckingIn}
+                  onClick={() => void handleCheckIn()}
                 >
-                  {errorMessage}
-                </AlertBanner>
-              )}
-              {!blackout && !stat && (
-                <div>
-                  <p className="mb-3">Citizen Has Arrived?</p>
-                  <Button
-                    className="w-full"
-                    disabled={isCheckingIn}
-                    onClick={() => void handleCheckIn()}
-                  >
-                    Check-In
-                  </Button>
-                </div>
-              )}
-              {!stat && (
-                <div>
-                  <p className="mb-3">Edit or Cancel Appointment?</p>
-                  <Button
-                    className="w-full"
-                    disabled={isCheckingIn}
-                    onClick={() => onEdit(false)}
-                    variant="secondary"
-                  >
-                    Edit Appointment
-                  </Button>
-                </div>
-              )}
-              {recurring && (
-                <div>
-                  <p className="mb-3">Edit or Cancel Recurring Series?</p>
-                  <Button
-                    className="w-full"
-                    disabled={isCheckingIn}
-                    onClick={() => onEdit(true)}
-                    variant="secondary"
-                  >
-                    Edit Recurring Series
-                  </Button>
-                </div>
-              )}
-              {stat && (
-                <div>
-                  <p className="mb-3">
-                    {support
-                      ? 'Edit or Cancel Recurring STAT Series?'
-                      : 'View STAT?'}
-                  </p>
-                  <Button
-                    className="w-full"
-                    disabled={isCheckingIn}
-                    onClick={() => onEdit(true)}
-                    variant="secondary"
-                  >
-                    {support ? 'Edit Recurring STAT Series' : 'View STAT'}
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
+                  Check-In
+                </Button>
+              </div>
+            )}
+            {!stat && (
+              <div>
+                <p className="mb-3">Edit or Cancel Appointment?</p>
+                <Button
+                  className="w-full"
+                  disabled={isCheckingIn}
+                  onClick={() => onEdit(false)}
+                  variant="secondary"
+                >
+                  Edit Appointment
+                </Button>
+              </div>
+            )}
+            {recurring && (
+              <div>
+                <p className="mb-3">Edit or Cancel Recurring Series?</p>
+                <Button
+                  className="w-full"
+                  disabled={isCheckingIn}
+                  onClick={() => onEdit(true)}
+                  variant="secondary"
+                >
+                  Edit Recurring Series
+                </Button>
+              </div>
+            )}
+            {stat && (
+              <div>
+                <p className="mb-3">
+                  {support
+                    ? 'Edit or Cancel Recurring STAT Series?'
+                    : 'View STAT?'}
+                </p>
+                <Button
+                  className="w-full"
+                  disabled={isCheckingIn}
+                  onClick={() => onEdit(true)}
+                  variant="secondary"
+                >
+                  {support ? 'Edit Recurring STAT Series' : 'View STAT'}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </ModalLayout>
   )

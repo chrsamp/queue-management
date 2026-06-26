@@ -62,19 +62,19 @@ export default function SelectInvigilatorModal({
       onClose={onClose}
     >
       <div className="grid gap-4 p-6">
-          {errorMessage && <Alert message={errorMessage} />}
-          <SelectField
-            label="Invigilator"
-            onChange={(value) => setSelected(value ? Number(value) : '')}
-            value={selected}
-          >
-            <option value="">Select invigilator</option>
-            {invigilators.map((item) => (
-              <option key={item.invigilator_id} value={item.invigilator_id}>
-                {item.invigilator_name}
-              </option>
-            ))}
-          </SelectField>
+        {errorMessage && <Alert message={errorMessage} />}
+        <SelectField
+          label="Invigilator"
+          onChange={(value) => setSelected(value ? Number(value) : '')}
+          value={selected}
+        >
+          <option value="">Select invigilator</option>
+          {invigilators.map((item) => (
+            <option key={item.invigilator_id} value={item.invigilator_id}>
+              {item.invigilator_name}
+            </option>
+          ))}
+        </SelectField>
       </div>
     </ModalLayout>
   )

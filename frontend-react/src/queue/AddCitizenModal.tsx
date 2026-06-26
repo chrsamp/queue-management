@@ -303,191 +303,186 @@ export default function AddCitizenModal({
       }
       header={
         <div>
-            <DialogTitle className="text-bc-h4 m-0 font-bold">
-              {title}
-            </DialogTitle>
-          </div>
+          <DialogTitle className="text-bc-h4 m-0 font-bold">
+            {title}
+          </DialogTitle>
+        </div>
       }
       isOpen={isOpen}
       onClose={() => void handleCancel()}
     >
-        <div className="bg-bc-light-gray px-6 py-4">
-          {alertMessage && (
-            <AlertBanner
-              className="mb-3"
-              isCloseable={false}
-              role="alert"
-              size="small"
-              variant="danger"
-            >
-              {alertMessage}
-            </AlertBanner>
-          )}
-          {commentsTooLong && (
-            <AlertBanner
-              className="mb-3"
-              isCloseable={false}
-              role="alert"
-              size="small"
-              variant="danger"
-            >
-              You have entered more than the 1,000 characters allowed for
-              comments.
-            </AlertBanner>
-          )}
+      <div className="bg-bc-light-gray px-6 py-4">
+        {alertMessage && (
+          <AlertBanner
+            className="mb-3"
+            isCloseable={false}
+            role="alert"
+            size="small"
+            variant="danger"
+          >
+            {alertMessage}
+          </AlertBanner>
+        )}
+        {commentsTooLong && (
+          <AlertBanner
+            className="mb-3"
+            isCloseable={false}
+            role="alert"
+            size="small"
+            variant="danger"
+          >
+            You have entered more than the 1,000 characters allowed for
+            comments.
+          </AlertBanner>
+        )}
 
-          {isReception && (
-            <div className="mb-2 grid grid-cols-[7rem_1fr] items-start gap-3">
-              <label
-                className="text-bc-small text-bc-secondary pt-2 text-right"
-                htmlFor="add-citizen-comments"
-              >
-                Comments:
-              </label>
-              <textarea
-                className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus min-h-16 rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
-                id="add-citizen-comments"
-                maxLength={1000}
-                onChange={(event) =>
-                  updateForm({ comments: event.target.value })
-                }
-                placeholder="add comments here"
-                ref={commentsRef}
-                value={form.comments}
-              />
-            </div>
-          )}
-
-          {showNotifications && (
-            <div className="mb-2 grid grid-cols-[7rem_1fr_1fr] items-start gap-3">
-              <label className="text-bc-small text-bc-secondary pt-2 text-right">
-                Notification:
-              </label>
-              <input
-                aria-invalid={!isValidNotificationPhone(form.notificationPhone)}
-                className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
-                maxLength={14}
-                onChange={(event) => setNotificationPhone(event.target.value)}
-                placeholder="Phone Number : (xxx) xxx-xxxx"
-                type="tel"
-                value={form.notificationPhone}
-              />
-              <input
-                aria-invalid={!isValidNotificationEmail(form.notificationEmail)}
-                className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
-                onChange={(event) => setNotificationEmail(event.target.value)}
-                placeholder="Email Address"
-                type="email"
-                value={form.notificationEmail}
-              />
-            </div>
-          )}
-
-          <div className="mb-3 grid grid-cols-[7rem_1fr] items-start gap-3">
+        {isReception && (
+          <div className="mb-2 grid grid-cols-[7rem_1fr] items-start gap-3">
             <label
               className="text-bc-small text-bc-secondary pt-2 text-right"
-              htmlFor="add-citizen-channel"
+              htmlFor="add-citizen-comments"
             >
-              Channel:
+              Comments:
             </label>
-            <select
-              className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
-              id="add-citizen-channel"
-              onChange={(event) =>
-                updateForm({ channelId: Number(event.target.value) || null })
-              }
-              value={form.channelId ?? ''}
-            >
-              <option value="">Select delivery channel</option>
-              {channels.map((channel) => (
-                <option key={channel.channel_id} value={channel.channel_id}>
-                  {channel.channel_name}
-                </option>
-              ))}
-            </select>
+            <textarea
+              className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus min-h-16 rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
+              id="add-citizen-comments"
+              maxLength={1000}
+              onChange={(event) => updateForm({ comments: event.target.value })}
+              placeholder="add comments here"
+              ref={commentsRef}
+              value={form.comments}
+            />
           </div>
+        )}
 
-          <ServicePicker
-            actionColumns={[
-              ...(isReception && !serviceModalMode
-                ? [
-                    {
-                      header: 'To Q',
-                      render: (service: Service) => (
-                        <Button
-                          aria-label={`Add ${service.service_name} to queue`}
-                          disabled={baseActionDisabled || !form.channelId}
-                          isIconButton
-                          onClick={() => {
-                            const nextForm = {
-                              ...form,
-                              search: service.service_name,
-                              selectedServiceId: service.service_id,
-                            }
-                            setForm(nextForm)
-                            void handleAddToQueue(nextForm)
-                          }}
-                          size="small"
-                          variant="tertiary"
-                        >
-                          <UserRoundPlus
-                            aria-hidden="true"
-                            className="h-4 w-4"
-                          />
-                        </Button>
-                      ),
-                      widthClassName: 'w-20',
-                    },
-                  ]
-                : []),
-              {
-                header: 'Serve',
-                render: (service) => (
-                  <Button
-                    aria-label={
-                      serviceModalMode
-                        ? `Apply ${service.service_name}`
-                        : `Begin ${service.service_name}`
-                    }
-                    disabled={baseActionDisabled || !form.channelId}
-                    isIconButton
-                    onClick={() => {
-                      const nextForm = {
-                        ...form,
-                        search: service.service_name,
-                        selectedServiceId: service.service_id,
-                      }
-                      setForm(nextForm)
-                      if (serviceModalMode) {
-                        void handleApplyService(nextForm)
-                      } else {
-                        void handleBeginService(nextForm)
-                      }
-                    }}
-                    size="small"
-                    variant="tertiary"
-                  >
-                    <HandHelping aria-hidden="true" className="h-4 w-4" />
-                  </Button>
-                ),
-                widthClassName: 'w-24',
-              },
-            ]}
-            categories={categories}
-            categoryId={form.categoryId}
-            onCategoryChange={(categoryId) => updateForm({ categoryId })}
-            onSearchChange={(search) => updateForm({ search })}
-            onSelectService={selectService}
-            search={form.search}
-            searchInputRef={searchInputRef}
-            selectedServiceId={form.selectedServiceId}
-            services={modeServices}
-          />
+        {showNotifications && (
+          <div className="mb-2 grid grid-cols-[7rem_1fr_1fr] items-start gap-3">
+            <label className="text-bc-small text-bc-secondary pt-2 text-right">
+              Notification:
+            </label>
+            <input
+              aria-invalid={!isValidNotificationPhone(form.notificationPhone)}
+              className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
+              maxLength={14}
+              onChange={(event) => setNotificationPhone(event.target.value)}
+              placeholder="Phone Number : (xxx) xxx-xxxx"
+              type="tel"
+              value={form.notificationPhone}
+            />
+            <input
+              aria-invalid={!isValidNotificationEmail(form.notificationEmail)}
+              className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus rounded-sm border bg-white px-3 py-2 focus:outline-2 focus:outline-offset-1"
+              onChange={(event) => setNotificationEmail(event.target.value)}
+              placeholder="Email Address"
+              type="email"
+              value={form.notificationEmail}
+            />
+          </div>
+        )}
+
+        <div className="mb-3 grid grid-cols-[7rem_1fr] items-start gap-3">
+          <label
+            className="text-bc-small text-bc-secondary pt-2 text-right"
+            htmlFor="add-citizen-channel"
+          >
+            Channel:
+          </label>
+          <select
+            className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
+            id="add-citizen-channel"
+            onChange={(event) =>
+              updateForm({ channelId: Number(event.target.value) || null })
+            }
+            value={form.channelId ?? ''}
+          >
+            <option value="">Select delivery channel</option>
+            {channels.map((channel) => (
+              <option key={channel.channel_id} value={channel.channel_id}>
+                {channel.channel_name}
+              </option>
+            ))}
+          </select>
         </div>
 
-        <p className="sr-only" aria-live="polite">
-          {selectedService ? `${selectedService.service_name} selected` : ''}
-        </p>
+        <ServicePicker
+          actionColumns={[
+            ...(isReception && !serviceModalMode
+              ? [
+                  {
+                    header: 'To Q',
+                    render: (service: Service) => (
+                      <Button
+                        aria-label={`Add ${service.service_name} to queue`}
+                        disabled={baseActionDisabled || !form.channelId}
+                        isIconButton
+                        onClick={() => {
+                          const nextForm = {
+                            ...form,
+                            search: service.service_name,
+                            selectedServiceId: service.service_id,
+                          }
+                          setForm(nextForm)
+                          void handleAddToQueue(nextForm)
+                        }}
+                        size="small"
+                        variant="tertiary"
+                      >
+                        <UserRoundPlus aria-hidden="true" className="h-4 w-4" />
+                      </Button>
+                    ),
+                    widthClassName: 'w-20',
+                  },
+                ]
+              : []),
+            {
+              header: 'Serve',
+              render: (service) => (
+                <Button
+                  aria-label={
+                    serviceModalMode
+                      ? `Apply ${service.service_name}`
+                      : `Begin ${service.service_name}`
+                  }
+                  disabled={baseActionDisabled || !form.channelId}
+                  isIconButton
+                  onClick={() => {
+                    const nextForm = {
+                      ...form,
+                      search: service.service_name,
+                      selectedServiceId: service.service_id,
+                    }
+                    setForm(nextForm)
+                    if (serviceModalMode) {
+                      void handleApplyService(nextForm)
+                    } else {
+                      void handleBeginService(nextForm)
+                    }
+                  }}
+                  size="small"
+                  variant="tertiary"
+                >
+                  <HandHelping aria-hidden="true" className="h-4 w-4" />
+                </Button>
+              ),
+              widthClassName: 'w-24',
+            },
+          ]}
+          categories={categories}
+          categoryId={form.categoryId}
+          onCategoryChange={(categoryId) => updateForm({ categoryId })}
+          onSearchChange={(search) => updateForm({ search })}
+          onSelectService={selectService}
+          search={form.search}
+          searchInputRef={searchInputRef}
+          selectedServiceId={form.selectedServiceId}
+          services={modeServices}
+        />
+      </div>
+
+      <p className="sr-only" aria-live="polite">
+        {selectedService ? `${selectedService.service_name} selected` : ''}
+      </p>
     </ModalLayout>
   )
 }

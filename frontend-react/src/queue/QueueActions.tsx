@@ -2,11 +2,7 @@ import { useState } from 'react'
 import { type Key } from 'react-aria-components'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import {
-  getCategories,
-  getChannels,
-  getServices,
-} from '@/api/endpoints'
+import { getCategories, getChannels, getServices } from '@/api/endpoints'
 import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'

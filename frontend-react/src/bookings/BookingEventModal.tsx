@@ -326,276 +326,274 @@ export default function BookingEventModal({
       onClose={onClose}
     >
       <div className="flex flex-col gap-4 p-6">
-          {errorMessage && (
-            <AlertBanner
-              isCloseable={false}
-              role="alert"
-              size="small"
-              variant="danger"
-            >
-              {errorMessage}
-            </AlertBanner>
-          )}
-          {exam && (
-            <div className="border-bc-border grid gap-2 rounded-sm border p-3 sm:grid-cols-2">
-              <div>
-                <strong>Writer:</strong> {exam.examinee_name || '-'}
-              </div>
-              <div>
-                <strong>Exam:</strong> {exam.exam_name || '-'}
-              </div>
-              <div>
-                <strong>Event ID:</strong> {exam.event_id || '-'}
-              </div>
-              <div>
-                <strong>Expiry:</strong>{' '}
-                {exam.expiry_date
-                  ? formatDateInputValue(new Date(exam.expiry_date))
-                  : '-'}
-              </div>
+        {errorMessage && (
+          <AlertBanner
+            isCloseable={false}
+            role="alert"
+            size="small"
+            variant="danger"
+          >
+            {errorMessage}
+          </AlertBanner>
+        )}
+        {exam && (
+          <div className="border-bc-border grid gap-2 rounded-sm border p-3 sm:grid-cols-2">
+            <div>
+              <strong>Writer:</strong> {exam.examinee_name || '-'}
             </div>
-          )}
+            <div>
+              <strong>Exam:</strong> {exam.exam_name || '-'}
+            </div>
+            <div>
+              <strong>Event ID:</strong> {exam.event_id || '-'}
+            </div>
+            <div>
+              <strong>Expiry:</strong>{' '}
+              {exam.expiry_date
+                ? formatDateInputValue(new Date(exam.expiry_date))
+                : '-'}
+            </div>
+          </div>
+        )}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="font-bold">
+              {stat
+                ? 'STAT Notes'
+                : blackout
+                  ? 'Blackout Notes'
+                  : 'Scheduling Party'}
+            </span>
+            <input
+              className="border-bc-border rounded-sm border px-3 py-2"
+              disabled={!canEdit || Boolean(exam) || blackout || stat}
+              onChange={(item) => setTitle(item.target.value)}
+              value={blackout || stat ? notes : title}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="font-bold">
+              Contact Information (Email or Phone Number)
+            </span>
+            <input
+              className="border-bc-border rounded-sm border px-3 py-2"
+              disabled={!canEdit || stat}
+              onChange={(item) => setContact(item.target.value)}
+              readOnly={stat}
+              value={contact}
+            />
+          </label>
+        </div>
+        {(blackout || stat) && (
+          <label className="flex flex-col gap-1">
+            <span className="font-bold">
+              {stat ? 'STAT Notes' : 'Blackout Notes'}
+            </span>
+            <textarea
+              className="border-bc-border min-h-20 rounded-sm border px-3 py-2"
+              disabled={!canEdit}
+              maxLength={255}
+              onChange={(item) => setNotes(item.target.value)}
+              value={notes}
+            />
+          </label>
+        )}
+        <div className="grid gap-4 sm:grid-cols-4">
+          <label className="flex flex-col gap-1">
+            <span className="font-bold">Room</span>
+            {mode === 'edit' && !canEdit ? (
+              <input
+                className="border-bc-border rounded-sm border px-3 py-2"
+                readOnly
+                value={roomLabel}
+              />
+            ) : (
+              <select
+                className="border-bc-border rounded-sm border px-3 py-2"
+                disabled={!canEdit || mode === 'exam'}
+                onChange={(item) =>
+                  setSelectedRoomId(
+                    item.target.value === '_offsite'
+                      ? '_offsite'
+                      : Number(item.target.value),
+                  )
+                }
+                value={String(selectedRoomId)}
+              >
+                {roomOptions.map((option) => (
+                  <option key={String(option.value)} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="font-bold">Date</span>
+            <input
+              className="border-bc-border rounded-sm border px-3 py-2"
+              disabled={!canEdit}
+              onChange={(item) => setDateValue(item.target.value)}
+              type="date"
+              value={dateValue}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="font-bold">Start Time</span>
+            <input
+              className="border-bc-border rounded-sm border px-3 py-2"
+              disabled={!canEdit}
+              onChange={(item) => setTimeValue(item.target.value)}
+              type="time"
+              value={timeValue}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="font-bold">Duration</span>
+            <select
+              className="border-bc-border rounded-sm border px-3 py-2"
+              disabled={!canEdit || Boolean(exam)}
+              onChange={(item) => setDurationMinutes(Number(item.target.value))}
+              value={durationMinutes}
+            >
+              {[30, 60, 90, 120, 180, 240].map((value) => (
+                <option key={value} value={value}>
+                  {(value / 60).toFixed(1)} hrs
+                </option>
+              ))}
+              {![30, 60, 90, 120, 180, 240].includes(durationMinutes) && (
+                <option value={durationMinutes}>
+                  {(durationMinutes / 60).toFixed(1)} hrs
+                </option>
+              )}
+            </select>
+          </label>
+        </div>
+        {!exam && !blackout && !stat && (
+          <label className="flex max-w-xs flex-col gap-1">
+            <span className="font-bold">Collect Fees</span>
+            <select
+              className="border-bc-border rounded-sm border px-3 py-2"
+              onChange={(item) => setFees(item.target.value)}
+              value={fees}
+            >
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+              <option value="HQFin">HQ to Invoice</option>
+            </select>
+          </label>
+        )}
+        {exam && (
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
-              <span className="font-bold">
-                {stat
-                  ? 'STAT Notes'
-                  : blackout
-                    ? 'Blackout Notes'
-                    : 'Scheduling Party'}
-              </span>
-              <input
+              <span className="font-bold">Invigilator Selection Options</span>
+              <select
                 className="border-bc-border rounded-sm border px-3 py-2"
-                disabled={!canEdit || Boolean(exam) || blackout || stat}
-                onChange={(item) => setTitle(item.target.value)}
-                value={blackout || stat ? notes : title}
-              />
+                onChange={(item) =>
+                  setInvigilatorMode(
+                    item.target.value as 'sbc' | 'unassigned' | 'invigilator',
+                  )
+                }
+                value={invigilatorMode}
+              >
+                <option value="sbc">ServiceBC Staff</option>
+                <option value="unassigned">Assign Later</option>
+                <option value="invigilator">Contract Invigilator</option>
+              </select>
             </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-bold">
-                Contact Information (Email or Phone Number)
-              </span>
-              <input
-                className="border-bc-border rounded-sm border px-3 py-2"
-                disabled={!canEdit || stat}
-                onChange={(item) => setContact(item.target.value)}
-                readOnly={stat}
-                value={contact}
-              />
-            </label>
-          </div>
-          {(blackout || stat) && (
-            <label className="flex flex-col gap-1">
-              <span className="font-bold">
-                {stat ? 'STAT Notes' : 'Blackout Notes'}
-              </span>
+            {invigilatorMode === 'invigilator' && (
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">Invigilator</span>
+                <select
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  onChange={(item) =>
+                    setInvigilatorId(Number(item.target.value))
+                  }
+                  value={invigilatorId}
+                >
+                  <option value="">Select invigilator</option>
+                  {selectedInvigilators.map((candidate) => (
+                    <option
+                      key={candidate.invigilator_id}
+                      value={candidate.invigilator_id}
+                    >
+                      {candidate.invigilator_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <label className="flex flex-col gap-1 sm:col-span-2">
+              <span className="font-bold">Notes</span>
               <textarea
                 className="border-bc-border min-h-20 rounded-sm border px-3 py-2"
-                disabled={!canEdit}
                 maxLength={255}
                 onChange={(item) => setNotes(item.target.value)}
                 value={notes}
               />
             </label>
-          )}
-          <div className="grid gap-4 sm:grid-cols-4">
-            <label className="flex flex-col gap-1">
-              <span className="font-bold">Room</span>
-              {mode === 'edit' && !canEdit ? (
-                <input
-                  className="border-bc-border rounded-sm border px-3 py-2"
-                  readOnly
-                  value={roomLabel}
-                />
-              ) : (
-                <select
-                  className="border-bc-border rounded-sm border px-3 py-2"
-                  disabled={!canEdit || mode === 'exam'}
-                  onChange={(item) =>
-                    setSelectedRoomId(
-                      item.target.value === '_offsite'
-                        ? '_offsite'
-                        : Number(item.target.value),
-                    )
-                  }
-                  value={String(selectedRoomId)}
-                >
-                  {roomOptions.map((option) => (
-                    <option key={String(option.value)} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-bold">Date</span>
-              <input
-                className="border-bc-border rounded-sm border px-3 py-2"
-                disabled={!canEdit}
-                onChange={(item) => setDateValue(item.target.value)}
-                type="date"
-                value={dateValue}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-bold">Start Time</span>
-              <input
-                className="border-bc-border rounded-sm border px-3 py-2"
-                disabled={!canEdit}
-                onChange={(item) => setTimeValue(item.target.value)}
-                type="time"
-                value={timeValue}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="font-bold">Duration</span>
-              <select
-                className="border-bc-border rounded-sm border px-3 py-2"
-                disabled={!canEdit || Boolean(exam)}
-                onChange={(item) =>
-                  setDurationMinutes(Number(item.target.value))
-                }
-                value={durationMinutes}
-              >
-                {[30, 60, 90, 120, 180, 240].map((value) => (
-                  <option key={value} value={value}>
-                    {(value / 60).toFixed(1)} hrs
-                  </option>
-                ))}
-                {![30, 60, 90, 120, 180, 240].includes(durationMinutes) && (
-                  <option value={durationMinutes}>
-                    {(durationMinutes / 60).toFixed(1)} hrs
-                  </option>
-                )}
-              </select>
-            </label>
           </div>
-          {!exam && !blackout && !stat && (
-            <label className="flex max-w-xs flex-col gap-1">
-              <span className="font-bold">Collect Fees</span>
-              <select
-                className="border-bc-border rounded-sm border px-3 py-2"
-                onChange={(item) => setFees(item.target.value)}
-                value={fees}
+        )}
+        {recurring && canEdit && (
+          <label className="flex items-center gap-2">
+            <input
+              checked={editSeries}
+              onChange={(item) => setEditSeries(item.target.checked)}
+              type="checkbox"
+            />
+            Edit recurring series notes
+          </label>
+        )}
+        {confirmDelete && event && (
+          <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4">
+            <p className="mt-0 mb-3">
+              Are you sure you want to delete this booking?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                danger
+                disabled={isSaving}
+                onClick={() => void handleDelete('single')}
               >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-                <option value="HQFin">HQ to Invoice</option>
-              </select>
-            </label>
-          )}
-          {exam && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-1">
-                <span className="font-bold">Invigilator Selection Options</span>
-                <select
-                  className="border-bc-border rounded-sm border px-3 py-2"
-                  onChange={(item) =>
-                    setInvigilatorMode(
-                      item.target.value as 'sbc' | 'unassigned' | 'invigilator',
-                    )
-                  }
-                  value={invigilatorMode}
-                >
-                  <option value="sbc">ServiceBC Staff</option>
-                  <option value="unassigned">Assign Later</option>
-                  <option value="invigilator">Contract Invigilator</option>
-                </select>
-              </label>
-              {invigilatorMode === 'invigilator' && (
-                <label className="flex flex-col gap-1">
-                  <span className="font-bold">Invigilator</span>
-                  <select
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    onChange={(item) =>
-                      setInvigilatorId(Number(item.target.value))
-                    }
-                    value={invigilatorId}
-                  >
-                    <option value="">Select invigilator</option>
-                    {selectedInvigilators.map((candidate) => (
-                      <option
-                        key={candidate.invigilator_id}
-                        value={candidate.invigilator_id}
-                      >
-                        {candidate.invigilator_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="font-bold">Notes</span>
-                <textarea
-                  className="border-bc-border min-h-20 rounded-sm border px-3 py-2"
-                  maxLength={255}
-                  onChange={(item) => setNotes(item.target.value)}
-                  value={notes}
-                />
-              </label>
-            </div>
-          )}
-          {recurring && canEdit && (
-            <label className="flex items-center gap-2">
-              <input
-                checked={editSeries}
-                onChange={(item) => setEditSeries(item.target.checked)}
-                type="checkbox"
-              />
-              Edit recurring series notes
-            </label>
-          )}
-          {confirmDelete && event && (
-            <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4">
-              <p className="mt-0 mb-3">
-                Are you sure you want to delete this booking?
-              </p>
-              <div className="flex flex-wrap gap-2">
+                Delete this booking
+              </Button>
+              {recurring && !stat && (
                 <Button
                   danger
                   disabled={isSaving}
-                  onClick={() => void handleDelete('single')}
+                  onClick={() => void handleDelete('series')}
                 >
-                  Delete this booking
+                  Delete series
                 </Button>
-                {recurring && !stat && (
+              )}
+              {recurring && stat && support && (
+                <>
                   <Button
                     danger
                     disabled={isSaving}
-                    onClick={() => void handleDelete('series')}
+                    onClick={() => void handleDelete('stat-current')}
                   >
-                    Delete series
+                    Delete series from this office
                   </Button>
-                )}
-                {recurring && stat && support && (
-                  <>
-                    <Button
-                      danger
-                      disabled={isSaving}
-                      onClick={() => void handleDelete('stat-current')}
-                    >
-                      Delete series from this office
-                    </Button>
-                    <Button
-                      danger
-                      disabled={isSaving}
-                      onClick={() => void handleDelete('stat-all')}
-                    >
-                      Delete all STAT series
-                    </Button>
-                  </>
-                )}
-                <Button
-                  disabled={isSaving}
-                  onClick={() => setConfirmDelete(false)}
-                  variant="secondary"
-                >
-                  Cancel delete
-                </Button>
-              </div>
+                  <Button
+                    danger
+                    disabled={isSaving}
+                    onClick={() => void handleDelete('stat-all')}
+                  >
+                    Delete all STAT series
+                  </Button>
+                </>
+              )}
+              <Button
+                disabled={isSaving}
+                onClick={() => setConfirmDelete(false)}
+                variant="secondary"
+              >
+                Cancel delete
+              </Button>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </ModalLayout>
   )

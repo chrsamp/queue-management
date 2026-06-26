@@ -10,11 +10,7 @@ import { enUS } from 'date-fns/locale/en-US'
 import { useQuery } from '@tanstack/react-query'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 
-import {
-  getAppointments,
-  getCategories,
-  getServices,
-} from '@/api/endpoints'
+import { getAppointments, getCategories, getServices } from '@/api/endpoints'
 import type { Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'

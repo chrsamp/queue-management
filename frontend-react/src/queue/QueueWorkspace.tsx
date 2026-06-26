@@ -434,10 +434,7 @@ export default function QueueWorkspace({
           <DayAgendaPanel office={office} />
         )}
       </div>
-      <ServeCitizenModal
-        citizen={activeCitizen}
-        office={office}
-      />
+      <ServeCitizenModal citizen={activeCitizen} office={office} />
     </section>
   )
 }

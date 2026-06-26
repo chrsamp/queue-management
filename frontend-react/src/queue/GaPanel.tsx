@@ -106,101 +106,98 @@ export default function GaPanel({
       onClose={onClose}
     >
       <div className="flex flex-col gap-4 p-6">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <SummaryItem
-              label={reception ? 'Citizens Waiting' : 'Citizens on Hold'}
-              value={queueCount}
-            />
-            <SummaryItem
-              label="Total CSRs"
-              value={csrsQuery.data?.length ?? 0}
-            />
-            <SummaryItem
-              label="Serving CSRs"
-              value={getServingCsrCount(citizens)}
-            />
-          </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <SummaryItem
+            label={reception ? 'Citizens Waiting' : 'Citizens on Hold'}
+            value={queueCount}
+          />
+          <SummaryItem label="Total CSRs" value={csrsQuery.data?.length ?? 0} />
+          <SummaryItem
+            label="Serving CSRs"
+            value={getServingCsrCount(citizens)}
+          />
+        </div>
 
-          {errorMessage && (
-            <AlertBanner
-              isCloseable={false}
-              role="alert"
-              size="small"
-              variant="danger"
-            >
-              {errorMessage}
-            </AlertBanner>
-          )}
+        {errorMessage && (
+          <AlertBanner
+            isCloseable={false}
+            role="alert"
+            size="small"
+            variant="danger"
+          >
+            {errorMessage}
+          </AlertBanner>
+        )}
 
-          {csrsQuery.isPending || csrStatesQuery.isPending ? (
-            <p className="text-bc-secondary m-0" role="status">
-              Loading GA panel...
-            </p>
-          ) : csrsQuery.isError || csrStatesQuery.isError ? (
-            <AlertBanner
-              isCloseable={false}
-              role="alert"
-              size="small"
-              variant="danger"
+        {csrsQuery.isPending || csrStatesQuery.isPending ? (
+          <p className="text-bc-secondary m-0" role="status">
+            Loading GA panel...
+          </p>
+        ) : csrsQuery.isError || csrStatesQuery.isError ? (
+          <AlertBanner
+            isCloseable={false}
+            role="alert"
+            size="small"
+            variant="danger"
+          >
+            Unable to load GA panel.
+          </AlertBanner>
+        ) : (
+          <div className="border-bc-border max-h-[65vh] overflow-auto border">
+            <table
+              aria-label="GA panel staff"
+              className="text-bc-small w-full min-w-5xl border-collapse"
             >
-              Unable to load GA panel.
-            </AlertBanner>
-          ) : (
-            <div className="border-bc-border max-h-[65vh] overflow-auto border">
-              <table
-                aria-label="GA panel staff"
-                className="text-bc-small w-full min-w-5xl border-collapse"
-              >
-                <thead className="bg-bc-light-gray">
+              <thead className="bg-bc-light-gray">
+                <tr>
+                  <ColumnHeader>Staff Member</ColumnHeader>
+                  <ColumnHeader>Service</ColumnHeader>
+                  <ColumnHeader>Wait Time</ColumnHeader>
+                  <ColumnHeader>Serving Time</ColumnHeader>
+                  <ColumnHeader>Comments</ColumnHeader>
+                  <ColumnHeader>Status</ColumnHeader>
+                  <ColumnHeader>End Service</ColumnHeader>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
                   <tr>
-                    <ColumnHeader>Staff Member</ColumnHeader>
-                    <ColumnHeader>Service</ColumnHeader>
-                    <ColumnHeader>Wait Time</ColumnHeader>
-                    <ColumnHeader>Serving Time</ColumnHeader>
-                    <ColumnHeader>Comments</ColumnHeader>
-                    <ColumnHeader>Status</ColumnHeader>
-                    <ColumnHeader>End Service</ColumnHeader>
+                    <td className="text-bc-secondary px-3 py-4" colSpan={7}>
+                      No staff members found.
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {rows.length === 0 ? (
-                    <tr>
-                      <td className="text-bc-secondary px-3 py-4" colSpan={7}>
-                        No staff members found.
-                      </td>
+                ) : (
+                  rows.map((row) => (
+                    <tr
+                      className="even:bg-bc-light-gray/45"
+                      key={row.csr.csr_id}
+                    >
+                      <TableCell>{row.csr.username}</TableCell>
+                      <TableCell>{row.serviceName}</TableCell>
+                      <TableCell>{row.waitTime}</TableCell>
+                      <TableCell>{row.servingTime}</TableCell>
+                      <TableCell>
+                        {row.citizen?.citizen_comments ?? ''}
+                      </TableCell>
+                      <TableCell>{getStatusLabel(row.status)}</TableCell>
+                      <TableCell>
+                        {row.citizen && (
+                          <Button
+                            onClick={() => void handleEndService(row)}
+                            size="small"
+                            variant="secondary"
+                          >
+                            End Service
+                          </Button>
+                        )}
+                      </TableCell>
                     </tr>
-                  ) : (
-                    rows.map((row) => (
-                      <tr
-                        className="even:bg-bc-light-gray/45"
-                        key={row.csr.csr_id}
-                      >
-                        <TableCell>{row.csr.username}</TableCell>
-                        <TableCell>{row.serviceName}</TableCell>
-                        <TableCell>{row.waitTime}</TableCell>
-                        <TableCell>{row.servingTime}</TableCell>
-                        <TableCell>
-                          {row.citizen?.citizen_comments ?? ''}
-                        </TableCell>
-                        <TableCell>{getStatusLabel(row.status)}</TableCell>
-                        <TableCell>
-                          {row.citizen && (
-                            <Button
-                              onClick={() => void handleEndService(row)}
-                              size="small"
-                              variant="secondary"
-                            >
-                              End Service
-                            </Button>
-                          )}
-                        </TableCell>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </ModalLayout>
   )

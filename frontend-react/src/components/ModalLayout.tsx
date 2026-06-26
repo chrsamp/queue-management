@@ -205,7 +205,9 @@ export default function ModalLayout({
 
           {!isMinimized && (
             <>
-              <div className={cx('min-h-0 flex-1 overflow-auto', bodyClassName)}>
+              <div
+                className={cx('min-h-0 flex-1 overflow-auto', bodyClassName)}
+              >
                 {children}
               </div>
               {footer && (

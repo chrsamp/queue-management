@@ -61,7 +61,11 @@ export function useSaveAppointmentMutation() {
     }) => {
       if (appointmentId) {
         if (recurringUuid) {
-          await updateRecurringAppointment(apiClient, recurringUuid, updatePayload)
+          await updateRecurringAppointment(
+            apiClient,
+            recurringUuid,
+            updatePayload,
+          )
         } else {
           await updateAppointment(apiClient, appointmentId, updatePayload)
         }
@@ -96,10 +100,16 @@ export function useDeleteAppointmentMutation() {
       if (!singleOnly && recurringUuid) {
         if (stat) {
           await deleteAllStatAppointments(apiClient, recurringUuid)
-          await deleteRecurringStatBookingsForAllOffices(apiClient, recurringUuid)
+          await deleteRecurringStatBookingsForAllOffices(
+            apiClient,
+            recurringUuid,
+          )
         } else {
           await deleteRecurringAppointments(apiClient, recurringUuid)
-          await deleteRecurringStatBookingsForCurrentOffice(apiClient, recurringUuid)
+          await deleteRecurringStatBookingsForCurrentOffice(
+            apiClient,
+            recurringUuid,
+          )
         }
       } else {
         await deleteAppointment(apiClient, appointmentId)
@@ -144,7 +154,9 @@ export function useCreateAppointmentBlackoutMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (run: (apiClient: ReturnType<typeof useApiClient>) => Promise<void>) => {
+    mutationFn: async (
+      run: (apiClient: ReturnType<typeof useApiClient>) => Promise<void>,
+    ) => {
       await run(apiClient)
       await queryClient.invalidateQueries({
         queryKey: queryKeys.appointments.all,

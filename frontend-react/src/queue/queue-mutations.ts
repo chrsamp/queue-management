@@ -24,7 +24,9 @@ function mutationOptions() {
   return { retry: false } as const
 }
 
-async function invalidateCitizens(queryClient: ReturnType<typeof useQueryClient>) {
+async function invalidateCitizens(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
   await queryClient.invalidateQueries({ queryKey: queryKeys.citizens })
 }
 
@@ -63,7 +65,8 @@ export function useCreateCitizenDraftMutation() {
   const apiClient = useApiClient()
 
   return useMutation({
-    mutationFn: (citizensWaiting: number) => addCitizen(apiClient, citizensWaiting),
+    mutationFn: (citizensWaiting: number) =>
+      addCitizen(apiClient, citizensWaiting),
     ...mutationOptions(),
   })
 }
@@ -166,7 +169,10 @@ export function useAddCitizenToQueueMutation() {
     mutationFn: async (current: AddCitizenModalState) => {
       await saveCitizenBase(apiClient, current)
       await createSelectedServiceRequest(apiClient, current)
-      const result = await addCitizenToQueue(apiClient, current.citizen.citizen_id)
+      const result = await addCitizenToQueue(
+        apiClient,
+        current.citizen.citizen_id,
+      )
       await invalidateCitizens(queryClient)
       return result
     },
@@ -182,7 +188,10 @@ export function useBeginAddedCitizenServiceMutation() {
     mutationFn: async (current: AddCitizenModalState) => {
       await saveCitizenBase(apiClient, current)
       await createSelectedServiceRequest(apiClient, current)
-      const result = await beginCitizenService(apiClient, current.citizen.citizen_id)
+      const result = await beginCitizenService(
+        apiClient,
+        current.citizen.citizen_id,
+      )
       await invalidateCitizens(queryClient)
       return result
     },
@@ -260,7 +269,11 @@ export function useServeCitizenLifecycleMutation() {
       } else if (action.type === 'citizen-left') {
         await markCitizenLeft(apiClient, action.citizenId)
       } else if (action.type === 'finish-service') {
-        await finishCitizenService(apiClient, action.citizenId, action.inaccurate)
+        await finishCitizenService(
+          apiClient,
+          action.citizenId,
+          action.inaccurate,
+        )
       } else {
         await placeCitizenOnHold(apiClient, action.citizenId)
       }

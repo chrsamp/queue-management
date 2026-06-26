@@ -182,180 +182,176 @@ export default function EditExamModal({
       onClose={onClose}
     >
       <div className="grid gap-4 p-6 sm:grid-cols-2">
-          {errorMessage && <Alert message={errorMessage} />}
-          {examNotReady && (
-            <Alert message="This exam is not yet ready for retrieval. Please try again in no less than 15 minutes." />
-          )}
-          {type === 'pesticide' && (
-            <>
-              <ReadOnlyField label="Exam Type" value={exam.exam_name ?? '-'} />
-              <Button onClick={() => void handleDownload()}>Print</Button>
-            </>
-          )}
-          {showAllFields ? (
-            <>
+        {errorMessage && <Alert message={errorMessage} />}
+        {examNotReady && (
+          <Alert message="This exam is not yet ready for retrieval. Please try again in no less than 15 minutes." />
+        )}
+        {type === 'pesticide' && (
+          <>
+            <ReadOnlyField label="Exam Type" value={exam.exam_name ?? '-'} />
+            <Button onClick={() => void handleDownload()}>Print</Button>
+          </>
+        )}
+        {showAllFields ? (
+          <>
+            <TextField
+              label="Event ID"
+              onChange={(value) => update('event_id', value)}
+              value={fields.event_id ?? ''}
+            />
+            <SelectField
+              label="Exam Method"
+              onChange={(value) => update('exam_method', value)}
+              value={fields.exam_method ?? 'paper'}
+            >
+              <option value="paper">paper</option>
+              <option value="online">online</option>
+            </SelectField>
+            {type !== 'challenger' && type !== 'pesticide' && (
+              <SelectField
+                label="Exam Type"
+                onChange={(value) => update('exam_type_id', Number(value))}
+                value={fields.exam_type_id ?? ''}
+              >
+                {typeOptions.map((item) => (
+                  <option key={item.exam_type_id} value={item.exam_type_id}>
+                    {item.exam_type_name}
+                  </option>
+                ))}
+              </SelectField>
+            )}
+            <TextField
+              label="Exam Name"
+              maxLength={50}
+              onChange={(value) => update('exam_name', value)}
+              value={fields.exam_name ?? ''}
+            />
+            <SelectField
+              label={type === 'pesticide' ? 'Exam Printed?' : 'Exam Received?'}
+              onChange={(value) =>
+                update(
+                  'exam_received_date',
+                  value === 'yes' ? todayDateInputValue() : '',
+                )
+              }
+              value={fields.exam_received_date ? 'yes' : 'no'}
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </SelectField>
+            {fields.exam_received_date ? (
               <TextField
-                label="Event ID"
-                onChange={(value) => update('event_id', value)}
-                value={fields.event_id ?? ''}
+                label={type === 'pesticide' ? 'Printed Date' : 'Received Date'}
+                onChange={(value) => update('exam_received_date', value)}
+                type="date"
+                value={fields.exam_received_date ?? ''}
               />
-              <SelectField
-                label="Exam Method"
-                onChange={(value) => update('exam_method', value)}
-                value={fields.exam_method ?? 'paper'}
-              >
-                <option value="paper">paper</option>
-                <option value="online">online</option>
-              </SelectField>
-              {type !== 'challenger' && type !== 'pesticide' && (
-                <SelectField
-                  label="Exam Type"
-                  onChange={(value) => update('exam_type_id', Number(value))}
-                  value={fields.exam_type_id ?? ''}
-                >
-                  {typeOptions.map((item) => (
-                    <option key={item.exam_type_id} value={item.exam_type_id}>
-                      {item.exam_type_name}
-                    </option>
-                  ))}
-                </SelectField>
-              )}
+            ) : null}
+            {['group', 'challenger'].includes(type) && (
               <TextField
-                label="Exam Name"
-                maxLength={50}
-                onChange={(value) => update('exam_name', value)}
-                value={fields.exam_name ?? ''}
-              />
-              <SelectField
-                label={
-                  type === 'pesticide' ? 'Exam Printed?' : 'Exam Received?'
-                }
+                label="# of Writers"
                 onChange={(value) =>
-                  update(
-                    'exam_received_date',
-                    value === 'yes' ? todayDateInputValue() : '',
-                  )
+                  update('number_of_students', Number(value))
                 }
-                value={fields.exam_received_date ? 'yes' : 'no'}
-              >
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-              </SelectField>
-              {fields.exam_received_date ? (
-                <TextField
-                  label={
-                    type === 'pesticide' ? 'Printed Date' : 'Received Date'
-                  }
-                  onChange={(value) => update('exam_received_date', value)}
-                  type="date"
-                  value={fields.exam_received_date ?? ''}
-                />
-              ) : null}
-              {['group', 'challenger'].includes(type) && (
-                <TextField
-                  label="# of Writers"
-                  onChange={(value) =>
-                    update('number_of_students', Number(value))
-                  }
-                  type="number"
-                  value={fields.number_of_students ?? ''}
-                />
-              )}
-              {type === 'individual' && (
-                <TextField
-                  label="Expiry Date"
-                  onChange={(value) => update('expiry_date', value)}
-                  type="date"
-                  value={fields.expiry_date ?? ''}
-                />
-              )}
-              {['individual', 'other', 'pesticide'].includes(type) && (
-                <TextField
-                  label="Candidate's Name"
-                  onChange={(value) => update('examinee_name', value)}
-                  value={fields.examinee_name ?? ''}
-                />
-              )}
-              {type === 'pesticide' && (
-                <>
-                  <TextField
-                    label="Telephone"
-                    onChange={(value) => update('examinee_phone', value)}
-                    value={fields.examinee_phone ?? ''}
-                  />
-                  <TextField
-                    label="Candidate's Email"
-                    onChange={(value) => update('examinee_email', value)}
-                    value={fields.examinee_email ?? ''}
-                  />
-                  <TextField
-                    label="Receipt"
-                    onChange={(value) => update('receipt', value)}
-                    value={fields.receipt ?? ''}
-                  />
-                  <label className="flex items-center gap-2">
-                    <input
-                      checked={fields.receipt_sent_ind === 1}
-                      onChange={(event) =>
-                        update('receipt_sent_ind', event.target.checked ? 1 : 0)
-                      }
-                      type="checkbox"
-                    />
-                    Confirmation/Receipt Sent?
-                  </label>
-                </>
-              )}
-            </>
-          ) : (
-            <>
-              <ReadOnlyField label="Exam" value={exam.exam_name ?? '-'} />
-              <ReadOnlyField label="Event ID" value={exam.event_id ?? '-'} />
-              <ReadOnlyField
-                label="Type"
-                value={exam.exam_type?.exam_type_name ?? '-'}
+                type="number"
+                value={fields.number_of_students ?? ''}
               />
-              <ReadOnlyField label="Method" value={exam.exam_method ?? '-'} />
-              <SelectField
-                label="Exam Received?"
-                onChange={(value) =>
-                  update(
-                    'exam_received_date',
-                    value === 'yes' ? todayDateInputValue() : '',
-                  )
-                }
-                value={fields.exam_received_date ? 'yes' : 'no'}
+            )}
+            {type === 'individual' && (
+              <TextField
+                label="Expiry Date"
+                onChange={(value) => update('expiry_date', value)}
+                type="date"
+                value={fields.expiry_date ?? ''}
+              />
+            )}
+            {['individual', 'other', 'pesticide'].includes(type) && (
+              <TextField
+                label="Candidate's Name"
+                onChange={(value) => update('examinee_name', value)}
+                value={fields.examinee_name ?? ''}
+              />
+            )}
+            {type === 'pesticide' && (
+              <>
+                <TextField
+                  label="Telephone"
+                  onChange={(value) => update('examinee_phone', value)}
+                  value={fields.examinee_phone ?? ''}
+                />
+                <TextField
+                  label="Candidate's Email"
+                  onChange={(value) => update('examinee_email', value)}
+                  value={fields.examinee_email ?? ''}
+                />
+                <TextField
+                  label="Receipt"
+                  onChange={(value) => update('receipt', value)}
+                  value={fields.receipt ?? ''}
+                />
+                <label className="flex items-center gap-2">
+                  <input
+                    checked={fields.receipt_sent_ind === 1}
+                    onChange={(event) =>
+                      update('receipt_sent_ind', event.target.checked ? 1 : 0)
+                    }
+                    type="checkbox"
+                  />
+                  Confirmation/Receipt Sent?
+                </label>
+              </>
+            )}
+          </>
+        ) : (
+          <>
+            <ReadOnlyField label="Exam" value={exam.exam_name ?? '-'} />
+            <ReadOnlyField label="Event ID" value={exam.event_id ?? '-'} />
+            <ReadOnlyField
+              label="Type"
+              value={exam.exam_type?.exam_type_name ?? '-'}
+            />
+            <ReadOnlyField label="Method" value={exam.exam_method ?? '-'} />
+            <SelectField
+              label="Exam Received?"
+              onChange={(value) =>
+                update(
+                  'exam_received_date',
+                  value === 'yes' ? todayDateInputValue() : '',
+                )
+              }
+              value={fields.exam_received_date ? 'yes' : 'no'}
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </SelectField>
+          </>
+        )}
+        <TextAreaField
+          className="sm:col-span-2"
+          label="Notes"
+          maxLength={400}
+          onChange={(value) => update('notes', value)}
+          value={fields.notes ?? ''}
+        />
+        {confirmBookingDelete && (
+          <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4 sm:col-span-2">
+            <p className="mt-0">
+              Room booking for the exam will be deleted. Are you sure you want
+              to proceed?
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setConfirmBookingDelete(false)}
+                variant="secondary"
               >
-                <option value="no">No</option>
-                <option value="yes">Yes</option>
-              </SelectField>
-            </>
-          )}
-          <TextAreaField
-            className="sm:col-span-2"
-            label="Notes"
-            maxLength={400}
-            onChange={(value) => update('notes', value)}
-            value={fields.notes ?? ''}
-          />
-          {confirmBookingDelete && (
-            <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4 sm:col-span-2">
-              <p className="mt-0">
-                Room booking for the exam will be deleted. Are you sure you want
-                to proceed?
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setConfirmBookingDelete(false)}
-                  variant="secondary"
-                >
-                  Cancel
-                </Button>
-                <Button danger onClick={() => void submitConfirmed()}>
-                  Confirm
-                </Button>
-              </div>
+                Cancel
+              </Button>
+              <Button danger onClick={() => void submitConfirmed()}>
+                Confirm
+              </Button>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </ModalLayout>
   )

@@ -276,259 +276,257 @@ export default function AppointmentBlackoutModal({
       onClose={resetAndClose}
     >
       <div className="flex flex-col gap-4 p-6">
-          {errorMessage && (
-            <AlertBanner
-              isCloseable={false}
-              role="alert"
-              size="small"
-              variant="danger"
-            >
-              {errorMessage}
-            </AlertBanner>
-          )}
-          {confirmOverlap && (
-            <div
-              className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4"
-              role="alert"
-            >
-              <p className="mt-0">
-                There is {overlapCount} appointment(s) which is overlapping with
-                this Blackout. Are you sure you want to create the Blackout?
-              </p>
-              <div className="flex gap-3">
-                <Button onClick={() => void handleSubmit(true)}>Yes</Button>
-                <Button
-                  onClick={() => setConfirmOverlap(false)}
-                  variant="secondary"
-                >
-                  No
-                </Button>
-              </div>
-            </div>
-          )}
-          <fieldset className="border-bc-border rounded-sm border p-4">
-            <legend className="px-1 font-bold">
-              Step 1: Select Event Type
-            </legend>
-            <div className="flex flex-wrap gap-3">
+        {errorMessage && (
+          <AlertBanner
+            isCloseable={false}
+            role="alert"
+            size="small"
+            variant="danger"
+          >
+            {errorMessage}
+          </AlertBanner>
+        )}
+        {confirmOverlap && (
+          <div
+            className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4"
+            role="alert"
+          >
+            <p className="mt-0">
+              There is {overlapCount} appointment(s) which is overlapping with
+              this Blackout. Are you sure you want to create the Blackout?
+            </p>
+            <div className="flex gap-3">
+              <Button onClick={() => void handleSubmit(true)}>Yes</Button>
               <Button
-                onClick={() => setMode('single')}
-                variant={mode === 'single' ? 'primary' : 'secondary'}
-              >
-                Create Single Blackout
-              </Button>
-              {recurringEnabled && (
-                <Button
-                  onClick={() => setMode('recurring')}
-                  variant={mode === 'recurring' ? 'primary' : 'secondary'}
-                >
-                  Create Recurring Blackout
-                </Button>
-              )}
-              {support && (
-                <Button
-                  onClick={() => setMode('stat')}
-                  variant={mode === 'stat' ? 'primary' : 'secondary'}
-                >
-                  Create STAT
-                </Button>
-              )}
-            </div>
-          </fieldset>
-
-          {mode !== 'stat' ? (
-            <>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <label className="flex flex-col gap-1">
-                  <span className="font-bold">Blackout Date</span>
-                  <input
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    onChange={(event) => setDateValue(event.target.value)}
-                    type="date"
-                    value={dateValue}
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="font-bold">Blackout Start Time</span>
-                  <input
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    onChange={(event) => setStartTimeValue(event.target.value)}
-                    type="time"
-                    value={startTimeValue}
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="font-bold">Blackout End Time</span>
-                  <input
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    onChange={(event) => setEndTimeValue(event.target.value)}
-                    type="time"
-                    value={endTimeValue}
-                  />
-                </label>
-              </div>
-              {mode === 'recurring' && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="flex flex-col gap-1">
-                    <span className="font-bold">Blackout End Date</span>
-                    <input
-                      className="border-bc-border rounded-sm border px-3 py-2"
-                      onChange={(event) => setEndDateValue(event.target.value)}
-                      type="date"
-                      value={endDateValue}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="font-bold">Frequency</span>
-                    <select
-                      className="border-bc-border rounded-sm border px-3 py-2"
-                      onChange={(event) =>
-                        setFrequency(event.target.value as 'daily' | 'weekly')
-                      }
-                      value={frequency}
-                    >
-                      <option value="weekly">Weekly</option>
-                      <option value="daily">Daily</option>
-                    </select>
-                  </label>
-                  <fieldset className="sm:col-span-2">
-                    <legend className="font-bold">Select Weekdays:</legend>
-                    <div className="flex flex-wrap gap-3">
-                      {weekdayOptions.map((option) => (
-                        <label
-                          className="flex items-center gap-2"
-                          key={option.value}
-                        >
-                          <input
-                            checked={weekdays.includes(option.value)}
-                            onChange={(event) =>
-                              setWeekdays((current) =>
-                                event.target.checked
-                                  ? [...current, option.value]
-                                  : current.filter(
-                                      (value) => value !== option.value,
-                                    ),
-                              )
-                            }
-                            type="checkbox"
-                          />
-                          {option.label}
-                        </label>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <label className="flex flex-col gap-1">
-                    <span className="font-bold">
-                      Number of Occurences(optional):
-                    </span>
-                    <input
-                      className="border-bc-border rounded-sm border px-3 py-2"
-                      onChange={(event) => setCount(event.target.value)}
-                      type="number"
-                      value={count}
-                    />
-                  </label>
-                </div>
-              )}
-              <label className="flex flex-col gap-1">
-                <span className="font-bold">Event Notes</span>
-                <textarea
-                  className="border-bc-border min-h-24 rounded-sm border px-3 py-2"
-                  maxLength={255}
-                  onChange={(event) => setNotes(event.target.value)}
-                  value={notes}
-                />
-              </label>
-            </>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {statDates.map((entry, index) => (
-                <div
-                  className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
-                  key={index}
-                >
-                  <input
-                    aria-label="STAT Date"
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    onChange={(event) =>
-                      setStatDates((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, date: event.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                    type="date"
-                    value={entry.date}
-                  />
-                  <input
-                    aria-label="STAT Note"
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    maxLength={255}
-                    onChange={(event) =>
-                      setStatDates((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, note: event.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                    placeholder="Note"
-                    value={entry.note}
-                  />
-                  <Button
-                    disabled={statDates.length === 1}
-                    onClick={() =>
-                      setStatDates((current) =>
-                        current.filter((_, itemIndex) => itemIndex !== index),
-                      )
-                    }
-                    variant="secondary"
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button
-                onClick={() =>
-                  setStatDates((current) => [
-                    ...current,
-                    { date: formatDateInputValue(new Date()), note: '' },
-                  ])
-                }
+                onClick={() => setConfirmOverlap(false)}
                 variant="secondary"
               >
-                Add STAT Date
+                No
               </Button>
+            </div>
+          </div>
+        )}
+        <fieldset className="border-bc-border rounded-sm border p-4">
+          <legend className="px-1 font-bold">Step 1: Select Event Type</legend>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={() => setMode('single')}
+              variant={mode === 'single' ? 'primary' : 'secondary'}
+            >
+              Create Single Blackout
+            </Button>
+            {recurringEnabled && (
+              <Button
+                onClick={() => setMode('recurring')}
+                variant={mode === 'recurring' ? 'primary' : 'secondary'}
+              >
+                Create Recurring Blackout
+              </Button>
+            )}
+            {support && (
+              <Button
+                onClick={() => setMode('stat')}
+                variant={mode === 'stat' ? 'primary' : 'secondary'}
+              >
+                Create STAT
+              </Button>
+            )}
+          </div>
+        </fieldset>
+
+        {mode !== 'stat' ? (
+          <>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">Blackout Date</span>
+                <input
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  onChange={(event) => setDateValue(event.target.value)}
+                  type="date"
+                  value={dateValue}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">Blackout Start Time</span>
+                <input
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  onChange={(event) => setStartTimeValue(event.target.value)}
+                  type="time"
+                  value={startTimeValue}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">Blackout End Time</span>
+                <input
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  onChange={(event) => setEndTimeValue(event.target.value)}
+                  type="time"
+                  value={endTimeValue}
+                />
+              </label>
+            </div>
+            {mode === 'recurring' && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="flex flex-col gap-1">
+                  <span className="font-bold">Blackout End Date</span>
+                  <input
+                    className="border-bc-border rounded-sm border px-3 py-2"
+                    onChange={(event) => setEndDateValue(event.target.value)}
+                    type="date"
+                    value={endDateValue}
+                  />
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="font-bold">Frequency</span>
+                  <select
+                    className="border-bc-border rounded-sm border px-3 py-2"
+                    onChange={(event) =>
+                      setFrequency(event.target.value as 'daily' | 'weekly')
+                    }
+                    value={frequency}
+                  >
+                    <option value="weekly">Weekly</option>
+                    <option value="daily">Daily</option>
+                  </select>
+                </label>
+                <fieldset className="sm:col-span-2">
+                  <legend className="font-bold">Select Weekdays:</legend>
+                  <div className="flex flex-wrap gap-3">
+                    {weekdayOptions.map((option) => (
+                      <label
+                        className="flex items-center gap-2"
+                        key={option.value}
+                      >
+                        <input
+                          checked={weekdays.includes(option.value)}
+                          onChange={(event) =>
+                            setWeekdays((current) =>
+                              event.target.checked
+                                ? [...current, option.value]
+                                : current.filter(
+                                    (value) => value !== option.value,
+                                  ),
+                            )
+                          }
+                          type="checkbox"
+                        />
+                        {option.label}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+                <label className="flex flex-col gap-1">
+                  <span className="font-bold">
+                    Number of Occurences(optional):
+                  </span>
+                  <input
+                    className="border-bc-border rounded-sm border px-3 py-2"
+                    onChange={(event) => setCount(event.target.value)}
+                    type="number"
+                    value={count}
+                  />
+                </label>
+              </div>
+            )}
+            <label className="flex flex-col gap-1">
+              <span className="font-bold">Event Notes</span>
+              <textarea
+                className="border-bc-border min-h-24 rounded-sm border px-3 py-2"
+                maxLength={255}
+                onChange={(event) => setNotes(event.target.value)}
+                value={notes}
+              />
+            </label>
+          </>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {statDates.map((entry, index) => (
+              <div
+                className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]"
+                key={index}
+              >
+                <input
+                  aria-label="STAT Date"
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  onChange={(event) =>
+                    setStatDates((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? { ...item, date: event.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                  type="date"
+                  value={entry.date}
+                />
+                <input
+                  aria-label="STAT Note"
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  maxLength={255}
+                  onChange={(event) =>
+                    setStatDates((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index
+                          ? { ...item, note: event.target.value }
+                          : item,
+                      ),
+                    )
+                  }
+                  placeholder="Note"
+                  value={entry.note}
+                />
+                <Button
+                  disabled={statDates.length === 1}
+                  onClick={() =>
+                    setStatDates((current) =>
+                      current.filter((_, itemIndex) => itemIndex !== index),
+                    )
+                  }
+                  variant="secondary"
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+            <Button
+              onClick={() =>
+                setStatDates((current) => [
+                  ...current,
+                  { date: formatDateInputValue(new Date()), note: '' },
+                ])
+              }
+              variant="secondary"
+            >
+              Add STAT Date
+            </Button>
+            <label className="flex items-center gap-2">
+              <input
+                checked={onlyThisOffice}
+                onChange={(event) => {
+                  setOnlyThisOffice(event.target.checked)
+                  if (!event.target.checked) {
+                    setOnlyAppointments(false)
+                  }
+                }}
+                type="checkbox"
+              />
+              Only this Office
+            </label>
+            {onlyThisOffice && (
               <label className="flex items-center gap-2">
                 <input
-                  checked={onlyThisOffice}
-                  onChange={(event) => {
-                    setOnlyThisOffice(event.target.checked)
-                    if (!event.target.checked) {
-                      setOnlyAppointments(false)
-                    }
-                  }}
+                  checked={onlyAppointments}
+                  onChange={(event) =>
+                    setOnlyAppointments(event.target.checked)
+                  }
                   type="checkbox"
                 />
-                Only this Office
+                Only appointment
               </label>
-              {onlyThisOffice && (
-                <label className="flex items-center gap-2">
-                  <input
-                    checked={onlyAppointments}
-                    onChange={(event) =>
-                      setOnlyAppointments(event.target.checked)
-                    }
-                    type="checkbox"
-                  />
-                  Only appointment
-                </label>
-              )}
-            </div>
-          )}
+            )}
+          </div>
+        )}
       </div>
     </ModalLayout>
   )

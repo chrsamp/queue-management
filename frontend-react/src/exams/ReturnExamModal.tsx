@@ -83,51 +83,51 @@ export default function ReturnExamModal({
       onClose={onClose}
     >
       <div className="grid gap-4 p-6 sm:grid-cols-2">
-          {errorMessage && <Alert message={errorMessage} />}
-          <SelectField
-            label="Exam Status"
-            onChange={(value) => setReturned(value === 'returned')}
-            value={returned ? 'returned' : 'not-returned'}
-          >
-            <option value="not-returned">Not Returned</option>
-            <option value="returned">Returned</option>
-          </SelectField>
-          {returned && (
-            <>
-              <SelectField
-                label="Written?"
-                onChange={(value) => setWritten(Number(value))}
-                value={written}
-              >
-                <option value={1}>Yes</option>
-                <option value={0}>No</option>
-              </SelectField>
-              <TextField
-                label="Date of Return"
-                onChange={setDate}
-                type="date"
-                value={date}
-              />
-              <TextField
-                label="Action Taken"
-                maxLength={250}
-                onChange={setActionTaken}
-                value={actionTaken}
-              />
-              <TextField label="Notes" onChange={setNotes} value={notes} />
-            </>
-          )}
-          {confirm && (
-            <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4 sm:col-span-2">
-              <p className="mt-0">Are you sure you want to return this exam?</p>
-              <div className="flex gap-2">
-                <Button onClick={() => setConfirm(false)} variant="secondary">
-                  No
-                </Button>
-                <Button onClick={() => void submit()}>Yes</Button>
-              </div>
+        {errorMessage && <Alert message={errorMessage} />}
+        <SelectField
+          label="Exam Status"
+          onChange={(value) => setReturned(value === 'returned')}
+          value={returned ? 'returned' : 'not-returned'}
+        >
+          <option value="not-returned">Not Returned</option>
+          <option value="returned">Returned</option>
+        </SelectField>
+        {returned && (
+          <>
+            <SelectField
+              label="Written?"
+              onChange={(value) => setWritten(Number(value))}
+              value={written}
+            >
+              <option value={1}>Yes</option>
+              <option value={0}>No</option>
+            </SelectField>
+            <TextField
+              label="Date of Return"
+              onChange={setDate}
+              type="date"
+              value={date}
+            />
+            <TextField
+              label="Action Taken"
+              maxLength={250}
+              onChange={setActionTaken}
+              value={actionTaken}
+            />
+            <TextField label="Notes" onChange={setNotes} value={notes} />
+          </>
+        )}
+        {confirm && (
+          <div className="border-bc-gold-60 bg-bc-light-gray border-l-4 p-4 sm:col-span-2">
+            <p className="mt-0">Are you sure you want to return this exam?</p>
+            <div className="flex gap-2">
+              <Button onClick={() => setConfirm(false)} variant="secondary">
+                No
+              </Button>
+              <Button onClick={() => void submit()}>Yes</Button>
             </div>
-          )}
+          </div>
+        )}
       </div>
     </ModalLayout>
   )

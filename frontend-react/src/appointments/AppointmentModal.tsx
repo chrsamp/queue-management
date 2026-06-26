@@ -268,164 +268,159 @@ export default function AppointmentModal({
       onClose={() => void handleClose()}
     >
       <div className="flex flex-col gap-4 p-6">
-          {draft ? (
-            <p className="m-0 font-bold">
-              You cannot edit or delete draft appointments.
-            </p>
-          ) : (
-            <>
-              {errorMessage && (
-                <AlertBanner
-                  isCloseable={false}
-                  role="alert"
-                  size="small"
-                  variant="danger"
-                >
-                  {errorMessage}
-                </AlertBanner>
-              )}
-              <div className="grid gap-4 sm:grid-cols-2">
+        {draft ? (
+          <p className="m-0 font-bold">
+            You cannot edit or delete draft appointments.
+          </p>
+        ) : (
+          <>
+            {errorMessage && (
+              <AlertBanner
+                isCloseable={false}
+                role="alert"
+                size="small"
+                variant="danger"
+              >
+                {errorMessage}
+              </AlertBanner>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">Citizen Name</span>
+                <input
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  disabled={blackout || stat}
+                  onChange={(event) => setCitizenName(event.target.value)}
+                  value={citizenName}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">
+                  {stat ? 'Contact Info' : 'Send Confirmation'}
+                </span>
+                <input
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  disabled={blackout || stat}
+                  onChange={(event) =>
+                    setContactInformation(event.target.value)
+                  }
+                  placeholder="By email or SMS Text"
+                  value={contactInformation}
+                />
+              </label>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">Date</span>
+                <input
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  disabled={stat || !rescheduleAllowed}
+                  onChange={(event) => setDateValue(event.target.value)}
+                  type="date"
+                  value={dateValue}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">Time</span>
+                <input
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  disabled={stat || !rescheduleAllowed}
+                  onChange={(event) => setTimeValue(event.target.value)}
+                  type="time"
+                  value={timeValue}
+                />
+              </label>
+              {!stat && (
                 <label className="flex flex-col gap-1">
-                  <span className="font-bold">Citizen Name</span>
-                  <input
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    disabled={blackout || stat}
-                    onChange={(event) => setCitizenName(event.target.value)}
-                    value={citizenName}
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="font-bold">
-                    {stat ? 'Contact Info' : 'Send Confirmation'}
-                  </span>
-                  <input
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    disabled={blackout || stat}
-                    onChange={(event) =>
-                      setContactInformation(event.target.value)
-                    }
-                    placeholder="By email or SMS Text"
-                    value={contactInformation}
-                  />
-                </label>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <label className="flex flex-col gap-1">
-                  <span className="font-bold">Date</span>
-                  <input
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    disabled={stat || !rescheduleAllowed}
-                    onChange={(event) => setDateValue(event.target.value)}
-                    type="date"
-                    value={dateValue}
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span className="font-bold">Time</span>
-                  <input
-                    className="border-bc-border rounded-sm border px-3 py-2"
-                    disabled={stat || !rescheduleAllowed}
-                    onChange={(event) => setTimeValue(event.target.value)}
-                    type="time"
-                    value={timeValue}
-                  />
-                </label>
-                {!stat && (
-                  <label className="flex flex-col gap-1">
-                    <span className="font-bold">Length</span>
-                    <select
-                      className="border-bc-border rounded-sm border px-3 py-2"
-                      onChange={(event) =>
-                        setLength(Number(event.target.value))
-                      }
-                      value={length}
-                    >
-                      {lengthOptions.map((option) => (
-                        <option key={option} value={option}>
-                          {option} minutes
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-              </div>
-              {showServicePicker && (
-                <div className="flex flex-col gap-1">
-                  <span className="font-bold">Service Required by Citizen</span>
-                  <ServicePicker
-                    categories={categories}
-                    categoryId={serviceCategoryId}
-                    onCategoryChange={setServiceCategoryId}
-                    onSearchChange={setServiceSearch}
-                    onSelectService={(service) => {
-                      setSelectedServiceId(service.service_id)
-                      setServiceSearch(service.service_name)
-                    }}
-                    search={serviceSearch}
-                    selectedServiceId={
-                      typeof selectedServiceId === 'number'
-                        ? selectedServiceId
-                        : null
-                    }
-                    services={services}
-                  />
-                </div>
-              )}
-              {!stat && blackout && (
-                <label className="flex flex-col gap-1">
-                  <span className="font-bold">Service Required by Citizen</span>
+                  <span className="font-bold">Length</span>
                   <select
                     className="border-bc-border rounded-sm border px-3 py-2"
-                    disabled={blackout}
-                    onChange={(event) =>
-                      setSelectedServiceId(Number(event.target.value) || '')
-                    }
-                    value={selectedServiceId}
+                    onChange={(event) => setLength(Number(event.target.value))}
+                    value={length}
                   >
-                    <option value="">Please choose a service</option>
-                    {services.map((service) => (
-                      <option
-                        key={service.service_id}
-                        value={service.service_id}
-                      >
-                        {service.service_name}
+                    {lengthOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option} minutes
                       </option>
                     ))}
                   </select>
                 </label>
               )}
-              <label className="flex flex-col gap-1">
-                <span className="font-bold">{stat ? 'Note' : 'Notes'}</span>
-                <textarea
-                  className="border-bc-border min-h-20 rounded-sm border px-3 py-2"
-                  disabled={stat && !support}
-                  maxLength={255}
-                  onChange={(event) => setComments(event.target.value)}
-                  value={comments}
+            </div>
+            {showServicePicker && (
+              <div className="flex flex-col gap-1">
+                <span className="font-bold">Service Required by Citizen</span>
+                <ServicePicker
+                  categories={categories}
+                  categoryId={serviceCategoryId}
+                  onCategoryChange={setServiceCategoryId}
+                  onSearchChange={setServiceSearch}
+                  onSelectService={(service) => {
+                    setSelectedServiceId(service.service_id)
+                    setServiceSearch(service.service_name)
+                  }}
+                  search={serviceSearch}
+                  selectedServiceId={
+                    typeof selectedServiceId === 'number'
+                      ? selectedServiceId
+                      : null
+                  }
+                  services={services}
                 />
+              </div>
+            )}
+            {!stat && blackout && (
+              <label className="flex flex-col gap-1">
+                <span className="font-bold">Service Required by Citizen</span>
+                <select
+                  className="border-bc-border rounded-sm border px-3 py-2"
+                  disabled={blackout}
+                  onChange={(event) =>
+                    setSelectedServiceId(Number(event.target.value) || '')
+                  }
+                  value={selectedServiceId}
+                >
+                  <option value="">Please choose a service</option>
+                  {services.map((service) => (
+                    <option key={service.service_id} value={service.service_id}>
+                      {service.service_name}
+                    </option>
+                  ))}
+                </select>
               </label>
-              {clickedEvent?.recurring_uuid && !stat && (
-                <label className="flex items-center gap-2">
-                  <input
-                    checked={editSeries}
-                    onChange={(event) => setEditSeries(event.target.checked)}
-                    type="checkbox"
-                  />
-                  Edit or delete recurring series
-                </label>
-              )}
-              {clickedEvent?.recurring_uuid && stat && support && (
-                <label className="flex items-center gap-2">
-                  <input
-                    checked={editSeries}
-                    onChange={(event) => setEditSeries(event.target.checked)}
-                    type="checkbox"
-                  />
-                  Edit or delete recurring STAT series
-                </label>
-              )}
-            </>
-          )}
+            )}
+            <label className="flex flex-col gap-1">
+              <span className="font-bold">{stat ? 'Note' : 'Notes'}</span>
+              <textarea
+                className="border-bc-border min-h-20 rounded-sm border px-3 py-2"
+                disabled={stat && !support}
+                maxLength={255}
+                onChange={(event) => setComments(event.target.value)}
+                value={comments}
+              />
+            </label>
+            {clickedEvent?.recurring_uuid && !stat && (
+              <label className="flex items-center gap-2">
+                <input
+                  checked={editSeries}
+                  onChange={(event) => setEditSeries(event.target.checked)}
+                  type="checkbox"
+                />
+                Edit or delete recurring series
+              </label>
+            )}
+            {clickedEvent?.recurring_uuid && stat && support && (
+              <label className="flex items-center gap-2">
+                <input
+                  checked={editSeries}
+                  onChange={(event) => setEditSeries(event.target.checked)}
+                  type="checkbox"
+                />
+                Edit or delete recurring STAT series
+              </label>
+            )}
+          </>
+        )}
       </div>
     </ModalLayout>
   )

@@ -139,10 +139,7 @@ export default function GroupBookingModal({
       className="max-w-3xl"
       closeDisabled={isSaving}
       footer={
-        <ModalFooter
-          isSaving={isSaving}
-          onSubmit={() => void handleSubmit()}
-        />
+        <ModalFooter isSaving={isSaving} onSubmit={() => void handleSubmit()} />
       }
       header={
         <ModalHeader
@@ -152,115 +149,110 @@ export default function GroupBookingModal({
       onClose={onClose}
     >
       <div className="grid gap-4 p-6 sm:grid-cols-2">
-          {errorMessage && <Alert message={errorMessage} />}
-          <ReadOnlyField label="Exam" value={exam.exam_name ?? '-'} />
-          <ReadOnlyField
-            label="Writers"
-            value={String(exam.number_of_students ?? '-')}
-          />
+        {errorMessage && <Alert message={errorMessage} />}
+        <ReadOnlyField label="Exam" value={exam.exam_name ?? '-'} />
+        <ReadOnlyField
+          label="Writers"
+          value={String(exam.number_of_students ?? '-')}
+        />
+        <TextField
+          disabled={fieldDisabled}
+          label="Event ID"
+          onChange={setEventId}
+          value={eventId}
+        />
+        <TextField
+          disabled={fieldDisabled}
+          label="Exam Date"
+          onChange={setDate}
+          type="date"
+          value={date}
+        />
+        <TextField
+          disabled={fieldDisabled}
+          label="Exam Time"
+          onChange={setTime}
+          type="time"
+          value={time}
+        />
+        <TextField
+          disabled={fieldDisabled}
+          label="Location"
+          maxLength={50}
+          onChange={setOffsiteLocation}
+          value={offsiteLocation}
+        />
+        <SelectField
+          label="Exam Received?"
+          onChange={(value) =>
+            setExamReceivedDate(value === 'yes' ? todayDateInputValue() : '')
+          }
+          value={examReceivedDate ? 'yes' : 'no'}
+        >
+          <option value="no">No</option>
+          <option value="yes">Yes</option>
+        </SelectField>
+        {examReceivedDate && (
           <TextField
-            disabled={fieldDisabled}
-            label="Event ID"
-            onChange={setEventId}
-            value={eventId}
-          />
-          <TextField
-            disabled={fieldDisabled}
-            label="Exam Date"
-            onChange={setDate}
+            label="Received Date"
+            onChange={setExamReceivedDate}
             type="date"
-            value={date}
+            value={examReceivedDate}
           />
-          <TextField
-            disabled={fieldDisabled}
-            label="Exam Time"
-            onChange={setTime}
-            type="time"
-            value={time}
-          />
-          <TextField
-            disabled={fieldDisabled}
-            label="Location"
-            maxLength={50}
-            onChange={setOffsiteLocation}
-            value={offsiteLocation}
-          />
-          <SelectField
-            label="Exam Received?"
-            onChange={(value) =>
-              setExamReceivedDate(value === 'yes' ? todayDateInputValue() : '')
-            }
-            value={examReceivedDate ? 'yes' : 'no'}
-          >
-            <option value="no">No</option>
-            <option value="yes">Yes</option>
-          </SelectField>
-          {examReceivedDate && (
-            <TextField
-              label="Received Date"
-              onChange={setExamReceivedDate}
-              type="date"
-              value={examReceivedDate}
-            />
-          )}
-          <TextAreaField
-            className="sm:col-span-2"
-            label="Notes"
-            maxLength={400}
-            onChange={setNotes}
-            value={notes}
-          />
-          <fieldset className="border-bc-border rounded-sm border p-3 sm:col-span-2">
-            <legend className="font-bold">Invigilators</legend>
-            <p className="mt-0 mb-2">Required Invigilators: {required}</p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {invigilatorSource
-                .filter(
-                  (item) =>
-                    item.shadow_count === 2 || item.shadow_count == null,
-                )
-                .map((item) => (
-                  <label
-                    className="flex items-center gap-2"
-                    key={item.invigilator_id}
-                  >
-                    <input
-                      checked={selectedInvigilators.includes(
-                        item.invigilator_id,
-                      )}
-                      onChange={(event) =>
-                        setSelectedInvigilators((current) =>
-                          event.target.checked
-                            ? [...current, item.invigilator_id]
-                            : current.filter(
-                                (id) => id !== item.invigilator_id,
-                              ),
-                        )
-                      }
-                      type="checkbox"
-                    />
-                    {item.invigilator_name}
-                  </label>
-                ))}
-            </div>
-          </fieldset>
-          <SelectField
-            className="sm:col-span-2"
-            label="Shadow Invigilator"
-            onChange={(value) =>
-              setShadowInvigilatorId(value ? Number(value) : '')
-            }
-            value={shadowInvigilatorId}
-          >
-            <option value="">Unassigned</option>
-            {invigilators
-              .filter((item) => (item.shadow_count ?? 0) < 2)
+        )}
+        <TextAreaField
+          className="sm:col-span-2"
+          label="Notes"
+          maxLength={400}
+          onChange={setNotes}
+          value={notes}
+        />
+        <fieldset className="border-bc-border rounded-sm border p-3 sm:col-span-2">
+          <legend className="font-bold">Invigilators</legend>
+          <p className="mt-0 mb-2">Required Invigilators: {required}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {invigilatorSource
+              .filter(
+                (item) => item.shadow_count === 2 || item.shadow_count == null,
+              )
               .map((item) => (
-                <option key={item.invigilator_id} value={item.invigilator_id}>
+                <label
+                  className="flex items-center gap-2"
+                  key={item.invigilator_id}
+                >
+                  <input
+                    checked={selectedInvigilators.includes(item.invigilator_id)}
+                    onChange={(event) =>
+                      setSelectedInvigilators((current) =>
+                        event.target.checked
+                          ? [...current, item.invigilator_id]
+                          : current.filter((id) => id !== item.invigilator_id),
+                      )
+                    }
+                    type="checkbox"
+                  />
                   {item.invigilator_name}
-                </option>
+                </label>
               ))}
-          </SelectField>
+          </div>
+        </fieldset>
+        <SelectField
+          className="sm:col-span-2"
+          label="Shadow Invigilator"
+          onChange={(value) =>
+            setShadowInvigilatorId(value ? Number(value) : '')
+          }
+          value={shadowInvigilatorId}
+        >
+          <option value="">Unassigned</option>
+          {invigilators
+            .filter((item) => (item.shadow_count ?? 0) < 2)
+            .map((item) => (
+              <option key={item.invigilator_id} value={item.invigilator_id}>
+                {item.invigilator_name}
+              </option>
+            ))}
+        </SelectField>
       </div>
     </ModalLayout>
   )

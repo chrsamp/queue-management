@@ -18,7 +18,9 @@ function mutationOptions() {
   return { retry: false } as const
 }
 
-async function invalidateBookings(queryClient: ReturnType<typeof useQueryClient>) {
+async function invalidateBookings(
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all }),
     queryClient.invalidateQueries({ queryKey: queryKeys.exams.all }),
@@ -87,7 +89,10 @@ export function useDeleteBookingEventMutation() {
       if (kind === 'series' && recurringUuid) {
         await deleteRecurringBooking(apiClient, recurringUuid)
       } else if (kind === 'stat-current' && recurringUuid) {
-        await deleteRecurringStatBookingsForCurrentOffice(apiClient, recurringUuid)
+        await deleteRecurringStatBookingsForCurrentOffice(
+          apiClient,
+          recurringUuid,
+        )
       } else if (kind === 'stat-all' && recurringUuid) {
         await deleteRecurringStatBookingsForAllOffices(apiClient, recurringUuid)
       } else {
@@ -109,7 +114,9 @@ export function useCreateBookingBlackoutMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (run: (apiClient: ReturnType<typeof useApiClient>) => Promise<void>) => {
+    mutationFn: async (
+      run: (apiClient: ReturnType<typeof useApiClient>) => Promise<void>,
+    ) => {
       await run(apiClient)
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all }),

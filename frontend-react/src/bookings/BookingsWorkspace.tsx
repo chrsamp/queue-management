@@ -475,56 +475,56 @@ function ExamPickerModal({
       onClose={onClose}
     >
       <div className="p-6">
-          {exams.length === 0 ? (
-            <p className="m-0">No unscheduled exams are available.</p>
-          ) : (
-            <table className="border-bc-border w-full border-collapse border text-left">
-              <thead className="bg-bc-light-gray">
-                <tr>
-                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
-                    Exam
-                  </th>
-                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
-                    Writer
-                  </th>
-                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
-                    Event ID
-                  </th>
-                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
-                    Expiry
-                  </th>
-                  <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
-                    Action
-                  </th>
+        {exams.length === 0 ? (
+          <p className="m-0">No unscheduled exams are available.</p>
+        ) : (
+          <table className="border-bc-border w-full border-collapse border text-left">
+            <thead className="bg-bc-light-gray">
+              <tr>
+                <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                  Exam
+                </th>
+                <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                  Writer
+                </th>
+                <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                  Event ID
+                </th>
+                <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                  Expiry
+                </th>
+                <th className="border-bc-border bg-bc-light-gray sticky top-0 z-10 border p-2">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {exams.map((exam) => (
+                <tr key={exam.exam_id}>
+                  <td className="border-bc-border border p-2">
+                    {exam.exam_name || '-'}
+                  </td>
+                  <td className="border-bc-border border p-2">
+                    {exam.examinee_name || '-'}
+                  </td>
+                  <td className="border-bc-border border p-2">
+                    {exam.event_id || '-'}
+                  </td>
+                  <td className="border-bc-border border p-2">
+                    {exam.expiry_date
+                      ? format(new Date(exam.expiry_date), 'yyyy-MM-dd')
+                      : '-'}
+                  </td>
+                  <td className="border-bc-border border p-2">
+                    <Button onClick={() => onSelect(exam)} size="small">
+                      Schedule
+                    </Button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {exams.map((exam) => (
-                  <tr key={exam.exam_id}>
-                    <td className="border-bc-border border p-2">
-                      {exam.exam_name || '-'}
-                    </td>
-                    <td className="border-bc-border border p-2">
-                      {exam.examinee_name || '-'}
-                    </td>
-                    <td className="border-bc-border border p-2">
-                      {exam.event_id || '-'}
-                    </td>
-                    <td className="border-bc-border border p-2">
-                      {exam.expiry_date
-                        ? format(new Date(exam.expiry_date), 'yyyy-MM-dd')
-                        : '-'}
-                    </td>
-                    <td className="border-bc-border border p-2">
-                      <Button onClick={() => onSelect(exam)} size="small">
-                        Schedule
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </ModalLayout>
   )
