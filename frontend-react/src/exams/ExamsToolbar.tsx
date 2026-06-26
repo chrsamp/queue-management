@@ -1,5 +1,6 @@
 import type { Office } from '@/api/schemas'
 import Button from '@/components/Button'
+import SplitAction, { type SplitActionItem } from '@/components/SplitAction'
 
 import type {
   ExamFilters,
@@ -36,13 +37,32 @@ export default function ExamsToolbar({
   permissions,
   quickActionOptions,
 }: ExamsToolbarProps) {
+  const examTypeItems: SplitActionItem[] = [
+    { id: 'individual', label: 'SkilledTradesBC Exam' },
+    ...(permissions.canSeeMonthlySessionOption
+      ? [{ id: 'challenger' as const, label: 'Monthly Session Exam' }]
+      : []),
+    ...(permissions.canAddGroup
+      ? [{ id: 'group' as const, label: 'Group Exam' }]
+      : []),
+    { id: 'other', label: 'Other Exam' },
+    ...(permissions.canAddPesticide
+      ? [{ id: 'pesticide' as const, label: 'Environment Exam' }]
+      : []),
+  ]
+
   return (
     <>
       <div className="flex shrink-0 flex-wrap justify-end gap-2">
-        <AddExamButtons
-          onAdd={onAdd}
-          onReport={onReport}
-          permissions={permissions}
+        {permissions.canGenerateFinancialReport && (
+          <Button onClick={onReport} variant="secondary">
+            Generate Financial Report
+          </Button>
+        )}
+        <SplitAction
+          items={examTypeItems}
+          label="Create new..."
+          onAction={(key) => onAdd(key as ExamSetup)}
         />
       </div>
 
@@ -122,39 +142,6 @@ export default function ExamsToolbar({
           </Button>
         )}
       </div>
-    </>
-  )
-}
-
-function AddExamButtons({
-  onAdd,
-  onReport,
-  permissions,
-}: {
-  onAdd: (setup: ExamSetup) => void
-  onReport: () => void
-  permissions: ExamPermissions
-}) {
-  return (
-    <>
-      <Button onClick={() => onAdd('individual')}>
-        Add SkilledTradesBC Exam
-      </Button>
-      {permissions.canSeeMonthlySessionOption && (
-        <Button onClick={() => onAdd('challenger')} variant="secondary">
-          Add Monthly Session Exam
-        </Button>
-      )}
-      {permissions.canAddGroup && (
-        <Button onClick={() => onAdd('group')}>Add Group Exam</Button>
-      )}
-      <Button onClick={() => onAdd('other')}>Add Other Exam</Button>
-      {permissions.canAddPesticide && (
-        <Button onClick={() => onAdd('pesticide')}>Add Environment Exam</Button>
-      )}
-      {permissions.canGenerateFinancialReport && (
-        <Button onClick={onReport}>Generate Financial Report</Button>
-      )}
     </>
   )
 }
