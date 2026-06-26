@@ -22,6 +22,7 @@ import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import SplitAction from '@/components/SplitAction'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import AppointmentBlackoutModal from './AppointmentBlackoutModal'
@@ -433,6 +434,3 @@ function AppointmentList({
   )
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback
-}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { createLucideIcon, HandHelping } from 'lucide-react'
+import {  HandHelping, UserRoundPlus } from 'lucide-react'
 
 import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
 import {
@@ -16,6 +16,7 @@ import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import ServicePicker from '@/components/ServicePicker'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -28,13 +29,6 @@ import {
 } from './add-citizen-utils'
 import type { AddCitizenModalState } from './add-citizen-modal-state'
 import { getWaitingCitizens, isReceptionOffice } from './queue-utils'
-
-const UserRoundArrowLeft = createLucideIcon('user-round-arrow-left', [
-  ['path', { d: 'M2 21a8 8 0 0 1 13.292-6', key: 'bjp14o' }],
-  ['circle', { cx: '10', cy: '8', r: '5', key: 'o932ke' }],
-  ['path', { d: 'm19 16-3 3 3 3', key: '1upmm3' }],
-  ['path', { d: 'M22 19h-6', key: '1uvf4f' }],
-])
 
 interface AddCitizenModalProps {
   categories: Category[]
@@ -442,7 +436,7 @@ export default function AddCitizenModal({
                           size="small"
                           variant="tertiary"
                         >
-                          <UserRoundArrowLeft
+                          <UserRoundPlus
                             aria-hidden="true"
                             className="h-4 w-4"
                           />
@@ -575,12 +569,4 @@ export default function AddCitizenModal({
       </Dialog>
     </Modal>
   )
-}
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return fallback
 }

@@ -14,6 +14,7 @@ import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import {
@@ -543,6 +544,3 @@ function createUuid() {
   return globalThis.crypto?.randomUUID?.() ?? String(Date.now())
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback
-}

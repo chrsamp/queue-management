@@ -9,6 +9,7 @@ import type { Appointment, Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -272,6 +273,3 @@ function TableCell({ children }: { children?: ReactNode }) {
   return <td className="border-bc-border border-b px-3 py-2">{children}</td>
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback
-}

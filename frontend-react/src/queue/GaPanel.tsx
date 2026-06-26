@@ -8,6 +8,7 @@ import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import {
@@ -251,14 +252,6 @@ function getStatusLabel(status: GaPanelRow['status']) {
     case 'inactive':
       return 'Inactive'
   }
-}
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return fallback
 }
 
 export { GaPanel }

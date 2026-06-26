@@ -16,6 +16,7 @@ import type { Citizen, Office } from '@/api/schemas'
 import { beginCitizenService, inviteCitizen } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 import DayAgendaPanel from '@/appointments/DayAgendaPanel'
@@ -491,10 +492,3 @@ function QueueStatusMessage({
   )
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return fallback
-}

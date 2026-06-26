@@ -14,6 +14,7 @@ import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import {
@@ -618,6 +619,3 @@ export default function BookingBlackoutModal({
   )
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback
-}

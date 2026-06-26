@@ -22,6 +22,7 @@ import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import { cx } from '@/lib/cx'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -660,10 +661,3 @@ function findServiceForRequest(
   }
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return fallback
-}

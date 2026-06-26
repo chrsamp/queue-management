@@ -4,9 +4,9 @@ import type { Key } from 'react-aria-components'
 
 import type { CsrMe, Office } from '@/api/schemas'
 import { getOffices, updateCsr } from '@/api/endpoints'
-import { ApiError } from '@/api/errors'
 import { useApiClient } from '@/api/use-api-client'
 import { queryKeys } from '@/query/query-keys'
+import { getErrorMessage } from '@/lib/errors'
 import { useWorkflowStore } from '@/store/workflow-store'
 
 import Select, { type SelectItem } from './Select'
@@ -19,13 +19,6 @@ function getOfficeDescription(office: Office) {
   return `Office #${office.office_number}`
 }
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof ApiError || error instanceof Error) {
-    return error.message
-  }
-
-  return 'Unable to change offices. Please try again.'
-}
 
 export default function OfficeSwitcher() {
   const apiClient = useApiClient()
@@ -91,7 +84,7 @@ export default function OfficeSwitcher() {
     onError: (error) => {
       setGlobalAlert({
         id: 'office-switcher',
-        message: getErrorMessage(error),
+        message: getErrorMessage(error, 'Unable to change offices. Please try again.'),
         role: 'alert',
         variant: 'danger',
       })
@@ -132,7 +125,7 @@ export default function OfficeSwitcher() {
             : undefined
       }
       errorMessage={
-        officesQuery.isError ? getErrorMessage(officesQuery.error) : ''
+        officesQuery.isError ? getErrorMessage(officesQuery.error, 'Unable to change offices. Please try again.') : ''
       }
       isDisabled={officesQuery.isLoading || updateOfficeMutation.isPending}
       isInvalid={officesQuery.isError}

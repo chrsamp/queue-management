@@ -19,6 +19,7 @@ import Dialog, { DialogTitle } from '@/components/Dialog'
 import Modal from '@/components/Modal'
 import ServicePicker from '@/components/ServicePicker'
 import { cx } from '@/lib/cx'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
 import {
@@ -471,6 +472,3 @@ export default function AppointmentModal({
   )
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback
-}

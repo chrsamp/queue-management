@@ -18,6 +18,7 @@ import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import SplitAction from '@/components/SplitAction'
 import { cx } from '@/lib/cx'
+import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -338,10 +339,3 @@ export default function QueueActions({
   )
 }
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return fallback
-}
