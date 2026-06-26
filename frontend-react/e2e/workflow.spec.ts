@@ -117,6 +117,7 @@ function citizen(id: number, periodName: string) {
 
 async function installMockRoutes(page: Page, roleCode = 'GA') {
   let citizens = [citizen(1, 'Waiting')]
+  let currentCsr = csr(roleCode)
   let csrs = [
     stripOffice({
       ...csr('CSR'),
@@ -158,10 +159,31 @@ async function installMockRoutes(page: Page, roleCode = 'GA') {
         active_citizens: [],
         attention_needed: false,
         back_office_display: null,
-        csr: csr(roleCode),
+        csr: currentCsr,
         errors: {},
         recurring_feature_flag: null,
       }),
+    })
+  })
+  await page.route('**/api/v1/csrs/10/', async (route) => {
+    const payload = route.request().postDataJSON() as {
+      csr_state_id?: number
+    }
+    const nextState = csrStates.find(
+      (state) => state.csr_state_id === payload.csr_state_id,
+    )
+
+    if (nextState) {
+      currentCsr = {
+        ...currentCsr,
+        csr_state: nextState,
+        csr_state_id: nextState.csr_state_id,
+      }
+    }
+
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ csr: currentCsr, errors: {} }),
     })
   })
   await page.route('**/api/v1/offices/', async (route) => {
@@ -307,6 +329,26 @@ test.describe('mocked queue workflows', () => {
 
     await expect(page).toHaveURL(/\/queue$/)
     await expect(page.getByText('Citizens Waiting: 1')).toBeVisible()
+  })
+
+  test('keeps the CSR on break until a later page click', async ({ page }) => {
+    await installMockRoutes(page)
+
+    await page.goto('/queue')
+    const statusSwitch = page.getByRole('switch', { name: 'CSR status' })
+    await expect(statusSwitch).toBeChecked()
+
+    await statusSwitch.click()
+
+    await expect(statusSwitch).not.toBeChecked()
+    await expect(page.getByText('On Break')).toBeVisible()
+    await page.waitForTimeout(150)
+    await expect(page.getByText('On Break')).toBeVisible()
+
+    await page.getByText('Citizens Waiting: 1').click()
+
+    await expect(statusSwitch).toBeChecked()
+    await expect(page.getByText('Active')).toBeVisible()
   })
 
   test('invites, begins, holds, and clears active citizen state', async ({

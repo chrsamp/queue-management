@@ -128,6 +128,11 @@ describe('CsrStatusSwitch', () => {
     expect(updateCsr).toHaveBeenCalledTimes(1)
     expect(screen.getByText('On Break')).toBeVisible()
     expect(screen.queryByText('Active')).not.toBeInTheDocument()
+
+    await new Promise((resolve) => window.setTimeout(resolve, 150))
+
+    expect(updateCsr).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('On Break')).toBeVisible()
   })
 
   test('returns the CSR to Active after a later body click while on Break', async () => {

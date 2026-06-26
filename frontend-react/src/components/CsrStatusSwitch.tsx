@@ -5,7 +5,7 @@ import { getCsrStates, updateCsr } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
 import type { CsrMe, CsrState } from '@/api/schemas'
 import { queryKeys } from '@/query/query-keys'
-import { useWorkflowStore } from '@/store/workflow-store'
+import { isCsrOnBreak, useWorkflowStore } from '@/store/workflow-store'
 
 import Switch from './Switch'
 
@@ -22,7 +22,7 @@ export default function CsrStatusSwitch() {
   const setCurrentCsrState = useWorkflowStore(
     (state) => state.setCurrentCsrState,
   )
-  const skipNextBodyClick = useRef(false)
+  const switchContainerRef = useRef<HTMLSpanElement>(null)
 
   const csrStatesQuery = useQuery({
     enabled: currentCsrId !== null && currentCsrState !== null,
@@ -88,34 +88,32 @@ export default function CsrStatusSwitch() {
         return
       }
 
-      skipNextBodyClick.current = checked
       updateCsrState(targetState)
     },
     [breakState, loginState, updateCsrState],
   )
 
-  const isOnBreak = currentCsrState?.csr_state_name === 'Break'
+  const isOnBreak = isCsrOnBreak(currentCsrState)
 
   useEffect(() => {
     if (!isOnBreak || !loginState) {
       return
     }
 
-    const handleBodyClick = () => {
-      if (skipNextBodyClick.current) {
-        skipNextBodyClick.current = false
+    const handleBodyClick = (event: MouseEvent) => {
+      if (
+        event.target instanceof Node &&
+        switchContainerRef.current?.contains(event.target)
+      ) {
         return
       }
 
       updateCsrState(loginState)
     }
 
-    const timeoutId = window.setTimeout(() => {
-      document.body.addEventListener('click', handleBodyClick)
-    }, 100)
+    document.body.addEventListener('click', handleBodyClick)
 
     return () => {
-      window.clearTimeout(timeoutId)
       document.body.removeEventListener('click', handleBodyClick)
     }
   }, [isOnBreak, loginState, updateCsrState])
@@ -125,17 +123,19 @@ export default function CsrStatusSwitch() {
   }
 
   return (
-    <Switch
-      aria-label="CSR status"
-      checked={!isOnBreak}
-      className="items-center"
-      disabled={updateStateMutation.isPending}
-      onChange={handleSwitchChange}
-    >
-      <span className="min-w-16 text-left">
-        {isOnBreak ? 'On Break' : 'Active'}
-      </span>
-    </Switch>
+    <span ref={switchContainerRef}>
+      <Switch
+        aria-label="CSR status"
+        checked={!isOnBreak}
+        className="items-center"
+        disabled={updateStateMutation.isPending}
+        onChange={handleSwitchChange}
+      >
+        <span className="min-w-16 text-left">
+          {isOnBreak ? 'On Break' : 'Active'}
+        </span>
+      </Switch>
+    </span>
   )
 }
 

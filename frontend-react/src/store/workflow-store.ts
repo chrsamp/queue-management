@@ -86,6 +86,9 @@ interface WorkflowState {
   setShowDayAgenda: (show: boolean) => void
 }
 
+export const isCsrOnBreak = (csrState: CsrState | null): boolean =>
+  csrState?.csr_state_name === 'Break'
+
 export const useWorkflowStore = create<WorkflowState>((set) => ({
   activeCitizenId: null,
   activeServiceRequestId: null,
