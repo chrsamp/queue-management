@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { HandHelping, UserRoundPlus } from 'lucide-react'
 
-import type { Category, Channel, Citizen, Office, Service } from '@/api/schemas'
+import type { Category, Channel, Office, Service } from '@/api/schemas'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog, { DialogTitle } from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import ServicePicker from '@/components/ServicePicker'
 import { getErrorMessage } from '@/lib/errors'
 
@@ -17,7 +17,7 @@ import {
 } from './add-citizen-utils'
 import { createUuid } from '@/lib/uuid'
 import type { AddCitizenModalState } from './add-citizen-modal-state'
-import { getWaitingCitizens, isReceptionOffice } from './queue-utils'
+import { isReceptionOffice } from './queue-utils'
 import {
   useAddCitizenToQueueMutation,
   useApplyCitizenServiceMutation,
@@ -28,7 +28,6 @@ import {
 interface AddCitizenModalProps {
   categories: Category[]
   channels: Channel[]
-  citizens: Citizen[]
   isOpen: boolean
   office: Office
   onClose: () => void
@@ -41,7 +40,6 @@ interface AddCitizenModalProps {
 export default function AddCitizenModal({
   categories,
   channels,
-  citizens,
   isOpen,
   office,
   onClose,
@@ -233,35 +231,86 @@ export default function AddCitizenModal({
         : form.mode === 'edit-service'
           ? 'Edit Service'
           : 'Add Citizen'
-  const waitingCount = getWaitingCitizens(citizens).length
 
   return (
-    <Modal
-      className="max-w-4xl overflow-hidden"
-      isDismissable={false}
-      isOpen={isOpen}
-    >
-      <Dialog className="p-0" isCloseable={false}>
-        <div className="border-bc-border bg-bc-light-gray flex items-center justify-between border-b px-6 py-4">
-          <div>
+    <ModalLayout
+      className="max-w-4xl"
+      closeDisabled={isPerformingAction}
+      footer={
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {isReception && (
+              <select
+                aria-label="Counter"
+                className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
+                onChange={(event) =>
+                  updateForm({ counterId: Number(event.target.value) || null })
+                }
+                value={form.counterId ?? ''}
+              >
+                {[...office.counters]
+                  .sort((left, right) =>
+                    left.counter_name.localeCompare(right.counter_name),
+                  )
+                  .map((counter) => (
+                    <option key={counter.counter_id} value={counter.counter_id}>
+                      {counter.counter_name}
+                    </option>
+                  ))}
+              </select>
+            )}
+            <select
+              aria-label="Priority"
+              className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
+              onChange={(event) =>
+                updateForm({ priority: Number(event.target.value) })
+              }
+              value={form.priority}
+            >
+              <option value={1}>High Priority</option>
+              <option value={2}>Default Priority</option>
+              <option value={3}>Low Priority</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isReception && !serviceModalMode && (
+              <Button
+                disabled={actionDisabled}
+                onClick={() => void handleAddToQueue()}
+                variant="secondary"
+              >
+                Add to queue
+              </Button>
+            )}
+            {serviceModalMode ? (
+              <Button
+                disabled={actionDisabled}
+                onClick={() => void handleApplyService()}
+              >
+                Apply
+              </Button>
+            ) : (
+              <Button
+                disabled={actionDisabled}
+                onClick={() => void handleBeginService()}
+              >
+                Begin service
+              </Button>
+            )}
+          </div>
+        </div>
+      }
+      header={
+        <div>
             <DialogTitle className="text-bc-h4 m-0 font-bold">
               {title}
             </DialogTitle>
-            <p className="text-bc-small text-bc-secondary m-0">
-              Citizens Waiting: {waitingCount}
-            </p>
           </div>
-          <Button
-            danger
-            disabled={isPerformingAction}
-            onClick={() => void handleCancel()}
-            size="small"
-            variant="secondary"
-          >
-            Cancel
-          </Button>
-        </div>
-
+      }
+      isOpen={isOpen}
+      onClose={() => void handleCancel()}
+    >
         <div className="bg-bc-light-gray px-6 py-4">
           {alertMessage && (
             <AlertBanner
@@ -436,82 +485,9 @@ export default function AddCitizenModal({
           />
         </div>
 
-        <div className="border-bc-border flex flex-wrap items-center justify-between gap-3 border-t px-6 py-4">
-          <div className="flex flex-wrap items-center gap-3">
-            {isReception && (
-              <select
-                aria-label="Counter"
-                className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
-                onChange={(event) =>
-                  updateForm({ counterId: Number(event.target.value) || null })
-                }
-                value={form.counterId ?? ''}
-              >
-                {[...office.counters]
-                  .sort((left, right) =>
-                    left.counter_name.localeCompare(right.counter_name),
-                  )
-                  .map((counter) => (
-                    <option key={counter.counter_id} value={counter.counter_id}>
-                      {counter.counter_name}
-                    </option>
-                  ))}
-              </select>
-            )}
-            <select
-              aria-label="Priority"
-              className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
-              onChange={(event) =>
-                updateForm({ priority: Number(event.target.value) })
-              }
-              value={form.priority}
-            >
-              <option value={1}>High Priority</option>
-              <option value={2}>Default Priority</option>
-              <option value={3}>Low Priority</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              danger
-              disabled={isPerformingAction}
-              onClick={() => void handleCancel()}
-              variant="secondary"
-            >
-              Cancel
-            </Button>
-            {isReception && !serviceModalMode && (
-              <Button
-                disabled={actionDisabled}
-                onClick={() => void handleAddToQueue()}
-                variant="secondary"
-              >
-                Add to queue
-              </Button>
-            )}
-            {serviceModalMode ? (
-              <Button
-                disabled={actionDisabled}
-                onClick={() => void handleApplyService()}
-              >
-                Apply
-              </Button>
-            ) : (
-              <Button
-                disabled={actionDisabled}
-                onClick={() => void handleBeginService()}
-              >
-                Begin service
-              </Button>
-            )}
-          </div>
-        </div>
-
         <p className="sr-only" aria-live="polite">
           {selectedService ? `${selectedService.service_name} selected` : ''}
         </p>
-      </Dialog>
-    </Modal>
+    </ModalLayout>
   )
 }

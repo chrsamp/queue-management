@@ -302,7 +302,6 @@ export default function QueueActions({
       <AddCitizenModal
         categories={categoriesQuery.data ?? []}
         channels={channelsQuery.data ?? []}
-        citizens={citizens}
         isOpen={modalState !== null}
         office={office}
         onClose={() => setModalState(null)}

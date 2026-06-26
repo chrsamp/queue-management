@@ -2,8 +2,7 @@ import { useState } from 'react'
 
 import { downloadExamExport } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
-import Dialog from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 
 import {
@@ -57,10 +56,18 @@ export default function FinancialReportModal({
   }
 
   return (
-    <Modal isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <ModalHeader title="Generate Exam Report" />
-        <div className="grid gap-4 p-6">
+    <ModalLayout
+      closeDisabled={isSaving}
+      footer={
+        <ModalFooter
+          isSaving={isSaving}
+          onSubmit={() => void submit()}
+        />
+      }
+      header={<ModalHeader title="Generate Exam Report" />}
+      onClose={onClose}
+    >
+      <div className="grid gap-4 p-6">
           {errorMessage && <Alert message={errorMessage} />}
           <TextField
             label="Start Date"
@@ -87,13 +94,7 @@ export default function FinancialReportModal({
             </option>
             <option value="all_non_ita">All Non-SkilledTradesBC Exams</option>
           </SelectField>
-        </div>
-        <ModalFooter
-          isSaving={isSaving}
-          onCancel={onClose}
-          onSubmit={() => void submit()}
-        />
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

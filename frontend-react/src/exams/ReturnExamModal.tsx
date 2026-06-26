@@ -2,8 +2,7 @@ import { useState } from 'react'
 
 import type { Exam } from '@/api/schemas'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 
 import {
@@ -68,10 +67,22 @@ export default function ReturnExamModal({
   }
 
   return (
-    <Modal isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
+    <ModalLayout
+      closeDisabled={isSaving}
+      footer={
+        <ModalFooter
+          isSaving={isSaving}
+          onSubmit={() =>
+            editMode || !returned ? void submit() : setConfirm(true)
+          }
+        />
+      }
+      header={
         <ModalHeader title={editMode ? 'Edit Return Details' : 'Return Exam'} />
-        <div className="grid gap-4 p-6 sm:grid-cols-2">
+      }
+      onClose={onClose}
+    >
+      <div className="grid gap-4 p-6 sm:grid-cols-2">
           {errorMessage && <Alert message={errorMessage} />}
           <SelectField
             label="Exam Status"
@@ -117,15 +128,7 @@ export default function ReturnExamModal({
               </div>
             </div>
           )}
-        </div>
-        <ModalFooter
-          isSaving={isSaving}
-          onCancel={onClose}
-          onSubmit={() =>
-            editMode || !returned ? void submit() : setConfirm(true)
-          }
-        />
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

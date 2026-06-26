@@ -2,8 +2,7 @@ import { useState } from 'react'
 
 import type { Exam } from '@/api/schemas'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 
 import { Alert, ModalHeader, SelectField } from './ExamModalFields'
@@ -67,10 +66,26 @@ export default function UploadPesticideExamModal({
   }
 
   return (
-    <Modal isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <ModalHeader title="Upload Completed Exam" />
-        <div className="grid gap-4 p-6">
+    <ModalLayout
+      closeDisabled={isSaving}
+      footer={
+        !submitted && (
+          <div className="flex justify-end gap-3">
+            <Button
+              disabled={isSaving || !status}
+              onClick={() =>
+                status === 'written' ? setConfirm(true) : void submit()
+              }
+            >
+              Submit
+            </Button>
+          </div>
+        )
+      }
+      header={<ModalHeader title="Upload Completed Exam" />}
+      onClose={onClose}
+    >
+      <div className="grid gap-4 p-6">
           {submitted ? (
             <div className="text-center">
               <div className="text-6xl text-green-700">✓</div>
@@ -144,27 +159,7 @@ export default function UploadPesticideExamModal({
               )}
             </>
           )}
-        </div>
-        <div className="bg-bc-light-gray flex justify-end gap-3 border-t px-6 py-4">
-          <Button
-            disabled={isSaving}
-            onClick={submitted ? onClose : onClose}
-            variant="secondary"
-          >
-            {submitted ? 'Done' : 'Cancel'}
-          </Button>
-          {!submitted && (
-            <Button
-              disabled={isSaving || !status}
-              onClick={() =>
-                status === 'written' ? setConfirm(true) : void submit()
-              }
-            >
-              Submit
-            </Button>
-          )}
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

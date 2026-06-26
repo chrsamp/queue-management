@@ -12,8 +12,8 @@ import type { Citizen, Office, Service, ServiceRequest } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog, { DialogTitle } from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import { cx } from '@/lib/cx'
 import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
@@ -38,7 +38,6 @@ import {
 
 interface ServeCitizenModalProps {
   citizen: Citizen | null
-  citizens: Citizen[]
   office: Office
 }
 
@@ -52,7 +51,6 @@ interface ServeCitizenForm {
 
 export default function ServeCitizenModal({
   citizen,
-  citizens,
   office,
 }: ServeCitizenModalProps) {
   const apiClient = useApiClient()
@@ -73,7 +71,6 @@ export default function ServeCitizenModal({
     (state) => state.setServeModalAlert,
   )
   const showServiceModal = useWorkflowStore((state) => state.showServiceModal)
-  const [isMinimized, setIsMinimized] = useState(false)
   const [serviceFormState, setServiceFormState] =
     useState<AddCitizenModalState | null>(null)
   const lifecycleMutation = useServeCitizenLifecycleMutation()
@@ -189,15 +186,6 @@ export default function ServeCitizenModal({
     }
   }
 
-  function handleMinimize() {
-    if (!serviceBegun) {
-      setIsMinimized((current) => !current)
-      return
-    }
-
-    closeServiceModal()
-  }
-
   function openServiceForm(mode: 'add-next-service' | 'edit-service') {
     if (!citizen || !activeService || channelsQuery.isPending) {
       return
@@ -237,24 +225,115 @@ export default function ServeCitizenModal({
 
   return (
     <>
-      <Modal className="max-w-5xl overflow-hidden" isDismissable={false} isOpen>
-        <Dialog className="p-0" isCloseable={false}>
-          <div className="border-bc-border bg-bc-light-gray flex items-center justify-between border-b px-6 py-4">
-            <DialogTitle className="text-bc-h4 text-bc-secondary m-0 font-bold">
-              Serve Citizen
-            </DialogTitle>
-            <Button
-              disabled={isPerformingAction}
-              onClick={handleMinimize}
-              variant="link"
-            >
-              {isMinimized ? 'Maximize' : 'Minimize'}
-            </Button>
-          </div>
+      <ModalLayout
+        className="max-w-5xl"
+        closeDisabled={isPerformingAction}
+        footer={
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {isReceptionOffice(office) && (
+                <select
+                  aria-label="Counter"
+                  className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
+                  onChange={(event) =>
+                    updateForm({
+                      counterId: Number(event.target.value) || null,
+                    })
+                  }
+                  value={form.counterId ?? ''}
+                >
+                  {[...office.counters]
+                    .sort((left, right) =>
+                      left.counter_name.localeCompare(right.counter_name),
+                    )
+                    .map((counter) => (
+                      <option
+                        key={counter.counter_id}
+                        value={counter.counter_id}
+                      >
+                        {counter.counter_name}
+                      </option>
+                    ))}
+                </select>
+              )}
+              <select
+                aria-label="Priority"
+                className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
+                onChange={(event) =>
+                  updateForm({ priority: Number(event.target.value) })
+                }
+                value={form.priority}
+              >
+                <option value={1}>High Priority</option>
+                <option value={2}>Default Priority</option>
+                <option value={3}>Low Priority</option>
+              </select>
+              <Button
+                disabled={serviceActionDisabled}
+                onClick={() => openServiceForm('add-next-service')}
+              >
+                Add Next Service
+              </Button>
+            </div>
 
-          {!isMinimized && (
-            <>
-              <div className="bg-bc-light-gray px-6 py-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-bc-white flex items-center gap-2">
+                <input
+                  checked={form.accurateTimeInd === 0}
+                  disabled={!serviceBegun || isPerformingAction}
+                  onChange={(event) =>
+                    updateForm({
+                      accurateTimeInd: event.target.checked ? 0 : 1,
+                    })
+                  }
+                  type="checkbox"
+                />
+                Inaccurate Time
+              </label>
+              <Button
+                disabled={serviceActionDisabled}
+                onClick={() =>
+                  void runLifecycle(
+                    {
+                      citizenId: citizen.citizen_id,
+                      inaccurate: form.accurateTimeInd === 0,
+                      type: 'finish-service',
+                    },
+                    { clear: true },
+                  )
+                }
+                id="serve-citizen-finish-button"
+              >
+                Finish
+              </Button>
+              <Button
+                disabled={serviceActionDisabled}
+                onClick={() =>
+                  void runLifecycle(
+                    {
+                      citizenId: citizen.citizen_id,
+                      type: 'place-on-hold',
+                    },
+                    { clear: true },
+                  )
+                }
+                variant="secondary"
+                id="serve-citizen-place-on-hold-button"
+              >
+                Place on Hold
+              </Button>
+            </div>
+          </div>
+        }
+        footerClassName="bg-bc-secondary"
+        header={
+          <DialogTitle className="text-bc-h4 text-bc-secondary m-0 font-bold">
+            Serve Citizen
+          </DialogTitle>
+        }
+        onClose={closeServiceModal}
+      >
+        <div className="bg-bc-light-gray px-6 py-4">
                 {combinedAlert && (
                   <AlertBanner
                     className="mb-3"
@@ -386,110 +465,11 @@ export default function ServeCitizenModal({
                 serviceRequests={serviceRequests}
               />
 
-              <div className="bg-bc-secondary flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  {isReceptionOffice(office) && (
-                    <select
-                      aria-label="Counter"
-                      className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
-                      onChange={(event) =>
-                        updateForm({
-                          counterId: Number(event.target.value) || null,
-                        })
-                      }
-                      value={form.counterId ?? ''}
-                    >
-                      {[...office.counters]
-                        .sort((left, right) =>
-                          left.counter_name.localeCompare(right.counter_name),
-                        )
-                        .map((counter) => (
-                          <option
-                            key={counter.counter_id}
-                            value={counter.counter_id}
-                          >
-                            {counter.counter_name}
-                          </option>
-                        ))}
-                    </select>
-                  )}
-                  <select
-                    aria-label="Priority"
-                    className="border-bc-border focus:border-bc-form-active focus:outline-bc-focus h-10 rounded-sm border bg-white px-3 focus:outline-2 focus:outline-offset-1"
-                    onChange={(event) =>
-                      updateForm({ priority: Number(event.target.value) })
-                    }
-                    value={form.priority}
-                  >
-                    <option value={1}>High Priority</option>
-                    <option value={2}>Default Priority</option>
-                    <option value={3}>Low Priority</option>
-                  </select>
-                  <Button
-                    disabled={serviceActionDisabled}
-                    onClick={() => openServiceForm('add-next-service')}
-                  >
-                    Add Next Service
-                  </Button>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <label className="text-bc-white flex items-center gap-2">
-                    <input
-                      checked={form.accurateTimeInd === 0}
-                      disabled={!serviceBegun || isPerformingAction}
-                      onChange={(event) =>
-                        updateForm({
-                          accurateTimeInd: event.target.checked ? 0 : 1,
-                        })
-                      }
-                      type="checkbox"
-                    />
-                    Inaccurate Time
-                  </label>
-                  <Button
-                    disabled={serviceActionDisabled}
-                    onClick={() =>
-                      void runLifecycle(
-                        {
-                          citizenId: citizen.citizen_id,
-                          inaccurate: form.accurateTimeInd === 0,
-                          type: 'finish-service',
-                        },
-                        { clear: true },
-                      )
-                    }
-                    id="serve-citizen-finish-button"
-                  >
-                    Finish
-                  </Button>
-                  <Button
-                    disabled={serviceActionDisabled}
-                    onClick={() =>
-                      void runLifecycle(
-                        {
-                          citizenId: citizen.citizen_id,
-                          type: 'place-on-hold',
-                        },
-                        { clear: true },
-                      )
-                    }
-                    variant="secondary"
-                    id="serve-citizen-place-on-hold-button"
-                  >
-                    Place on Hold
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </Dialog>
-      </Modal>
+      </ModalLayout>
 
       <AddCitizenModal
         categories={categoriesQuery.data ?? []}
         channels={channelsQuery.data ?? []}
-        citizens={citizens}
         isOpen={serviceFormState !== null}
         office={office}
         onClose={() => setServiceFormState(null)}

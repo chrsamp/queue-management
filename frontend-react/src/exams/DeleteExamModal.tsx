@@ -2,8 +2,7 @@ import { useState } from 'react'
 
 import type { Exam } from '@/api/schemas'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 
 import { Alert, ModalHeader } from './ExamModalFields'
@@ -35,10 +34,23 @@ export default function DeleteExamModal({
   }
 
   return (
-    <Modal isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <ModalHeader title="Delete Exam" />
-        <div className="grid gap-4 p-6">
+    <ModalLayout
+      closeDisabled={isSaving}
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button
+            danger
+            disabled={isSaving}
+            onClick={() => void handleDelete()}
+          >
+            Yes
+          </Button>
+        </div>
+      }
+      header={<ModalHeader title="Delete Exam" />}
+      onClose={onClose}
+    >
+      <div className="grid gap-4 p-6">
           {errorMessage && <Alert message={errorMessage} />}
           <p className="m-0">Are you sure you want to delete this Exam?</p>
           <div className="border-bc-border rounded-sm border p-3">
@@ -52,20 +64,7 @@ export default function DeleteExamModal({
               <strong>Event ID:</strong> {exam.event_id || '-'}
             </div>
           </div>
-        </div>
-        <div className="bg-bc-light-gray flex justify-end gap-3 border-t px-6 py-4">
-          <Button disabled={isSaving} onClick={onClose} variant="secondary">
-            No
-          </Button>
-          <Button
-            danger
-            disabled={isSaving}
-            onClick={() => void handleDelete()}
-          >
-            Yes
-          </Button>
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

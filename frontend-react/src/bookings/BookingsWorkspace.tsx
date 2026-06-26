@@ -20,8 +20,8 @@ import type { Exam, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog, { DialogTitle } from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import SplitAction from '@/components/SplitAction'
 import { queryKeys } from '@/query/query-keys'
 import { useWorkflowStore } from '@/store/workflow-store'
@@ -465,14 +465,16 @@ function ExamPickerModal({
   onSelect: (exam: Exam) => void
 }) {
   return (
-    <Modal className="max-w-4xl overflow-hidden" isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <DialogTitle className="text-bc-h4 m-0 font-bold">
-            Select Exam
-          </DialogTitle>
-        </div>
-        <div className="max-h-[70vh] overflow-auto p-6">
+    <ModalLayout
+      className="max-w-4xl"
+      header={
+        <DialogTitle className="text-bc-h4 m-0 font-bold">
+          Select Exam
+        </DialogTitle>
+      }
+      onClose={onClose}
+    >
+      <div className="p-6">
           {exams.length === 0 ? (
             <p className="m-0">No unscheduled exams are available.</p>
           ) : (
@@ -523,13 +525,7 @@ function ExamPickerModal({
               </tbody>
             </table>
           )}
-        </div>
-        <div className="bg-bc-light-gray flex justify-end gap-3 border-t px-6 py-4">
-          <Button onClick={onClose} variant="secondary">
-            Cancel
-          </Button>
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

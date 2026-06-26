@@ -1,8 +1,7 @@
 import { useState } from 'react'
 
 import type { Exam, ExamType, Invigilator, Office } from '@/api/schemas'
-import Dialog from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 
 import CandidateEditor from './CandidateEditor'
@@ -162,10 +161,19 @@ export default function AddExamModal({
   }
 
   return (
-    <Modal className="max-w-3xl overflow-hidden" isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <ModalHeader title={`Add ${setupLabel(setup)} Exam`} />
-        <div className="grid max-h-[75vh] gap-4 overflow-auto p-6 sm:grid-cols-2">
+    <ModalLayout
+      className="max-w-3xl"
+      closeDisabled={isSaving}
+      footer={
+        <ModalFooter
+          isSaving={isSaving}
+          onSubmit={() => void handleSubmit()}
+        />
+      }
+      header={<ModalHeader title={`Add ${setupLabel(setup)} Exam`} />}
+      onClose={onClose}
+    >
+      <div className="grid gap-4 p-6 sm:grid-cols-2">
           {errorMessage && <Alert message={errorMessage} />}
           {setup === 'pesticide' && (
             <>
@@ -382,13 +390,7 @@ export default function AddExamModal({
               Request exam package from BCMP
             </label>
           )}
-        </div>
-        <ModalFooter
-          isSaving={isSaving}
-          onCancel={onClose}
-          onSubmit={() => void handleSubmit()}
-        />
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

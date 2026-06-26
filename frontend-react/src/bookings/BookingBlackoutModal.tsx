@@ -11,8 +11,8 @@ import type { Office, Room } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog, { DialogTitle } from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 
 import {
@@ -321,14 +321,24 @@ export default function BookingBlackoutModal({
   }
 
   return (
-    <Modal className="max-w-4xl overflow-hidden" isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <DialogTitle className="text-bc-h4 m-0 font-bold">
-            Schedule Booking Blackout
-          </DialogTitle>
+    <ModalLayout
+      className="max-w-4xl"
+      closeDisabled={isSaving}
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button disabled={isSaving} onClick={() => void handleSubmit()}>
+            Submit
+          </Button>
         </div>
-        <div className="flex max-h-[75vh] flex-col gap-4 overflow-auto p-6">
+      }
+      header={
+        <DialogTitle className="text-bc-h4 m-0 font-bold">
+          Schedule Booking Blackout
+        </DialogTitle>
+      }
+      onClose={resetAndClose}
+    >
+      <div className="flex flex-col gap-4 p-6">
           {errorMessage && (
             <AlertBanner
               isCloseable={false}
@@ -596,20 +606,7 @@ export default function BookingBlackoutModal({
               value={contact}
             />
           </label>
-        </div>
-        <div className="bg-bc-light-gray flex justify-end gap-3 border-t px-6 py-4">
-          <Button
-            disabled={isSaving}
-            onClick={resetAndClose}
-            variant="secondary"
-          >
-            Cancel
-          </Button>
-          <Button disabled={isSaving} onClick={() => void handleSubmit()}>
-            Submit
-          </Button>
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

@@ -3,8 +3,8 @@ import { useState } from 'react'
 import type { AppointmentCalendarEvent } from './appointment-utils'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog, { DialogTitle } from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 import { useWorkflowStore } from '@/store/workflow-store'
 import { useCheckInAppointmentMutation } from './appointment-mutations'
@@ -73,14 +73,17 @@ export default function AppointmentCheckInModal({
   }
 
   return (
-    <Modal className="max-w-sm overflow-hidden" isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <DialogTitle className="text-bc-h4 m-0 font-bold">
-            Appointment
-          </DialogTitle>
-        </div>
-        <div className="flex flex-col gap-4 p-6">
+    <ModalLayout
+      className="max-w-sm"
+      closeDisabled={isCheckingIn}
+      header={
+        <DialogTitle className="text-bc-h4 m-0 font-bold">
+          Appointment
+        </DialogTitle>
+      }
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-4 p-6">
           {draft ? (
             <p className="m-0 font-bold">
               You cannot edit or delete draft appointments.
@@ -154,13 +157,7 @@ export default function AppointmentCheckInModal({
               )}
             </>
           )}
-        </div>
-        <div className="bg-bc-light-gray flex justify-end border-t px-6 py-4">
-          <Button disabled={isCheckingIn} onClick={onClose} variant="secondary">
-            Close
-          </Button>
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 
 import type { Exam, Invigilator } from '@/api/schemas'
-import Dialog from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 
 import { Alert, ModalFooter, ModalHeader, SelectField } from './ExamModalFields'
@@ -49,10 +48,20 @@ export default function SelectInvigilatorModal({
   }
 
   return (
-    <Modal isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <ModalHeader title="Select Invigilator" />
-        <div className="grid gap-4 p-6">
+    <ModalLayout
+      closeDisabled={isSaving}
+      footer={
+        <ModalFooter
+          isSaving={isSaving}
+          onSubmit={() => void submit()}
+          submitDisabled={!selected}
+          submitText="Email Invigilator"
+        />
+      }
+      header={<ModalHeader title="Select Invigilator" />}
+      onClose={onClose}
+    >
+      <div className="grid gap-4 p-6">
           {errorMessage && <Alert message={errorMessage} />}
           <SelectField
             label="Invigilator"
@@ -66,15 +75,7 @@ export default function SelectInvigilatorModal({
               </option>
             ))}
           </SelectField>
-        </div>
-        <ModalFooter
-          isSaving={isSaving}
-          onCancel={onClose}
-          onSubmit={() => void submit()}
-          submitDisabled={!selected}
-          submitText="Email Invigilator"
-        />
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

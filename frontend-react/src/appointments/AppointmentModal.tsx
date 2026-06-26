@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Category, Office, Service } from '@/api/schemas'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog, { DialogTitle } from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import ServicePicker from '@/components/ServicePicker'
 import { cx } from '@/lib/cx'
 import { getErrorMessage } from '@/lib/errors'
@@ -241,21 +241,33 @@ export default function AppointmentModal({
   }
 
   return (
-    <Modal
-      className={cx(
-        showServicePicker ? 'max-w-4xl' : 'max-w-2xl',
-        'overflow-hidden',
-      )}
-      isDismissable={false}
-      isOpen
-    >
-      <Dialog className="p-0" isCloseable={false}>
-        <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <DialogTitle className="text-bc-h4 m-0 font-bold">
-            {title}
-          </DialogTitle>
+    <ModalLayout
+      className={cx(showServicePicker ? 'max-w-4xl' : 'max-w-2xl')}
+      closeDisabled={isSaving}
+      footer={
+        <div className="flex flex-wrap justify-end gap-3">
+          {clickedEvent && !draft && (!stat || support) && (
+            <Button
+              danger
+              disabled={isSaving}
+              onClick={() => void handleDelete(false)}
+            >
+              {editSeries ? 'Delete Series' : stat ? 'Delete STAT' : 'Delete'}
+            </Button>
+          )}
+          {!draft && (
+            <Button disabled={isSaving} onClick={() => void handleSubmit()}>
+              Submit
+            </Button>
+          )}
         </div>
-        <div className="flex flex-col gap-4 p-6">
+      }
+      header={
+        <DialogTitle className="text-bc-h4 m-0 font-bold">{title}</DialogTitle>
+      }
+      onClose={() => void handleClose()}
+    >
+      <div className="flex flex-col gap-4 p-6">
           {draft ? (
             <p className="m-0 font-bold">
               You cannot edit or delete draft appointments.
@@ -414,31 +426,7 @@ export default function AppointmentModal({
               )}
             </>
           )}
-        </div>
-        <div className="bg-bc-light-gray flex flex-wrap justify-end gap-3 border-t px-6 py-4">
-          <Button
-            disabled={isSaving}
-            onClick={() => void handleClose()}
-            variant="secondary"
-          >
-            Cancel
-          </Button>
-          {clickedEvent && !draft && (!stat || support) && (
-            <Button
-              danger
-              disabled={isSaving}
-              onClick={() => void handleDelete(false)}
-            >
-              {editSeries ? 'Delete Series' : stat ? 'Delete STAT' : 'Delete'}
-            </Button>
-          )}
-          {!draft && (
-            <Button disabled={isSaving} onClick={() => void handleSubmit()}>
-              Submit
-            </Button>
-          )}
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

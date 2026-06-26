@@ -4,8 +4,8 @@ import { type BookingPayload } from '@/api/endpoints'
 import type { Exam, Invigilator, Office, Room } from '@/api/schemas'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog, { DialogTitle } from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 
 import {
@@ -288,14 +288,44 @@ export default function BookingEventModal({
   }
 
   return (
-    <Modal className="max-w-3xl overflow-hidden" isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-          <DialogTitle className="text-bc-h4 m-0 font-bold">
-            {titleText}
-          </DialogTitle>
+    <ModalLayout
+      className="max-w-3xl"
+      closeDisabled={isSaving}
+      footer={
+        <div className="flex flex-wrap justify-end gap-3">
+          {event && canEdit && !confirmDelete && (
+            <Button
+              danger
+              disabled={isSaving}
+              onClick={() => setConfirmDelete(true)}
+            >
+              Delete
+            </Button>
+          )}
+          {event && canEdit && mode === 'edit' && onReschedule && (
+            <Button
+              disabled={isSaving}
+              onClick={() => onReschedule(event)}
+              variant="secondary"
+            >
+              Reschedule
+            </Button>
+          )}
+          {canEdit && (
+            <Button disabled={isSaving} onClick={() => void handleSubmit()}>
+              Submit
+            </Button>
+          )}
         </div>
-        <div className="flex max-h-[75vh] flex-col gap-4 overflow-auto p-6">
+      }
+      header={
+        <DialogTitle className="text-bc-h4 m-0 font-bold">
+          {titleText}
+        </DialogTitle>
+      }
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-4 p-6">
           {errorMessage && (
             <AlertBanner
               isCloseable={false}
@@ -566,36 +596,7 @@ export default function BookingEventModal({
               </div>
             </div>
           )}
-        </div>
-        <div className="bg-bc-light-gray flex flex-wrap justify-end gap-3 border-t px-6 py-4">
-          {event && canEdit && !confirmDelete && (
-            <Button
-              danger
-              disabled={isSaving}
-              onClick={() => setConfirmDelete(true)}
-            >
-              Delete
-            </Button>
-          )}
-          {event && canEdit && mode === 'edit' && onReschedule && (
-            <Button
-              disabled={isSaving}
-              onClick={() => onReschedule(event)}
-              variant="secondary"
-            >
-              Reschedule
-            </Button>
-          )}
-          <Button disabled={isSaving} onClick={onClose} variant="secondary">
-            Cancel
-          </Button>
-          {canEdit && (
-            <Button disabled={isSaving} onClick={() => void handleSubmit()}>
-              Submit
-            </Button>
-          )}
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

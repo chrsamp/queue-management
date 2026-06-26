@@ -5,31 +5,22 @@ import Button from '@/components/Button'
 import { DialogTitle } from '@/components/Dialog'
 
 export function ModalHeader({ title }: { title: string }) {
-  return (
-    <div className="border-bc-border bg-bc-light-gray border-b px-6 py-4">
-      <DialogTitle className="text-bc-h4 m-0 font-bold">{title}</DialogTitle>
-    </div>
-  )
+  return <DialogTitle className="text-bc-h4 m-0 font-bold">{title}</DialogTitle>
 }
 
 export function ModalFooter({
   isSaving,
-  onCancel,
   onSubmit,
   submitDisabled = false,
   submitText = 'Submit',
 }: {
   isSaving: boolean
-  onCancel: () => void
   onSubmit: () => void
   submitDisabled?: boolean
   submitText?: string
 }) {
   return (
-    <div className="bg-bc-light-gray flex justify-end gap-3 border-t px-6 py-4">
-      <Button disabled={isSaving} onClick={onCancel} variant="secondary">
-        Cancel
-      </Button>
+    <div className="flex justify-end gap-3">
       <Button disabled={isSaving || submitDisabled} onClick={onSubmit}>
         {submitText}
       </Button>

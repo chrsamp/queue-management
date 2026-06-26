@@ -610,18 +610,14 @@ describe('QueueWorkspace', () => {
         </QueryClientProvider>
       </ApiProvider>,
     )
-    await user.click(screen.getByRole('button', { name: 'Minimize' }))
+    await user.click(screen.getByRole('button', { name: 'Minimize modal' }))
+    expect(screen.getByRole('heading', { name: 'Serve Citizen' })).toBeVisible()
     expect(
-      screen.queryByRole('heading', { name: 'Serve Citizen' }),
+      screen.queryByRole('button', { name: 'Finish' }),
     ).not.toBeInTheDocument()
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: 'Serve Now' }),
-      ).not.toBeDisabled()
-    })
-    await user.click(screen.getByRole('button', { name: 'Serve Now' }))
-    expect(screen.getByRole('heading', { name: 'Serve Citizen' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Restore modal' }))
+    expect(screen.getByRole('button', { name: 'Finish' })).toBeVisible()
   })
 
   test('clears stale active state when the queue data has no active CSR citizen', async () => {

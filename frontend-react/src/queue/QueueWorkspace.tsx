@@ -436,7 +436,6 @@ export default function QueueWorkspace({
       </div>
       <ServeCitizenModal
         citizen={activeCitizen}
-        citizens={citizens}
         office={office}
       />
     </section>

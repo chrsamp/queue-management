@@ -6,8 +6,8 @@ import type { Citizen, Office } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
-import Dialog, { DialogTitle } from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import { DialogTitle } from '@/components/Dialog'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 import { queryKeys } from '@/query/query-keys'
 
@@ -96,24 +96,16 @@ export default function GaPanel({
   }
 
   return (
-    <Modal
-      className="max-w-6xl overflow-hidden"
-      isDismissable
-      isOpen
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose()
-        }
-      }}
+    <ModalLayout
+      className="max-w-6xl"
+      header={
+        <DialogTitle className="text-bc-h4 text-bc-secondary m-0 font-bold">
+          GA Panel
+        </DialogTitle>
+      }
+      onClose={onClose}
     >
-      <Dialog className="p-0">
-        <div className="border-bc-border bg-bc-light-gray flex items-center justify-between border-b px-6 py-4">
-          <DialogTitle className="text-bc-h4 text-bc-secondary m-0 font-bold">
-            GA Panel
-          </DialogTitle>
-        </div>
-
-        <div className="flex flex-col gap-4 p-6">
+      <div className="flex flex-col gap-4 p-6">
           <div className="grid gap-3 sm:grid-cols-3">
             <SummaryItem
               label={reception ? 'Citizens Waiting' : 'Citizens on Hold'}
@@ -209,9 +201,8 @@ export default function GaPanel({
               </table>
             </div>
           )}
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }
 

@@ -4,8 +4,7 @@ import { downloadExamDocument } from '@/api/endpoints'
 import type { Exam, ExamType } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
 import Button from '@/components/Button'
-import Dialog from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 import { useWorkflowStore } from '@/store/workflow-store'
 
@@ -161,10 +160,28 @@ export default function EditExamModal({
   }
 
   return (
-    <Modal className="max-w-3xl overflow-hidden" isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
-        <ModalHeader title="Edit/Print Exam Details" />
-        <div className="grid max-h-[75vh] gap-4 overflow-auto p-6 sm:grid-cols-2">
+    <ModalLayout
+      className="max-w-3xl"
+      closeDisabled={isSaving}
+      footer={
+        <div className="flex flex-wrap justify-end gap-3">
+          {canDeleteExam(exam, permissions) && (
+            <Button danger disabled={isSaving} onClick={onDelete}>
+              Delete Exam
+            </Button>
+          )}
+          <Button
+            disabled={isSaving || confirmBookingDelete}
+            onClick={handleSubmit}
+          >
+            Submit
+          </Button>
+        </div>
+      }
+      header={<ModalHeader title="Edit/Print Exam Details" />}
+      onClose={onClose}
+    >
+      <div className="grid gap-4 p-6 sm:grid-cols-2">
           {errorMessage && <Alert message={errorMessage} />}
           {examNotReady && (
             <Alert message="This exam is not yet ready for retrieval. Please try again in no less than 15 minutes." />
@@ -339,24 +356,7 @@ export default function EditExamModal({
               </div>
             </div>
           )}
-        </div>
-        <div className="bg-bc-light-gray flex flex-wrap justify-end gap-3 border-t px-6 py-4">
-          {canDeleteExam(exam, permissions) && (
-            <Button danger disabled={isSaving} onClick={onDelete}>
-              Delete Exam
-            </Button>
-          )}
-          <Button disabled={isSaving} onClick={onClose} variant="secondary">
-            Cancel
-          </Button>
-          <Button
-            disabled={isSaving || confirmBookingDelete}
-            onClick={handleSubmit}
-          >
-            Submit
-          </Button>
-        </div>
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }

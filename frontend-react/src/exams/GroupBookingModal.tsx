@@ -1,8 +1,7 @@
 import { useState } from 'react'
 
 import type { Exam, Invigilator } from '@/api/schemas'
-import Dialog from '@/components/Dialog'
-import Modal from '@/components/Modal'
+import ModalLayout from '@/components/ModalLayout'
 import { getErrorMessage } from '@/lib/errors'
 import { officeDateToUtcIso } from '@/lib/datetime'
 
@@ -136,12 +135,23 @@ export default function GroupBookingModal({
   }
 
   return (
-    <Modal className="max-w-3xl overflow-hidden" isDismissable={false} isOpen>
-      <Dialog className="p-0" isCloseable={false}>
+    <ModalLayout
+      className="max-w-3xl"
+      closeDisabled={isSaving}
+      footer={
+        <ModalFooter
+          isSaving={isSaving}
+          onSubmit={() => void handleSubmit()}
+        />
+      }
+      header={
         <ModalHeader
           title={`Edit ${setupLabel(examTypeForEdit(exam))} Exam Booking`}
         />
-        <div className="grid max-h-[75vh] gap-4 overflow-auto p-6 sm:grid-cols-2">
+      }
+      onClose={onClose}
+    >
+      <div className="grid gap-4 p-6 sm:grid-cols-2">
           {errorMessage && <Alert message={errorMessage} />}
           <ReadOnlyField label="Exam" value={exam.exam_name ?? '-'} />
           <ReadOnlyField
@@ -251,13 +261,7 @@ export default function GroupBookingModal({
                 </option>
               ))}
           </SelectField>
-        </div>
-        <ModalFooter
-          isSaving={isSaving}
-          onCancel={onClose}
-          onSubmit={() => void handleSubmit()}
-        />
-      </Dialog>
-    </Modal>
+      </div>
+    </ModalLayout>
   )
 }
