@@ -1,5 +1,7 @@
 import { format, isBefore, isSameDay, parseISO, startOfDay } from 'date-fns'
 
+import { officeDateToUtcIso } from '@/lib/datetime'
+
 import type { Csr, Exam, ExamType, Invigilator, Office } from '@/api/schemas'
 
 export type ExamSetup =
@@ -598,4 +600,54 @@ export function sameDayOrAfterToday(value: string | null | undefined) {
   const today = startOfDay(new Date())
 
   return isSameDay(date, today) || !isBefore(date, today)
+}
+
+export function buildBookingPayload({
+  draft,
+  examName,
+  examType,
+  office,
+}: {
+  draft: ExamDraft
+  examName: string
+  examType?: ExamType
+  office: Office
+}) {
+  const date = draft.expiry_date || todayDateInputValue()
+  const time = draft.exam_time || '09:00'
+  const start = new Date(`${date}T${time}`)
+  const hours =
+    setupDurationHours(examType) ||
+    (draft.ind_or_group === 'group' || Number(draft.number_of_students ?? 0) > 1
+      ? 3
+      : 1)
+  const end = new Date(start.getTime() + hours * 60 * 60000)
+
+  return {
+    booking_name: examName,
+    end_time: officeDateToUtcIso(end, office.timezone.timezone_name),
+    fees: 'false',
+    invigilator_id: draft.invigilator_id ? [draft.invigilator_id] : undefined,
+    office_id: draft.office_id ?? office.office_id,
+    start_time: officeDateToUtcIso(start, office.timezone.timezone_name),
+  }
+}
+
+function setupDurationHours(examType?: ExamType) {
+  return Number(examType?.number_of_hours ?? 0)
+}
+
+export function setupLabel(setup: ExamSetup) {
+  switch (setup) {
+    case 'challenger':
+      return 'Monthly Session'
+    case 'group':
+      return 'Group'
+    case 'individual':
+      return 'SkilledTradesBC'
+    case 'pesticide':
+      return 'Environment'
+    default:
+      return 'Other'
+  }
 }
