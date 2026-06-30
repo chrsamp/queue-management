@@ -34,7 +34,18 @@ export class ApiError extends Error {
   }
 }
 
-export function getApiErrorKind(status: number): ApiErrorKind {
+export function getApiErrorKind(
+  status: number,
+  details?: unknown,
+): ApiErrorKind {
+  if (
+    details &&
+    typeof details === 'object' &&
+    'code' in details &&
+    details.code === 'CONFLICT_APPOINTMENT'
+  ) {
+    return 'conflict'
+  }
   if (status === 401) return 'unauthorized'
   if (status === 403) return 'forbidden'
   if (status === 404) return 'not-found'

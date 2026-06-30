@@ -11,12 +11,12 @@ import {
 } from 'react-router'
 
 import ErrorBoundary from '@/app/ErrorBoundary'
-import {
-  isIdentityProviderHint,
-  type IdentityProviderHint,
-} from '@/auth/auth-service'
+import { deleteDraft } from '@/api/endpoints'
+import { useApiClient } from '@/api/use-api-client'
+import { isIdentityProviderHint } from '@/auth/auth-service'
 import { useAuth } from '@/auth/use-auth'
 import AppointmentBooking from '@/booking/AppointmentBooking'
+import LoginChoices from '@/booking/LoginChoices'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Footer from '@/components/Footer'
@@ -76,7 +76,10 @@ export default function App({
           )}
           <Routes>
             <Route element={<Navigate replace to="/appointment" />} path="/" />
-            <Route element={<AppointmentPage />} path="/appointment" />
+            <Route
+              element={<AppointmentPage config={config} />}
+              path="/appointment"
+            />
             <Route element={<LoginPage config={config} />} path="/login" />
             <Route element={<SigninPage />} path="/signin/:idpHint" />
             <Route
@@ -204,8 +207,8 @@ function HeaderActions() {
   )
 }
 
-function AppointmentPage() {
-  return <AppointmentBooking />
+function AppointmentPage({ config }: { config: RuntimeConfig }) {
+  return <AppointmentBooking config={config} />
 }
 
 function LoginPage({ config }: { config: RuntimeConfig }) {
@@ -219,48 +222,8 @@ function LoginPage({ config }: { config: RuntimeConfig }) {
     <section className="border-bc-border mx-auto w-full max-w-2xl border bg-white p-6">
       <h2 className="text-bc-h4 mt-0">Login</h2>
       <p>Please login using one of the following.</p>
-      <div className="flex flex-col items-start gap-4">
-        {!config.VITE_APPOINTMENT_HIDE_BC_SERVICES_CARD && (
-          <LoginChoice
-            hint="bcsc"
-            label="Login with BC Services Card"
-            learnMore="https://www2.gov.bc.ca/gov/content?id=B2B3A21E797A421A8FD39EEA86E245D6"
-          />
-        )}
-        <LoginChoice
-          hint="bceidboth"
-          label="Login with Basic BCeID"
-          learnMore={
-            config.VITE_APPOINTMENT_BCEID_REGISTRATION_URL ||
-            'https://www.bceid.ca/register/basic/account_details.aspx'
-          }
-        />
-      </div>
+      <LoginChoices config={config} />
     </section>
-  )
-}
-
-function LoginChoice({
-  hint,
-  label,
-  learnMore,
-}: {
-  hint: IdentityProviderHint
-  label: string
-  learnMore: string
-}) {
-  return (
-    <div className="border-bc-border flex w-full flex-wrap items-center justify-between gap-3 border-t pt-4">
-      <Link
-        className="bg-bc-button-primary hover:bg-bc-button-primary-hover inline-flex min-h-12 items-center rounded-sm px-6 text-white no-underline"
-        to={`/signin/${hint}`}
-      >
-        {label}
-      </Link>
-      <a href={learnMore} rel="noreferrer" target="_blank">
-        Learn more
-      </a>
-    </div>
   )
 }
 
@@ -287,16 +250,29 @@ function SigninPage() {
 
 function SignoutPage({ queryClient }: { queryClient: QueryClient }) {
   const auth = useAuth()
+  const apiClient = useApiClient()
   const started = useRef(false)
   const clearBooking = useBookingStore((state) => state.clearBooking)
+  const draftAppointmentId = useBookingStore(
+    (state) => state.draftAppointmentId,
+  )
 
   useEffect(() => {
     if (started.current) return
     started.current = true
-    queryClient.clear()
-    clearBooking()
-    void auth.logout()
-  }, [auth, clearBooking, queryClient])
+    void (async () => {
+      if (draftAppointmentId !== null) {
+        try {
+          await deleteDraft(apiClient, draftAppointmentId)
+        } catch {
+          // Draft cleanup is best effort.
+        }
+      }
+      queryClient.clear()
+      clearBooking()
+      await auth.logout()
+    })()
+  }, [apiClient, auth, clearBooking, draftAppointmentId, queryClient])
 
   return <LoadingIndicator label="Signing out" />
 }

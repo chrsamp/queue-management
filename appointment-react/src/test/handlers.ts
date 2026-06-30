@@ -28,7 +28,7 @@ export const handlers = [
   ),
   http.post(`${api}/appointments/draft`, () =>
     HttpResponse.json(
-      { appointment: draftFixture, errors: {} },
+      { appointment: draftFixture, warning: {} },
       { status: 201 },
     ),
   ),

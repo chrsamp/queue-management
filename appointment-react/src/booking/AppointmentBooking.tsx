@@ -1,24 +1,28 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import {
-  ArrowLeft,
-  ArrowRight,
-  ExternalLink,
-  MapPin,
-  Phone,
-} from 'lucide-react'
+import { ArrowRight, ExternalLink, MapPin, Phone } from 'lucide-react'
 import type { Key } from 'react-aria-components'
 
-import { getCategories, getOffices, getServices } from '@/api/endpoints'
+import {
+  deleteDraft,
+  getCategories,
+  getOffices,
+  getServices,
+} from '@/api/endpoints'
 import type { Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
+import { useAuth } from '@/auth/use-auth'
+import AppointmentSummary from '@/booking/AppointmentSummary'
+import BookingLogin from '@/booking/BookingLogin'
+import { RequestError, StepHeader } from '@/booking/BookingStepLayout'
+import DateSelection from '@/booking/DateSelection'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Dialog, { DialogTitle } from '@/components/Dialog'
-import InlineError from '@/components/InlineError'
 import LoadingIndicator from '@/components/LoadingIndicator'
 import Modal from '@/components/Modal'
 import Select, { type SelectItem } from '@/components/Select'
+import type { RuntimeConfig } from '@/config/runtime-config'
 import { queryKeys } from '@/query/query-keys'
 import {
   filterServices,
@@ -32,7 +36,7 @@ import {
 import OfficeMap from '@/booking/OfficeMap'
 import { useBookingStore, type BookingStep } from '@/store/booking-store'
 
-const steps: { id: BookingStep; label: string }[] = [
+const allSteps: { id: BookingStep; label: string }[] = [
   { id: 'location', label: 'Location Selection' },
   { id: 'service', label: 'Select Service' },
   { id: 'date', label: 'Select Date' },
@@ -48,7 +52,12 @@ interface ServiceItem extends SelectItem {
   service: Service
 }
 
-export default function AppointmentBooking() {
+export default function AppointmentBooking({
+  config,
+}: {
+  config: RuntimeConfig
+}) {
+  const auth = useAuth()
   const currentStep = useBookingStore((state) => state.currentStep)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const previousStep = useRef(currentStep)
@@ -62,40 +71,36 @@ export default function AppointmentBooking() {
 
   return (
     <section aria-labelledby="booking-heading">
-      <BookingProgress currentStep={currentStep} />
+      <BookingProgress
+        currentStep={currentStep}
+        steps={
+          auth.authenticated && auth.authorized
+            ? allSteps.filter((step) => step.id !== 'login')
+            : allSteps
+        }
+      />
       <div className="border-bc-border mt-6 border bg-white">
         {currentStep === 'location' && <LocationStep headingRef={headingRef} />}
         {currentStep === 'service' && <ServiceStep headingRef={headingRef} />}
-        {currentStep === 'date' && (
-          <DeferredStep
-            description="Date and time selection will be available in the next migration stage."
-            headingRef={headingRef}
-            previousStep="service"
-            title="Select a Date"
-          />
-        )}
+        {currentStep === 'date' && <DateSelection headingRef={headingRef} />}
         {currentStep === 'login' && (
-          <DeferredStep
-            description="Login during booking will be available in a later migration stage."
-            headingRef={headingRef}
-            previousStep="date"
-            title="Login"
-          />
+          <BookingLogin config={config} headingRef={headingRef} />
         )}
         {currentStep === 'summary' && (
-          <DeferredStep
-            description="Appointment confirmation will be available in a later migration stage."
-            headingRef={headingRef}
-            previousStep="login"
-            title="Appointment Summary"
-          />
+          <AppointmentSummary config={config} headingRef={headingRef} />
         )}
       </div>
     </section>
   )
 }
 
-function BookingProgress({ currentStep }: { currentStep: BookingStep }) {
+function BookingProgress({
+  currentStep,
+  steps,
+}: {
+  currentStep: BookingStep
+  steps: { id: BookingStep; label: string }[]
+}) {
   const activeIndex = steps.findIndex((step) => step.id === currentStep)
   return (
     <nav aria-label="Booking progress">
@@ -146,6 +151,9 @@ function LocationStep({
   const apiClient = useApiClient()
   const selectedOfficeId = useBookingStore((state) => state.selectedOfficeId)
   const setOfficeId = useBookingStore((state) => state.setOfficeId)
+  const draftAppointmentId = useBookingStore(
+    (state) => state.draftAppointmentId,
+  )
   const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
   const [servicesOpen, setServicesOpen] = useState(false)
   const officesQuery = useQuery({
@@ -179,7 +187,11 @@ function LocationStep({
   }, [officesQuery.isSuccess, selectedOffice, selectedOfficeId, setOfficeId])
 
   function handleOfficeChange(key: Key | null) {
-    setOfficeId(key === null ? null : Number(key))
+    const officeId = key === null ? null : Number(key)
+    if (officeId !== selectedOfficeId && draftAppointmentId !== null) {
+      void deleteDraft(apiClient, draftAppointmentId).catch(() => undefined)
+    }
+    setOfficeId(officeId)
   }
 
   return (
@@ -290,14 +302,14 @@ function OfficeDetails({
             Available Services
           </Button>
         </div>
-        <div className="border-bc-border border-t md:border-t-0 md:border-l flex flex-col">
+        <div className="border-bc-border flex flex-col border-t md:border-t-0 md:border-l">
           <OfficeMap office={office} />
           {office.civic_address && (
             <div className="p-4 text-center">
               <span className="inline-flex items-center gap-2">
-                  <MapPin aria-hidden="true" className="size-4" />
-                  {office.civic_address}
-                </span>
+                <MapPin aria-hidden="true" className="size-4" />
+                {office.civic_address}
+              </span>
             </div>
           )}
         </div>
@@ -481,6 +493,9 @@ function ServiceStep({
   const selectedOfficeId = useBookingStore((state) => state.selectedOfficeId)
   const selectedServiceId = useBookingStore((state) => state.selectedServiceId)
   const setServiceId = useBookingStore((state) => state.setServiceId)
+  const draftAppointmentId = useBookingStore(
+    (state) => state.draftAppointmentId,
+  )
   const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
   const servicesQuery = useQuery({
     enabled: selectedOfficeId !== null,
@@ -565,9 +580,18 @@ function ServiceStep({
             aria-label="Select Service"
             className="mx-auto max-w-lg"
             items={serviceItems}
-            onSelectionChange={(key) =>
-              setServiceId(key === null ? null : Number(key))
-            }
+            onSelectionChange={(key) => {
+              const serviceId = key === null ? null : Number(key)
+              if (
+                serviceId !== selectedServiceId &&
+                draftAppointmentId !== null
+              ) {
+                void deleteDraft(apiClient, draftAppointmentId).catch(
+                  () => undefined,
+                )
+              }
+              setServiceId(serviceId)
+            }}
             placeholder="Select Service"
             renderEmptyState={() => (
               <div className="text-bc-secondary p-3">
@@ -634,82 +658,5 @@ function ServiceStep({
         )}
       </div>
     </>
-  )
-}
-
-function DeferredStep({
-  description,
-  headingRef,
-  previousStep,
-  title,
-}: {
-  description: string
-  headingRef: RefObject<HTMLHeadingElement | null>
-  previousStep: BookingStep
-  title: string
-}) {
-  const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
-  return (
-    <>
-      <StepHeader
-        headingRef={headingRef}
-        onBack={() => setCurrentStep(previousStep)}
-        title={title}
-      />
-      <p className="p-6 text-center">{description}</p>
-    </>
-  )
-}
-
-function StepHeader({
-  headingRef,
-  onBack,
-  subtitle,
-  title,
-}: {
-  headingRef: RefObject<HTMLHeadingElement | null>
-  onBack?: () => void
-  subtitle?: string
-  title: string
-}) {
-  return (
-    <header className="border-bc-border relative border-b px-4 py-5 text-center">
-      {onBack && (
-        <Button
-          aria-label="Back"
-          className="mb-3 sm:absolute sm:top-4 sm:left-4 sm:mb-0"
-          onClick={onBack}
-          variant="tertiary"
-        >
-          <ArrowLeft aria-hidden="true" className="size-5" />
-          Back
-        </Button>
-      )}
-      <h3
-        className="text-bc-h4 m-0 outline-none"
-        ref={headingRef}
-        tabIndex={-1}
-      >
-        {title}
-      </h3>
-      {subtitle && <p className="text-bc-secondary mb-0">{subtitle}</p>}
-    </header>
-  )
-}
-
-function RequestError({
-  message,
-  onRetry,
-}: {
-  message: string
-  onRetry: () => void
-}) {
-  return (
-    <div className="flex flex-col items-center gap-3 py-6">
-      <InlineError>{message}</InlineError>
-      <Button onClick={onRetry} variant="secondary">
-        Try again
-      </Button>
-    </div>
   )
 }

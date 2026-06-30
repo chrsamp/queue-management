@@ -4,6 +4,7 @@ from app.tests.api_test_support import (
     first_day_with_slots,
     future_utc_window,
     json_of,
+    public_slot_payload,
     slot_window_to_iso,
     unique_name,
 )
@@ -11,6 +12,7 @@ from app.tests.contracts.conftest import validate_schema
 from app.tests.contracts.schemas import (
     APPOINTMENT_LIST_RESPONSE_SCHEMA,
     APPOINTMENT_RESPONSE_SCHEMA,
+    DRAFT_APPOINTMENT_RESPONSE_SCHEMA,
     SLOTS_SCHEMA,
     USER_APPOINTMENTS_RESPONSE_SCHEMA,
 )
@@ -58,6 +60,22 @@ def test_appointment_create_response_matches_the_contract(
     assert_json_response(response, 201)
     validate_schema(body, APPOINTMENT_RESPONSE_SCHEMA)
     assert body["appointment"]["citizen_name"]
+
+
+def test_draft_appointment_response_matches_the_existing_contract(
+    bare_client, seeded_data
+):
+    """Document the warning-based response returned by anonymous draft creation."""
+    payload, _day_key, _slots = public_slot_payload(
+        bare_client, seeded_data, minimum_slots=1
+    )
+
+    response = bare_client.post("/appointments/draft", json=payload)
+    body = json_of(response)
+
+    assert_json_response(response, 201)
+    validate_schema(body, DRAFT_APPOINTMENT_RESPONSE_SCHEMA)
+    assert body["appointment"]["is_draft"] is True
 
 
 def test_appointment_detail_response_matches_the_contract(

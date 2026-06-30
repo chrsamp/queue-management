@@ -5,6 +5,7 @@ import { officeFixture } from '@/test/fixtures'
 
 const leaflet = vi.hoisted(() => {
   const mapInstance = {
+    attributionControl: { setPrefix: vi.fn() },
     remove: vi.fn(),
     setView: vi.fn(),
   }

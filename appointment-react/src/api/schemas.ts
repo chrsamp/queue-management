@@ -122,6 +122,10 @@ export const appointmentResponseSchema = z.object({
   appointment: appointmentSchema,
   errors: errorsSchema,
 })
+export const draftAppointmentResponseSchema = z.object({
+  appointment: appointmentSchema,
+  warning: z.unknown().optional(),
+})
 export const appointmentsResponseSchema = z.object({
   appointments: z.array(appointmentSchema),
 })

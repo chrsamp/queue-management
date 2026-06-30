@@ -64,7 +64,7 @@ export default function OfficeMap({ office }: { office: Office }) {
   return (
     <div
       aria-label={`Map showing ${office.office_name}`}
-      className="flex-1 w-full"
+      className="min-h-72 w-full flex-1"
       ref={containerRef}
     />
   )

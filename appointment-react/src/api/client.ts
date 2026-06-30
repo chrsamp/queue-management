@@ -100,7 +100,7 @@ export class ApiClient {
       if (!response.ok) {
         throw new ApiError({
           details: responseBody,
-          kind: getApiErrorKind(response.status),
+          kind: getApiErrorKind(response.status, responseBody),
           message: this.getErrorMessage(response.status, responseBody),
           status: response.status,
         })

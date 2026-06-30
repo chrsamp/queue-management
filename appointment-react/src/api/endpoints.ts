@@ -3,6 +3,7 @@ import {
   appointmentResponseSchema,
   appointmentsResponseSchema,
   categoriesResponseSchema,
+  draftAppointmentResponseSchema,
   emptyResponseSchema,
   officesResponseSchema,
   servicesResponseSchema,
@@ -63,7 +64,7 @@ export function createDraft(
     authenticated: false,
     body: request,
     method: 'POST',
-    schema: appointmentResponseSchema,
+    schema: draftAppointmentResponseSchema,
     signal,
   })
 }

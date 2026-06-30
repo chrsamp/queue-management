@@ -51,4 +51,28 @@ describe('booking store', () => {
     expect(persisted).toContain('/account-settings')
     expect(persisted).not.toContain('token')
   })
+
+  it('stores and clears a draft reservation atomically', () => {
+    const slot = {
+      dateKey: '07/15/2030',
+      endTime: '2030-07-15T16:30:00.000Z',
+      startTime: '2030-07-15T16:00:00.000Z',
+    }
+
+    useBookingStore.getState().setReservation(slot, 40)
+
+    expect(useBookingStore.getState()).toMatchObject({
+      draftAppointmentId: 40,
+      selectedSlot: slot,
+    })
+    expect(window.sessionStorage.getItem('appointment-booking')).toContain(
+      '2030-07-15T16:00:00.000Z',
+    )
+
+    useBookingStore.getState().clearReservation()
+    expect(useBookingStore.getState()).toMatchObject({
+      draftAppointmentId: null,
+      selectedSlot: null,
+    })
+  })
 })

@@ -636,6 +636,14 @@ APPOINTMENT_RESPONSE_SCHEMA = object_schema(
     properties={"appointment": APPOINTMENT_SCHEMA, "errors": ERRORS_SCHEMA},
 )
 
+DRAFT_APPOINTMENT_RESPONSE_SCHEMA = object_schema(
+    required=["appointment", "warning"],
+    properties={
+        "appointment": APPOINTMENT_SCHEMA,
+        "warning": {"type": "object"},
+    },
+)
+
 APPOINTMENT_LIST_RESPONSE_SCHEMA = object_schema(
     required=["appointments", "errors"],
     properties={

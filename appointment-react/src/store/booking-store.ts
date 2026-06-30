@@ -21,6 +21,8 @@ interface BookingState {
   setServiceId: (serviceId: number | null) => void
   setSelectedSlot: (slot: SelectedSlot | null) => void
   setDraftAppointmentId: (appointmentId: number | null) => void
+  setReservation: (slot: SelectedSlot, appointmentId: number) => void
+  clearReservation: () => void
   setEditAppointmentId: (appointmentId: number | null) => void
   setCurrentStep: (step: BookingStep) => void
   setPendingPostLoginPath: (path: string | null) => void
@@ -70,6 +72,10 @@ export const useBookingStore = create<BookingState>()(
       setSelectedSlot: (selectedSlot) => set({ selectedSlot }),
       setDraftAppointmentId: (draftAppointmentId) =>
         set({ draftAppointmentId }),
+      setReservation: (selectedSlot, draftAppointmentId) =>
+        set({ selectedSlot, draftAppointmentId }),
+      clearReservation: () =>
+        set({ selectedSlot: null, draftAppointmentId: null }),
       setEditAppointmentId: (editAppointmentId) => set({ editAppointmentId }),
       setCurrentStep: (currentStep) => set({ currentStep }),
       setPendingPostLoginPath: (pendingPostLoginPath) =>

@@ -10,6 +10,7 @@ import FatalStartupError from '@/app/FatalStartupError'
 import AuthProvider from '@/auth/AuthProvider'
 import { AuthService } from '@/auth/auth-service'
 import { loadRuntime } from '@/config/runtime-config'
+import { createE2eAuthService } from '@/e2e/e2e-auth-service'
 import { createAppQueryClient } from '@/query/query-client'
 
 import './index.css'
@@ -20,7 +21,13 @@ async function start() {
 
   try {
     const runtime = await loadRuntime()
-    const authService = new AuthService(runtime.keycloak)
+    const e2eAuth =
+      import.meta.env.MODE === 'e2e' ||
+      (import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).has('e2e-auth'))
+    const authService = e2eAuth
+      ? createE2eAuthService()
+      : new AuthService(runtime.keycloak)
     await authService.initialize()
     const apiClient = new ApiClient({
       authService,
