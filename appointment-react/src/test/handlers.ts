@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw'
 
 import {
   appointmentFixture,
+  categoryFixture,
   draftFixture,
   knowledgeTestAppointmentFixture,
   officeFixture,
@@ -20,7 +21,7 @@ export const handlers = [
     HttpResponse.json({ errors: {}, services: serviceFixtures }),
   ),
   http.get(`${api}/categories/`, () =>
-    HttpResponse.json({ categories: serviceFixtures, errors: {} }),
+    HttpResponse.json({ categories: [categoryFixture], errors: {} }),
   ),
   http.get(`${api}/offices/:officeId/slots/`, () =>
     HttpResponse.json(slotsFixture),

@@ -6,11 +6,7 @@ import { cx } from '@/lib/cx'
 import Button from './Button'
 
 export type AlertBannerVariant =
-  | 'black'
-  | 'danger'
-  | 'info'
-  | 'success'
-  | 'warning'
+  'black' | 'danger' | 'info' | 'success' | 'warning'
 
 export interface AlertBannerProps {
   children: ReactNode

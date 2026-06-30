@@ -16,6 +16,7 @@ import {
   type IdentityProviderHint,
 } from '@/auth/auth-service'
 import { useAuth } from '@/auth/use-auth'
+import AppointmentBooking from '@/booking/AppointmentBooking'
 import AlertBanner from '@/components/AlertBanner'
 import Button from '@/components/Button'
 import Footer from '@/components/Footer'
@@ -204,15 +205,7 @@ function HeaderActions() {
 }
 
 function AppointmentPage() {
-  return (
-    <section>
-      <h2 className="text-bc-h4 mt-0">Book an appointment</h2>
-      <p>
-        Location and service selection will be available in the next migration
-        stage.
-      </p>
-    </section>
-  )
+  return <AppointmentBooking />
 }
 
 function LoginPage({ config }: { config: RuntimeConfig }) {

@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { expect, it } from 'vitest'
@@ -6,6 +7,8 @@ import { axe } from 'vitest-axe'
 
 import AuthProvider from '@/auth/AuthProvider'
 import type { AuthService, AuthSnapshot } from '@/auth/auth-service'
+import ApiProvider from '@/api/ApiProvider'
+import { ApiClient } from '@/api/client'
 import type { RuntimeConfig } from '@/config/runtime-config'
 
 import App from './App'
@@ -33,11 +36,23 @@ function authService(snapshot: AuthSnapshot) {
 }
 
 function renderApp(path: string, snapshot: AuthSnapshot) {
+  const service = authService(snapshot)
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
+  const apiClient = new ApiClient({
+    authService: service,
+    baseUrl: config.VITE_APPOINTMENT_API_URL,
+  })
   return render(
-    <AuthProvider authService={authService(snapshot)}>
-      <MemoryRouter initialEntries={[path]}>
-        <App config={config} queryClient={new QueryClient()} />
-      </MemoryRouter>
+    <AuthProvider authService={service}>
+      <ApiProvider client={apiClient}>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={[path]}>
+            <App config={config} queryClient={queryClient} />
+          </MemoryRouter>
+        </QueryClientProvider>
+      </ApiProvider>
     </AuthProvider>,
   )
 }

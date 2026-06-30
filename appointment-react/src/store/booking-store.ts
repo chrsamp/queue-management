@@ -50,7 +50,7 @@ export const useBookingStore = create<BookingState>()(
                 selectedServiceId: null,
                 selectedSlot: null,
                 draftAppointmentId: null,
-                currentStep: officeId === null ? 'location' : 'service',
+                currentStep: officeId === null ? 'location' : state.currentStep,
               },
         ),
       setServiceId: (serviceId) =>
@@ -61,7 +61,10 @@ export const useBookingStore = create<BookingState>()(
                 selectedServiceId: serviceId,
                 selectedSlot: null,
                 draftAppointmentId: null,
-                currentStep: serviceId === null ? 'service' : 'date',
+                currentStep:
+                  serviceId === null && state.currentStep !== 'location'
+                    ? 'service'
+                    : state.currentStep,
               },
         ),
       setSelectedSlot: (selectedSlot) => set({ selectedSlot }),

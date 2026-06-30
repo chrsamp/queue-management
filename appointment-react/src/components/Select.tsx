@@ -26,6 +26,7 @@ export interface SelectItem {
   iconLeft?: ReactElement
   id: Key
   isDisabled?: boolean
+  isUnavailable?: boolean
   label: string
   textValue?: string
 }
@@ -80,7 +81,12 @@ export default function Select<T extends SelectItem>({
               {item.iconLeft}
               <span className="min-w-0 flex-1">
                 <Text
-                  className="text-bc-body text-bc-primary block truncate"
+                  className={cx(
+                    'text-bc-body block truncate',
+                    item.isUnavailable
+                      ? 'text-bc-disabled-text'
+                      : 'text-bc-primary',
+                  )}
                   slot="label"
                 >
                   {item.label}

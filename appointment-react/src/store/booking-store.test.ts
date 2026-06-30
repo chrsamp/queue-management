@@ -22,12 +22,23 @@ describe('booking store', () => {
     useBookingStore.getState().setOfficeId(11)
 
     expect(useBookingStore.getState()).toMatchObject({
-      currentStep: 'service',
+      currentStep: 'location',
       draftAppointmentId: null,
       selectedOfficeId: 11,
       selectedServiceId: null,
       selectedSlot: null,
     })
+  })
+
+  it('does not navigate when a selection changes', () => {
+    const store = useBookingStore.getState()
+
+    store.setOfficeId(10)
+    expect(useBookingStore.getState().currentStep).toBe('location')
+
+    store.setCurrentStep('service')
+    useBookingStore.getState().setServiceId(20)
+    expect(useBookingStore.getState().currentStep).toBe('service')
   })
 
   it('persists only resumable workflow data', () => {

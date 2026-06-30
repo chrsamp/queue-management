@@ -68,6 +68,10 @@
   body {
     @apply text-bc-primary m-0 font-sans;
   }
+
+  .leaflet-container {
+    font-family: var(--font-sans);
+  }
 }
 
 @keyframes bc-modal-fade {

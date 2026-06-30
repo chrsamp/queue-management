@@ -19,9 +19,16 @@ export const officeFixture: Office = {
   latitude: 48.455,
   longitude: -123.377,
   office_appointment_message: 'Please arrive five minutes early.',
-  online_status: 'Availability.SHOW',
+  online_status: 'Status.SHOW',
   telephone: '250-555-0100',
-  timeslots: [],
+  timeslots: [
+    {
+      day_of_week: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+      end_time: '16:30:00',
+      no_of_slots: 16,
+      start_time: '08:30:00',
+    },
+  ],
   timezone: { timezone_id: 1, timezone_name: 'America/Vancouver' },
 }
 
@@ -29,10 +36,27 @@ const serviceBase = {
   actual_service_ind: 1,
   deleted: null,
   display_dashboard_ind: 1,
-  parent_id: null,
+  parent: { service_name: 'Personal Services' },
+  parent_id: 50,
   prefix: null,
   service_code: null,
   service_desc: 'Service description',
+}
+
+export const categoryFixture: Service = {
+  actual_service_ind: 0,
+  deleted: null,
+  display_dashboard_ind: 0,
+  external_service_name: 'Personal Services',
+  is_dlkt: null,
+  online_availability: 'Availability.SHOW',
+  online_link: null,
+  parent_id: null,
+  prefix: null,
+  service_code: 'PERSONAL',
+  service_desc: 'Personal services',
+  service_id: 50,
+  service_name: 'Personal Services',
 }
 
 export const serviceFixtures: Service[] = [
