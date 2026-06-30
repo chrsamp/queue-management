@@ -85,6 +85,12 @@ main () {
 
     copy_config "$REPO_ROOT/.devcontainer/config/appointment-frontend/public/config/configuration.json" \
         "$REPO_ROOT/appointment-frontend/public/config/configuration.json"
+
+    copy_config "$REPO_ROOT/.devcontainer/config/appointment-react/public/config/keycloak.json" \
+        "$REPO_ROOT/appointment-react/public/config/keycloak.json"
+
+    copy_config "$REPO_ROOT/.devcontainer/config/appointment-react/public/config/configuration.json" \
+        "$REPO_ROOT/appointment-react/public/config/configuration.json"
 }
 
 main "$@"

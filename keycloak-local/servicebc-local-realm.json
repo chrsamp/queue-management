@@ -178,13 +178,15 @@
       "rootUrl": "http://localhost:8081",
       "baseUrl": "/",
       "redirectUris": [
-        "http://localhost:8081/*"
+        "http://localhost:8081/*",
+        "http://localhost:8100/*"
       ],
       "webOrigins": [
-        "http://localhost:8081"
+        "http://localhost:8081",
+        "http://localhost:8100"
       ],
       "attributes": {
-        "post.logout.redirect.uris": "http://localhost:8081/*",
+        "post.logout.redirect.uris": "http://localhost:8081/*##http://localhost:8100/*",
         "pkce.code.challenge.method": "S256"
       },
       "protocolMappers": [

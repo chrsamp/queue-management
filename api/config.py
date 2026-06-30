@@ -219,7 +219,7 @@ class LocalConfig(BaseConfig):
 
     SERVER_NAME = None
     SESSION_COOKIE_DOMAIN = None
-    CORS_ALLOWED_ORIGINS = ["http://localhost:8080", "http://localhost:8000", "http://localhost:8081", "http://localhost:5173", "http://localhost:5174"]
+    CORS_ALLOWED_ORIGINS = ["http://localhost:8080", "http://localhost:8000", "http://localhost:8081", "http://localhost:8100", "http://localhost:5173", "http://localhost:5174"]
     SQLALCHEMY_ECHO = False
     SECRET_KEY = "pancakes"
 

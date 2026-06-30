@@ -1,0 +1,5 @@
+{
+  "realm": "servicebc-local",
+  "url": "http://localhost:8085/auth",
+  "clientId": "theq-appointment-frontend"
+}
