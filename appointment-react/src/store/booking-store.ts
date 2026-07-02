@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 
-export type BookingStep = 'location' | 'service' | 'date' | 'login' | 'summary'
+export type BookingStep =
+  'intro' | 'location' | 'service' | 'date' | 'login' | 'summary'
 
 export interface SelectedSlot {
   dateKey: string
@@ -42,7 +43,7 @@ const initialState = {
   selectedSlot: null,
   draftAppointmentId: null,
   editAppointmentId: null,
-  currentStep: 'location' as BookingStep,
+  currentStep: 'intro' as BookingStep,
   pendingPostLoginPath: null,
 }
 

@@ -10,6 +10,7 @@ describe('booking store', () => {
 
   it('clears dependent state when an office changes', () => {
     const store = useBookingStore.getState()
+    store.setCurrentStep('location')
     store.setOfficeId(10)
     store.setServiceId(20)
     store.setSelectedSlot({
@@ -33,6 +34,7 @@ describe('booking store', () => {
   it('does not navigate when a selection changes', () => {
     const store = useBookingStore.getState()
 
+    store.setCurrentStep('location')
     store.setOfficeId(10)
     expect(useBookingStore.getState().currentStep).toBe('location')
 
@@ -43,11 +45,13 @@ describe('booking store', () => {
 
   it('persists only resumable workflow data', () => {
     useBookingStore.getState().setOfficeId(10)
+    useBookingStore.getState().setCurrentStep('service')
     useBookingStore.getState().setPendingPostLoginPath('/account-settings')
 
     const persisted = window.sessionStorage.getItem('appointment-booking')
 
     expect(persisted).toContain('"selectedOfficeId":10')
+    expect(persisted).toContain('"currentStep":"service"')
     expect(persisted).toContain('/account-settings')
     expect(persisted).not.toContain('token')
   })
@@ -101,7 +105,7 @@ describe('booking store', () => {
 
     useBookingStore.getState().startNewBooking()
     expect(useBookingStore.getState()).toMatchObject({
-      currentStep: 'location',
+      currentStep: 'intro',
       editAppointmentId: null,
       selectedOfficeId: null,
       selectedServiceId: null,

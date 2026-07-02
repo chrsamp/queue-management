@@ -51,7 +51,6 @@ export default function DateSelection({
   const draftAppointmentId = useBookingStore(
     (state) => state.draftAppointmentId,
   )
-  const editAppointmentId = useBookingStore((state) => state.editAppointmentId)
   const setReservation = useBookingStore((state) => state.setReservation)
   const clearReservation = useBookingStore((state) => state.clearReservation)
   const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
@@ -188,7 +187,7 @@ export default function DateSelection({
   if (selectedOfficeId === null || selectedServiceId === null) {
     return (
       <>
-        <StepHeader headingRef={headingRef} title="Select a Date" />
+        <StepHeader headingRef={headingRef} title="Select a date and time" />
         <RequestError
           message="Select an office and service before choosing a date."
           onRetry={() =>
@@ -209,13 +208,8 @@ export default function DateSelection({
     <>
       <StepHeader
         headingRef={headingRef}
-        onBack={
-          editAppointmentId === null
-            ? () => setCurrentStep('service')
-            : undefined
-        }
-        subtitle="Available days can be selected in the calendar."
-        title="Select a Date"
+        subtitle="You can book an appointment online up to 6 months in advance."
+        title="Select a date and time"
       />
       <div className="p-4 sm:p-6">
         {isLoading && <LoadingIndicator label="Loading available times" />}
@@ -256,7 +250,7 @@ export default function DateSelection({
               <div className="grid gap-8 md:grid-cols-2">
                 <Calendar
                   aria-label="Appointment date"
-                  className="border-bc-border mx-auto w-full max-w-md rounded-sm border p-4"
+                  className="border-bc-border w-full max-w-md rounded-sm border p-4"
                   defaultFocusedValue={apiDateKeyToCalendarDate(
                     effectiveDateKey!,
                   )}
@@ -305,7 +299,7 @@ export default function DateSelection({
                     </CalendarGridBody>
                   </CalendarGrid>
                 </Calendar>
-                <div aria-live="polite" className="text-center">
+                <div aria-live="polite" className="text-left">
                   <p className="mt-0">
                     <strong>Date Selected:</strong>{' '}
                     {effectiveDateKey && timezone

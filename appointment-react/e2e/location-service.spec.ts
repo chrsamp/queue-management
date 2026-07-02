@@ -168,6 +168,7 @@ test.beforeEach(async ({ page }) => {
 
 test('completes the location and service selection slice', async ({ page }) => {
   await page.goto('/appointment')
+  await page.getByRole('button', { name: 'Book an appointment' }).click()
 
   await page.getByLabel('Select Office').click()
   await page.getByRole('option', { name: 'Victoria Service BC Centre' }).click()
@@ -179,7 +180,7 @@ test('completes the location and service selection slice', async ({ page }) => {
     page.getByLabel('Map showing Victoria Service BC Centre'),
   ).toBeVisible()
 
-  await page.getByRole('button', { name: 'Available Services' }).click()
+  await page.getByRole('link', { name: 'View available services' }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog.getByText('General Service')).toBeVisible()
   await expect(dialog.getByText('Unavailable Service')).toBeVisible()
@@ -196,7 +197,7 @@ test('completes the location and service selection slice', async ({ page }) => {
   await page.getByRole('button', { name: /Next/ }).click()
 
   await expect(
-    page.getByRole('heading', { name: 'Select a Date' }),
+    page.getByRole('heading', { name: 'Select a date and time' }),
   ).toBeFocused()
 })
 
@@ -204,6 +205,7 @@ test('reserves a slot, resumes after BCeID login, and confirms', async ({
   page,
 }) => {
   await page.goto('/appointment?e2e-auth=1')
+  await page.getByRole('button', { name: 'Book an appointment' }).click()
   await page.getByLabel('Select Office').click()
   await page.getByRole('option', { name: 'Victoria Service BC Centre' }).click()
   await page.getByRole('button', { name: 'Book Appointment' }).click()
@@ -216,7 +218,7 @@ test('reserves a slot, resumes after BCeID login, and confirms', async ({
   await page.getByRole('link', { name: 'Login with Basic BCeID' }).click()
 
   await expect(
-    page.getByRole('heading', { name: 'Appointment Summary' }),
+    page.getByRole('heading', { name: 'Appointment summary' }),
   ).toBeVisible()
   await page.getByText('I agree to the Terms of Use').click()
   await page.getByRole('button', { name: 'Confirm Appointment' }).click()

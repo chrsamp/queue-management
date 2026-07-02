@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
-import { ExternalLink } from 'lucide-react'
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router'
 
 import ErrorBoundary from '@/app/ErrorBoundary'
@@ -23,8 +22,6 @@ import { parseNotice } from '@/config/notice-links'
 import { useBookingStore } from '@/store/booking-store'
 
 const appTitle = 'Book a Service BC Appointment'
-const helpUrl =
-  'https://www2.gov.bc.ca/gov/content/home/get-help-with-government-services'
 
 export default function App({
   config,
@@ -146,7 +143,7 @@ function HeaderActions() {
   const auth = useAuth()
   return (
     <nav
-      aria-label="Account and help"
+      aria-label="Account"
       className="flex flex-wrap items-center justify-end gap-2"
     >
       {auth.authenticated ? (
@@ -183,15 +180,6 @@ function HeaderActions() {
           </Button>
         </>
       )}
-      <a
-        className="border-bc-border-dark focus-visible:outline-bc-focus inline-flex min-h-10 items-center gap-2 rounded-sm border px-4 no-underline focus-visible:outline-2"
-        href={helpUrl}
-        rel="noreferrer"
-        target="_blank"
-      >
-        <ExternalLink aria-hidden="true" className="size-4" />
-        Help
-      </a>
     </nav>
   )
 }

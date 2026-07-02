@@ -90,6 +90,7 @@ it('renders the application shell and legacy anonymous actions', () => {
     }),
   ).toBeVisible()
   expect(screen.getByRole('button', { name: 'Login' })).toBeVisible()
+  expect(screen.queryByRole('link', { name: 'Help' })).toBeNull()
   expect(screen.getByRole('contentinfo')).toBeVisible()
   expect(container.querySelector('header .max-w-bc-content')).toBeTruthy()
   expect(

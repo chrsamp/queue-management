@@ -82,6 +82,10 @@ async function selectOption(
   await user.click(await screen.findByRole('option', { name: optionName }))
 }
 
+async function startBooking(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Book an appointment' }))
+}
+
 beforeEach(() => {
   window.sessionStorage.clear()
   useBookingStore.getState().clearBooking()
@@ -92,32 +96,101 @@ afterEach(() => {
 })
 
 describe('appointment booking location and service flow', () => {
-  it('selects an office, shows its details, and navigates back from services', async () => {
+  it('shows the introduction and starts Step 1', async () => {
     const user = userEvent.setup()
     renderBooking()
 
-    await selectOption(user, 'Select Office', /Victoria Service BC Centre/)
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Book an appointment at Service BC',
+      }),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('heading', {
+        level: 3,
+        name: 'What you should know',
+      }),
+    ).toBeVisible()
+    expect(
+      screen.getByText(/do more than one service in a single appointment/),
+    ).toBeVisible()
+    expect(
+      screen.getByRole('link', { name: '1-800-663-6687' }),
+    ).toHaveAttribute('href', 'tel:+18006636687')
+    expect(
+      screen.getByRole('link', {
+        name: 'Get help with government services',
+      }),
+    ).toHaveAttribute('href', 'https://gov.bc.ca/contact')
+    expect(
+      screen.queryByRole('navigation', { name: 'Booking progress' }),
+    ).toBeNull()
+
+    await startBooking(user)
 
     expect(
       screen.getByRole('heading', {
-        name: 'Victoria Service BC Centre',
+        level: 2,
+        name: 'Select a Service BC location',
       }),
-    ).toBeVisible()
+    ).toHaveFocus()
+    expect(screen.getByText('Step 1')).toBeVisible()
+    const back = screen.getByRole('button', { name: 'Back' })
+    const progress = screen.getByRole('navigation', {
+      name: 'Booking progress',
+    })
+    expect(
+      back.compareDocumentPosition(progress) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+
+    await user.click(back)
+    expect(
+      screen.getByRole('heading', {
+        name: 'Book an appointment at Service BC',
+      }),
+    ).toHaveFocus()
+  })
+
+  it('selects an office, shows its details, and navigates back from services', async () => {
+    const user = userEvent.setup()
+    renderBooking()
+    await startBooking(user)
+
+    await selectOption(user, 'Select Office', /Victoria Service BC Centre/)
+
+    const officeHeading = screen.getByRole('heading', {
+      name: 'Victoria Service BC Centre',
+    })
+    expect(officeHeading).toBeVisible()
     expect(screen.getByText('250-555-0100')).toBeVisible()
     expect(screen.getAllByText('8:30 a.m. – 4:30 p.m.')).toHaveLength(5)
     expect(
       screen.getByLabelText('Map showing Victoria Service BC Centre'),
     ).toBeVisible()
 
+    const officeDetails = officeHeading.closest('article')
+    expect(officeDetails).not.toBeNull()
+    const detailsText = officeDetails!.textContent ?? ''
+    expect(
+      detailsText.indexOf('403-771 Vernon Avenue, Victoria, BC'),
+    ).toBeLessThan(detailsText.indexOf('250-555-0100'))
+    expect(detailsText.indexOf('View available services')).toBeLessThan(
+      detailsText.indexOf('Book Appointment'),
+    )
+
     await user.click(screen.getByRole('button', { name: 'Book Appointment' }))
     expect(
-      screen.getByRole('heading', { name: 'Service Selection' }),
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Select the service you need',
+      }),
     ).toBeVisible()
 
     await user.click(screen.getByRole('button', { name: 'Back' }))
     expect(
       screen.getByRole('heading', {
-        name: 'Book an Appointment at Service BC',
+        name: 'Select a Service BC location',
       }),
     ).toHaveFocus()
   })
@@ -125,9 +198,12 @@ describe('appointment booking location and service flow', () => {
   it('filters the Available Services dialog and resets its filters', async () => {
     const user = userEvent.setup()
     renderBooking()
+    await startBooking(user)
     await selectOption(user, 'Select Office', /Victoria Service BC Centre/)
 
-    await user.click(screen.getByRole('button', { name: 'Available Services' }))
+    await user.click(
+      screen.getByRole('link', { name: 'View available services' }),
+    )
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText('Unavailable Service')).toBeVisible()
     expect(within(dialog).queryByText('Hidden Service')).toBeNull()
@@ -140,7 +216,9 @@ describe('appointment booking location and service flow', () => {
     expect(within(dialog).queryByText('General Service')).toBeNull()
 
     await user.click(within(dialog).getByRole('button', { name: 'Close' }))
-    await user.click(screen.getByRole('button', { name: 'Available Services' }))
+    await user.click(
+      screen.getByRole('link', { name: 'View available services' }),
+    )
     expect(
       within(await screen.findByRole('dialog')).getByText('General Service'),
     ).toBeVisible()
@@ -149,6 +227,7 @@ describe('appointment booking location and service flow', () => {
   it('blocks an unavailable service and advances a bookable service', async () => {
     const user = userEvent.setup()
     renderBooking()
+    await startBooking(user)
     await selectOption(user, 'Select Office', /Victoria Service BC Centre/)
     await user.click(screen.getByRole('button', { name: 'Book Appointment' }))
 
@@ -159,12 +238,16 @@ describe('appointment booking location and service flow', () => {
     await selectOption(user, /Unavailable Service/, /General Service/)
     await user.click(screen.getByRole('button', { name: /Next/ }))
 
-    expect(screen.getByRole('heading', { name: 'Select a Date' })).toHaveFocus()
+    expect(
+      screen.getByRole('heading', { name: 'Select a date and time' }),
+    ).toHaveFocus()
     expect(useBookingStore.getState().selectedServiceId).toBeGreaterThan(0)
   })
 
   it('has no serious or critical accessibility violations', async () => {
+    const user = userEvent.setup()
     const { container } = renderBooking()
+    await startBooking(user)
     await screen.findByLabelText('Select Office')
 
     const results = await axe(container)
@@ -190,6 +273,12 @@ describe('appointment booking location and service flow', () => {
     )
 
     expect(await screen.findByRole('heading', { name: 'Login' })).toHaveFocus()
+    expect(screen.getByText('Sign in to continue')).toBeVisible()
+    const progress = screen.getByRole('navigation', {
+      name: 'Booking progress',
+    })
+    expect(within(progress).getAllByRole('listitem')).toHaveLength(4)
+    expect(progress.querySelector('[aria-current="step"]')).toBeNull()
     expect(useBookingStore.getState()).toMatchObject({
       currentStep: 'login',
       draftAppointmentId: 40,
@@ -199,6 +288,11 @@ describe('appointment booking location and service flow', () => {
         startTime: '2030-07-15T16:00:00.000Z',
       },
     })
+
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(
+      screen.getByRole('heading', { name: 'Select a date and time' }),
+    ).toHaveFocus()
   })
 
   it('recovers when draft creation reports a slot conflict', async () => {
@@ -276,6 +370,19 @@ describe('appointment booking location and service flow', () => {
     store.setCurrentStep('summary')
     const user = userEvent.setup()
     renderBooking(true)
+
+    expect(
+      await screen.findByRole('heading', {
+        level: 2,
+        name: 'Appointment summary',
+      }),
+    ).toBeVisible()
+    expect(screen.getByText('Step 4')).toBeVisible()
+    expect(
+      screen.getByText(
+        'Please confirm your appointment and location before completing your booking.',
+      ),
+    ).toBeVisible()
 
     await user.click(
       await screen.findByRole('switch', {

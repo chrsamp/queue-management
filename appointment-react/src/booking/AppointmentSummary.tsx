@@ -260,8 +260,8 @@ export default function AppointmentSummary({
     <>
       <StepHeader
         headingRef={headingRef}
-        onBack={() => setCurrentStep('date')}
-        title="Appointment Summary"
+        subtitle="Please confirm your appointment and location before completing your booking."
+        title="Appointment summary"
       />
       <div className="p-4 sm:p-6">
         {loading && <LoadingIndicator label="Loading appointment summary" />}
@@ -288,7 +288,7 @@ export default function AppointmentSummary({
           selectedService &&
           selectedSlot &&
           user && (
-            <div className="mx-auto max-w-3xl">
+            <div className="max-w-3xl">
               <div className="bg-bc-light-gray grid gap-5 p-5 sm:grid-cols-2">
                 <SummaryItem
                   label="Reason for Appointment"
@@ -326,7 +326,7 @@ export default function AppointmentSummary({
                       Send me appointment reminders via SMS text message
                     </Switch>
                   )}
-                <div className="flex flex-wrap items-center justify-center gap-2">
+                <div className="flex flex-wrap items-center justify-start gap-2">
                   <Checkbox
                     isSelected={termsAccepted}
                     onChange={setTermsAccepted}
@@ -338,7 +338,7 @@ export default function AppointmentSummary({
                   </Button>
                 </div>
                 <Button
-                  className="self-center"
+                  className="self-start"
                   disabled={!termsAccepted || confirmMutation.isPending}
                   onClick={() => confirmMutation.mutate()}
                   size="large"

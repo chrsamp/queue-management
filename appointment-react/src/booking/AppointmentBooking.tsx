@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowRight, ExternalLink, MapPin, Phone } from 'lucide-react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  ExternalLink,
+  MapPin,
+  Phone,
+} from 'lucide-react'
 import type { Key } from 'react-aria-components'
 
 import {
@@ -11,7 +17,6 @@ import {
 } from '@/api/endpoints'
 import type { Office, Service } from '@/api/schemas'
 import { useApiClient } from '@/api/use-api-client'
-import { useAuth } from '@/auth/use-auth'
 import AppointmentSummary from '@/booking/AppointmentSummary'
 import BookingLogin from '@/booking/BookingLogin'
 import { RequestError, StepHeader } from '@/booking/BookingStepLayout'
@@ -36,12 +41,13 @@ import {
 import OfficeMap from '@/booking/OfficeMap'
 import { useBookingStore, type BookingStep } from '@/store/booking-store'
 
-const allSteps: { id: BookingStep; label: string }[] = [
-  { id: 'location', label: 'Location Selection' },
-  { id: 'service', label: 'Select Service' },
-  { id: 'date', label: 'Select Date' },
-  { id: 'login', label: 'Login to Confirm Appointment' },
-  { id: 'summary', label: 'Appointment Summary' },
+type NumberedBookingStep = Exclude<BookingStep, 'intro' | 'login'>
+
+const numberedSteps: { id: NumberedBookingStep; label: string }[] = [
+  { id: 'location', label: 'Select a Service BC location' },
+  { id: 'service', label: 'Select the service you need' },
+  { id: 'date', label: 'Select a date and time' },
+  { id: 'summary', label: 'Appointment summary' },
 ]
 
 interface OfficeItem extends SelectItem {
@@ -57,8 +63,9 @@ export default function AppointmentBooking({
 }: {
   config: RuntimeConfig
 }) {
-  const auth = useAuth()
   const currentStep = useBookingStore((state) => state.currentStep)
+  const editAppointmentId = useBookingStore((state) => state.editAppointmentId)
+  const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const previousStep = useRef(currentStep)
 
@@ -69,17 +76,50 @@ export default function AppointmentBooking({
     }
   }, [currentStep])
 
+  if (currentStep === 'intro') {
+    return (
+      <BookingIntro
+        headingRef={headingRef}
+        onStart={() => setCurrentStep('location')}
+      />
+    )
+  }
+
+  const numberedStep: NumberedBookingStep | null =
+    currentStep === 'login' ? null : currentStep
+  const stepIndex =
+    currentStep === 'login'
+      ? 2
+      : numberedSteps.findIndex((step) => step.id === numberedStep)
+  const backTarget: BookingStep | null =
+    currentStep === 'location'
+      ? 'intro'
+      : currentStep === 'service'
+        ? 'location'
+        : currentStep === 'date'
+          ? editAppointmentId === null
+            ? 'service'
+            : null
+          : currentStep === 'login' || currentStep === 'summary'
+            ? 'date'
+            : null
+  const navigationLabel =
+    currentStep === 'login' ? 'Sign in to continue' : `Step ${stepIndex + 1} of ${numberedSteps.length}`
+
   return (
     <section aria-labelledby="booking-heading">
-      <BookingProgress
-        currentStep={currentStep}
-        steps={
-          auth.authenticated && auth.authorized
-            ? allSteps.filter((step) => step.id !== 'login')
-            : allSteps
+      <BookingNavigation
+        label={navigationLabel}
+        onBack={
+          backTarget === null ? undefined : () => setCurrentStep(backTarget)
         }
       />
-      <div className="border-bc-border mt-6 border bg-white">
+      <BookingProgress
+        activeStep={numberedStep}
+        completedThroughIndex={stepIndex}
+        steps={numberedSteps}
+      />
+      <div className="mt-6 bg-white">
         {currentStep === 'location' && <LocationStep headingRef={headingRef} />}
         {currentStep === 'service' && <ServiceStep headingRef={headingRef} />}
         {currentStep === 'date' && <DateSelection headingRef={headingRef} />}
@@ -94,27 +134,108 @@ export default function AppointmentBooking({
   )
 }
 
+function BookingIntro({
+  headingRef,
+  onStart,
+}: {
+  headingRef: RefObject<HTMLHeadingElement | null>
+  onStart: () => void
+}) {
+  return (
+    <section
+      aria-labelledby="booking-heading"
+      className="max-w-3xl bg-white p-4 sm:p-6"
+    >
+      <h2
+        className="bc-heading mt-0 mb-6 outline-none"
+        id="booking-heading"
+        ref={headingRef}
+        tabIndex={-1}
+      >
+        Before you start
+      </h2>
+      <section aria-labelledby="what-you-should-know">
+        <h3 className="bc-heading mb-4" id="what-you-should-know">
+          What you should know
+        </h3>
+        <ul className="list-disc space-y-3 pl-6">
+          <li>You may be able to complete your service online instead of in person.</li>
+          <li>
+            You need an email address or the BC Services Card app to book an
+            appointment. If you don&apos;t have either, you can still book an
+            appointment by calling Service BC.
+          </li>
+          <li>
+            If you need help to book an appointment, please:
+            <ul className="mt-2 list-disc space-y-2 pl-6">
+              <li>
+                Call us toll-free: <a href="tel:+18006636687">1-800-663-6687</a>
+              </li>
+              <li>
+                Outside of Canada/USA:{' '}
+                <a href="tel:+16046602421">1-604-660-2421</a>
+              </li>
+              <li>
+                Text us: <a href="sms:+16046602421">1-604-660-2421</a>
+              </li>
+              <li>
+                <a className="underline text-bc-link" href="https://gov.bc.ca/contact">
+                  Get help with government services
+                </a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </section>
+      <Button className="mt-6" onClick={onStart} size="large">
+        Book an appointment
+      </Button>
+    </section>
+  )
+}
+
+function BookingNavigation({
+  label,
+  onBack,
+}: {
+  label: string
+  onBack?: () => void
+}) {
+  return (
+    <div className="mb-4 flex min-h-10 items-center gap-3">
+      {onBack && (
+        <Button aria-label="Back" onClick={onBack} variant="secondary">
+          <ArrowLeft aria-hidden="true" className="size-5" />
+          Back
+        </Button>
+      )}
+      <span className="font-bold">{label}</span>
+    </div>
+  )
+}
+
 function BookingProgress({
-  currentStep,
+  activeStep,
+  completedThroughIndex,
   steps,
 }: {
-  currentStep: BookingStep
-  steps: { id: BookingStep; label: string }[]
+  activeStep: NumberedBookingStep | null
+  completedThroughIndex: number
+  steps: { id: NumberedBookingStep; label: string }[]
 }) {
-  const activeIndex = steps.findIndex((step) => step.id === currentStep)
   return (
-    <nav aria-label="Booking progress">
-      <ol className="grid grid-cols-1 gap-2 sm:grid-cols-5 sm:gap-0">
+    <nav aria-label="Booking progress" className="my-8">
+      <ol className="grid w-full grid-cols-1 gap-2 sm:auto-cols-fr sm:grid-flow-col sm:gap-0">
         {steps.map((step, index) => (
           <li
-            aria-current={step.id === currentStep ? 'step' : undefined}
+            aria-current={step.id === activeStep ? 'step' : undefined}
             className="relative flex items-center gap-2 sm:flex-col sm:text-center"
             key={step.id}
           >
             <span
               aria-hidden="true"
               className={`z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2 ${
-                index <= activeIndex
+                index <= completedThroughIndex
                   ? 'border-bc-button-primary bg-bc-button-primary text-white'
                   : 'border-bc-border bg-white'
               }`}
@@ -123,7 +244,7 @@ function BookingProgress({
             </span>
             <span
               className={
-                step.id === currentStep
+                step.id === activeStep
                   ? 'text-bc-small font-bold'
                   : 'text-bc-small text-bc-secondary'
               }
@@ -198,8 +319,8 @@ function LocationStep({
     <>
       <StepHeader
         headingRef={headingRef}
-        subtitle="Choose from our Service BC Centre locations."
-        title="Book an Appointment at Service BC"
+        subtitle="Appointments are available at most Service BC locations"
+        title="Select a Service BC location"
       />
       <div className="p-4 sm:p-6">
         {officesQuery.isPending && <LoadingIndicator label="Loading offices" />}
@@ -217,7 +338,7 @@ function LocationStep({
         {offices.length > 0 && (
           <Select
             aria-label="Select Office"
-            className="mx-auto max-w-lg"
+            className="max-w-lg"
             items={officeItems}
             onSelectionChange={handleOfficeChange}
             placeholder="Select Office"
@@ -265,18 +386,21 @@ function OfficeDetails({
     <article className="border-bc-border mt-6 overflow-hidden border">
       <div className="grid md:grid-cols-2">
         <div className="flex flex-col gap-5 p-5">
-          <Button className="w-full" onClick={onBook} size="large">
-            Book Appointment
-          </Button>
           <h3 className="text-bc-h4 m-0">{office.office_name}</h3>
           {office.office_appointment_message && (
             <AlertBanner isCloseable={false} size="small">
               {office.office_appointment_message}
             </AlertBanner>
           )}
+          {office.civic_address && (
+            <span className="inline-flex items-center gap-2">
+              <MapPin aria-hidden="true" className="size-4" />
+              {office.civic_address}
+            </span>
+          )}
           {office.telephone && (
             <a
-              className="inline-flex items-center gap-2"
+              className="inline-flex w-fit items-center gap-2"
               href={`tel:${office.telephone}`}
             >
               <Phone aria-hidden="true" className="size-4" />
@@ -293,25 +417,23 @@ function OfficeDetails({
               </div>
             ))}
           </dl>
-          <Button
-            className="w-full"
-            onClick={onShowServices}
-            size="large"
-            variant="secondary"
+          <a
+            aria-haspopup="dialog"
+            className="focus-visible:outline-bc-focus w-fit underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2"
+            href="#available-services-dialog"
+            onClick={(event) => {
+              event.preventDefault()
+              onShowServices()
+            }}
           >
-            Available Services
+            View available services
+          </a>
+          <Button className="mt-auto w-full" onClick={onBook} size="large">
+            Book Appointment
           </Button>
         </div>
         <div className="border-bc-border flex flex-col border-t md:border-t-0 md:border-l">
           <OfficeMap office={office} />
-          {office.civic_address && (
-            <div className="p-4 text-center">
-              <span className="inline-flex items-center gap-2">
-                <MapPin aria-hidden="true" className="size-4" />
-                {office.civic_address}
-              </span>
-            </div>
-          )}
         </div>
       </div>
     </article>
@@ -364,7 +486,10 @@ function AvailableServicesDialog({
       isOpen={isOpen}
       onOpenChange={(open) => !open && close()}
     >
-      <Dialog className="max-h-[calc(100vh-2rem)] overflow-auto">
+      <Dialog
+        className="max-h-[calc(100vh-2rem)] overflow-auto"
+        id="available-services-dialog"
+      >
         <DialogTitle className="text-bc-h4 mt-0 pr-8">
           Location Services for {office.office_name}
         </DialogTitle>
@@ -556,9 +681,8 @@ function ServiceStep({
     <>
       <StepHeader
         headingRef={headingRef}
-        onBack={() => setCurrentStep('location')}
-        subtitle="Please select the service you'd like to receive."
-        title="Service Selection"
+        subtitle="You can book an appointment for most services. Not all services are available at every Service BC location."
+        title="Select the service you need"
       />
       <div className="p-4 sm:p-6">
         {servicesQuery.isPending && (
@@ -578,7 +702,7 @@ function ServiceStep({
         {services.length > 0 && (
           <Select
             aria-label="Select Service"
-            className="mx-auto max-w-lg"
+            className="max-w-lg"
             items={serviceItems}
             onSelectionChange={(key) => {
               const serviceId = key === null ? null : Number(key)
@@ -605,7 +729,7 @@ function ServiceStep({
           />
         )}
         {selectedService && (
-          <div className="mx-auto mt-6 max-w-3xl text-center">
+          <div className="mt-6 max-w-3xl text-left">
             {unavailable ? (
               <p>
                 We&apos;re sorry,{' '}

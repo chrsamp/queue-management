@@ -26,11 +26,10 @@ export default function BookingLogin({
     <>
       <StepHeader
         headingRef={headingRef}
-        onBack={() => setCurrentStep('date')}
         subtitle="To complete your appointment booking, please login using one of the following."
         title="Login"
       />
-      <div className="mx-auto max-w-2xl p-6">
+      <div className="max-w-2xl p-6">
         {!auth.initialized && <LoadingIndicator label="Checking login" />}
         {auth.authenticated && !auth.authorized && (
           <AlertBanner isCloseable={false} role="alert" variant="danger">

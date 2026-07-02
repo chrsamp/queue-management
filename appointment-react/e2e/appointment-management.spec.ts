@@ -103,7 +103,7 @@ test('manages appointments and account settings', async ({ page }) => {
   await page.goto('/login?e2e-auth=1')
   await page.getByRole('link', { name: 'Login with Basic BCeID' }).click()
   await expect(
-    page.getByRole('heading', { name: 'Book an Appointment at Service BC' }),
+    page.getByRole('heading', { name: 'Book an appointment at Service BC' }),
   ).toBeVisible()
   await page.getByRole('button', { name: 'Menu' }).click()
   await page.getByRole('menuitem', { name: 'My Appointments' }).click()

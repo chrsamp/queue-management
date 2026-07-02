@@ -71,6 +71,31 @@
 
   .leaflet-container {
     font-family: var(--font-sans);
+    isolation: isolate;
+    z-index: 0;
+  }
+}
+
+@layer components {
+  .bc-heading {
+    color: var(--color-bc-primary);
+    font-family: var(--font-sans);
+    font-weight: 700;
+  }
+
+  h1.bc-heading {
+    font-size: 2.25rem;
+    line-height: 3.375rem;
+  }
+
+  h2.bc-heading {
+    font-size: 2rem;
+    line-height: 3rem;
+  }
+
+  h3.bc-heading {
+    font-size: 1.75rem;
+    line-height: 3rem;
   }
 }
 
