@@ -26,6 +26,13 @@ interface BookingState {
   setEditAppointmentId: (appointmentId: number | null) => void
   setCurrentStep: (step: BookingStep) => void
   setPendingPostLoginPath: (path: string | null) => void
+  startNewBooking: () => void
+  startAppointmentEdit: (appointment: {
+    appointmentId: number
+    officeId: number
+    serviceId: number
+    slot: SelectedSlot
+  }) => void
   clearBooking: () => void
 }
 
@@ -80,6 +87,16 @@ export const useBookingStore = create<BookingState>()(
       setCurrentStep: (currentStep) => set({ currentStep }),
       setPendingPostLoginPath: (pendingPostLoginPath) =>
         set({ pendingPostLoginPath }),
+      startNewBooking: () => set(initialState),
+      startAppointmentEdit: ({ appointmentId, officeId, serviceId, slot }) =>
+        set({
+          ...initialState,
+          currentStep: 'date',
+          editAppointmentId: appointmentId,
+          selectedOfficeId: officeId,
+          selectedServiceId: serviceId,
+          selectedSlot: slot,
+        }),
       clearBooking: () => set(initialState),
     }),
     {

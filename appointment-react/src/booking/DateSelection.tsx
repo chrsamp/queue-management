@@ -51,6 +51,7 @@ export default function DateSelection({
   const draftAppointmentId = useBookingStore(
     (state) => state.draftAppointmentId,
   )
+  const editAppointmentId = useBookingStore((state) => state.editAppointmentId)
   const setReservation = useBookingStore((state) => state.setReservation)
   const clearReservation = useBookingStore((state) => state.clearReservation)
   const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
@@ -208,7 +209,11 @@ export default function DateSelection({
     <>
       <StepHeader
         headingRef={headingRef}
-        onBack={() => setCurrentStep('service')}
+        onBack={
+          editAppointmentId === null
+            ? () => setCurrentStep('service')
+            : undefined
+        }
         subtitle="Available days can be selected in the calendar."
         title="Select a Date"
       />

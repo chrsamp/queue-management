@@ -52,6 +52,18 @@ export function createE2eAuthService() {
       })
       return Promise.resolve()
     },
+    expireSession: (message = 'Your session expired. Please log in again.') => {
+      publish({
+        authenticated: false,
+        authorized: false,
+        displayName: null,
+        error: message,
+        initialized: true,
+        roles: [],
+        token: null,
+        username: null,
+      })
+    },
     refreshToken: () => Promise.resolve(),
     subscribe: (subscriber: () => void) => {
       subscribers.add(subscriber)

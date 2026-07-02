@@ -4,6 +4,7 @@ import {
   apiDateKeyToCalendarDate,
   calendarDateToApiKey,
   officeSlotToUtcIso,
+  utcIsoToApiDateKey,
 } from './booking-datetime'
 
 describe('booking date and time conversion', () => {
@@ -30,5 +31,14 @@ describe('booking date and time conversion', () => {
     expect(officeSlotToUtcIso('03/10/2024', '03:30', 'America/Vancouver')).toBe(
       '2024-03-10T10:30:00.000Z',
     )
+  })
+
+  it('derives an edit date from the office timezone', () => {
+    expect(
+      utcIsoToApiDateKey('2030-07-15T06:30:00.000Z', 'America/Vancouver'),
+    ).toBe('07/14/2030')
+    expect(
+      utcIsoToApiDateKey('2030-07-15T06:30:00.000Z', 'America/Toronto'),
+    ).toBe('07/15/2030')
   })
 })

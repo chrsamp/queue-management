@@ -75,4 +75,37 @@ describe('booking store', () => {
       selectedSlot: null,
     })
   })
+
+  it('hydrates and clears appointment edit state atomically', () => {
+    const slot = {
+      dateKey: '07/15/2030',
+      endTime: '2030-07-15T16:30:00.000Z',
+      startTime: '2030-07-15T16:00:00.000Z',
+    }
+
+    useBookingStore.getState().startAppointmentEdit({
+      appointmentId: 41,
+      officeId: 10,
+      serviceId: 20,
+      slot,
+    })
+
+    expect(useBookingStore.getState()).toMatchObject({
+      currentStep: 'date',
+      draftAppointmentId: null,
+      editAppointmentId: 41,
+      selectedOfficeId: 10,
+      selectedServiceId: 20,
+      selectedSlot: slot,
+    })
+
+    useBookingStore.getState().startNewBooking()
+    expect(useBookingStore.getState()).toMatchObject({
+      currentStep: 'location',
+      editAppointmentId: null,
+      selectedOfficeId: null,
+      selectedServiceId: null,
+      selectedSlot: null,
+    })
+  })
 })

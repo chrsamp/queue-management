@@ -89,4 +89,28 @@ describe('AuthService', () => {
     expect(isIdentityProviderHint('bceidboth')).toBe(true)
     expect(isIdentityProviderHint('idir')).toBe(false)
   })
+
+  it('clears local authentication when a session expires', async () => {
+    keycloak.authenticated = true
+    keycloak.token = 'access-token'
+    keycloak.tokenParsed = {
+      realm_access: { roles: ['online_appointment_user'] },
+    }
+    keycloak.init.mockResolvedValue(true)
+    const service = new AuthService({
+      clientId: 'appointment',
+      realm: 'servicebc-local',
+      url: 'http://localhost:8085/auth',
+    })
+    await service.initialize()
+
+    service.expireSession()
+
+    expect(keycloak.clearToken).toHaveBeenCalled()
+    expect(service.getSnapshot()).toMatchObject({
+      authenticated: false,
+      authorized: false,
+      error: 'Your session expired. Please log in again.',
+    })
+  })
 })

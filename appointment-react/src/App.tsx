@@ -1,23 +1,19 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { QueryClient } from '@tanstack/react-query'
 import { ExternalLink } from 'lucide-react'
-import {
-  Link,
-  Navigate,
-  Route,
-  Routes,
-  useLocation,
-  useParams,
-} from 'react-router'
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router'
 
 import ErrorBoundary from '@/app/ErrorBoundary'
+import AccountSettings from '@/account/AccountSettings'
 import { deleteDraft } from '@/api/endpoints'
 import { useApiClient } from '@/api/use-api-client'
 import { isIdentityProviderHint } from '@/auth/auth-service'
 import { useAuth } from '@/auth/use-auth'
 import AppointmentBooking from '@/booking/AppointmentBooking'
+import BookedAppointments from '@/appointments/BookedAppointments'
 import LoginChoices from '@/booking/LoginChoices'
 import AlertBanner from '@/components/AlertBanner'
+import AccountNavigationMenu from '@/components/AccountNavigationMenu'
 import Button from '@/components/Button'
 import Footer from '@/components/Footer'
 import Header from '@/components/Header'
@@ -38,6 +34,7 @@ export default function App({
   queryClient: QueryClient
 }) {
   const auth = useAuth()
+  const wasAuthenticated = useRef(auth.authenticated)
   const [headerNoticeVisible, setHeaderNoticeVisible] = useState(true)
   const headerNotice = parseNotice(
     config.VITE_APPOINTMENT_HEADER_MESSAGE,
@@ -47,6 +44,13 @@ export default function App({
     config.VITE_APPOINTMENT_FOOTER_MESSAGE,
     config.VITE_APPOINTMENT_FOOTER_LINKS,
   )
+
+  useEffect(() => {
+    if (wasAuthenticated.current && !auth.authenticated) {
+      queryClient.clear()
+    }
+    wasAuthenticated.current = auth.authenticated
+  }, [auth.authenticated, queryClient])
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -89,10 +93,7 @@ export default function App({
             <Route
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage
-                    description="Your booked appointments will be available in a later migration stage."
-                    title="My Appointments"
-                  />
+                  <BookedAppointments config={config} />
                 </ProtectedRoute>
               }
               path="/booked-appointments"
@@ -100,10 +101,7 @@ export default function App({
             <Route
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage
-                    description="Account settings will be available in a later migration stage."
-                    title="Account Settings"
-                  />
+                  <AccountSettings config={config} />
                 </ProtectedRoute>
               }
               path="/account-settings"
@@ -152,20 +150,11 @@ function HeaderActions() {
       className="flex flex-wrap items-center justify-end gap-2"
     >
       {auth.authenticated ? (
-        <>
-          <span className="max-bc-mobile:hidden text-bc-small">
-            {auth.displayName ?? auth.username}
-          </span>
-          {auth.authorized && (
-            <>
-              <Link className="text-bc-link p-2" to="/booked-appointments">
-                My Appointments
-              </Link>
-              <Link className="text-bc-link p-2" to="/account-settings">
-                Account Settings
-              </Link>
-            </>
-          )}
+        auth.authorized ? (
+          <AccountNavigationMenu
+            displayName={auth.displayName ?? auth.username}
+          />
+        ) : (
           <Button
             onClick={() => {
               window.location.assign('/signout')
@@ -174,7 +163,7 @@ function HeaderActions() {
           >
             Log out
           </Button>
-        </>
+        )
       ) : (
         <>
           <Button
@@ -301,21 +290,6 @@ function AccessUnavailable() {
     <section role="alert">
       <h2 className="text-bc-h4 mt-0">Access unavailable</h2>
       <p>Your account is not authorized to use this application.</p>
-    </section>
-  )
-}
-
-function PlaceholderPage({
-  description,
-  title,
-}: {
-  description: string
-  title: string
-}) {
-  return (
-    <section>
-      <h2 className="text-bc-h4 mt-0">{title}</h2>
-      <p>{description}</p>
     </section>
   )
 }

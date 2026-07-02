@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { expect, it } from 'vitest'
 import { axe } from 'vitest-axe'
@@ -68,6 +69,17 @@ const anonymous: AuthSnapshot = {
   username: null,
 }
 
+const authorized: AuthSnapshot = {
+  authenticated: true,
+  authorized: true,
+  displayName: 'Alex Citizen',
+  error: null,
+  initialized: true,
+  roles: ['online_appointment_user'],
+  token: 'access-token',
+  username: 'citizen@bceidboth',
+}
+
 it('renders the application shell and legacy anonymous actions', () => {
   const { container } = renderApp('/appointment', anonymous)
 
@@ -102,4 +114,47 @@ it('has no detectable serious accessibility violations', async () => {
       ({ impact }) => impact === 'serious' || impact === 'critical',
     ),
   ).toEqual([])
+})
+
+it('renders the authenticated appointment-management workflow', async () => {
+  const user = userEvent.setup()
+  renderApp('/booked-appointments', authorized)
+
+  expect(
+    await screen.findByRole('heading', { name: 'My Appointments' }),
+  ).toBeVisible()
+  expect((await screen.findAllByText('General Service'))[0]).toBeVisible()
+  expect((await screen.findAllByText('Appointment Confirmed'))[0]).toBeVisible()
+
+  await user.click(
+    screen.getAllByRole('button', { name: 'Cancel Appointment' })[0]!,
+  )
+  expect(
+    screen.getByText('Are you sure that you want to cancel this appointment?'),
+  ).toBeVisible()
+  await user.click(screen.getByRole('button', { name: 'No' }))
+  expect(
+    screen.queryByText(
+      'Are you sure that you want to cancel this appointment?',
+    ),
+  ).not.toBeInTheDocument()
+})
+
+it('loads account settings and enables updates only after a valid change', async () => {
+  const user = userEvent.setup()
+  renderApp('/account-settings', authorized)
+
+  expect(
+    await screen.findByRole('heading', { name: 'Account Settings' }),
+  ).toBeVisible()
+  const update = await screen.findByRole('button', { name: 'Update' })
+  expect(update).toBeDisabled()
+
+  const email = screen.getByRole('textbox', { name: /Email/ })
+  await user.clear(email)
+  await user.type(email, 'updated@example.test')
+  expect(update).toBeEnabled()
+  await user.click(update)
+
+  expect(await screen.findByText('Profile Successfully Updated!')).toBeVisible()
 })

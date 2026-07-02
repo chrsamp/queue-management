@@ -98,6 +98,9 @@ export class ApiClient {
       const responseBody = await this.readBody(response)
 
       if (!response.ok) {
+        if (authenticated && response.status === 401) {
+          this.authService.expireSession()
+        }
         throw new ApiError({
           details: responseBody,
           kind: getApiErrorKind(response.status, responseBody),

@@ -101,6 +101,16 @@ export class AuthService {
     await this.keycloak.logout({ redirectUri })
   }
 
+  expireSession(message = 'Your session expired. Please log in again.') {
+    this.stopRefreshTimer()
+    this.keycloak.clearToken()
+    this.updateSnapshot({
+      ...initialSnapshot,
+      initialized: true,
+      error: message,
+    })
+  }
+
   async refreshToken(minValidity = refreshMinValiditySeconds) {
     if (!this.keycloak.authenticated) {
       throw new Error('Cannot refresh an unauthenticated session')
@@ -117,13 +127,7 @@ export class AuthService {
     }
     this.keycloak.onAuthRefreshSuccess = () => this.syncSnapshot(true)
     this.keycloak.onAuthRefreshError = () => {
-      this.stopRefreshTimer()
-      this.keycloak.clearToken()
-      this.updateSnapshot({
-        ...initialSnapshot,
-        initialized: true,
-        error: 'Your session expired. Please log in again.',
-      })
+      this.expireSession()
     }
     this.keycloak.onAuthLogout = () => {
       this.stopRefreshTimer()

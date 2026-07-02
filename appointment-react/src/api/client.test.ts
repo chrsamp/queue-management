@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
 import type { AuthService } from '@/auth/auth-service'
@@ -106,5 +106,28 @@ describe('ApiClient', () => {
     await expect(getOffices(client)).rejects.toMatchObject({
       kind: 'validation',
     })
+  })
+
+  it('expires an authenticated session after a protected 401 response', async () => {
+    server.use(
+      http.get('http://localhost:5000/api/v1/protected', () =>
+        HttpResponse.json({ message: 'Token expired' }, { status: 401 }),
+      ),
+    )
+    const expireSession = vi.fn()
+    const protectedAuth = {
+      expireSession,
+      getSnapshot: () => ({ token: 'token' }),
+      refreshToken: () => Promise.resolve(),
+    } as unknown as AuthService
+    const client = new ApiClient({
+      authService: protectedAuth,
+      baseUrl: 'http://localhost:5000/api/v1',
+    })
+
+    await expect(
+      client.get('/protected', { schema: z.unknown() }),
+    ).rejects.toMatchObject({ kind: 'unauthorized' })
+    expect(expireSession).toHaveBeenCalledOnce()
   })
 })

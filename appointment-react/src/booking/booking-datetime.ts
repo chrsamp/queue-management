@@ -66,6 +66,18 @@ export function formatOfficeTime(
   }).format(new Date(value))
 }
 
+export function utcIsoToApiDateKey(value: string, timezone: string) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: timezone,
+    year: 'numeric',
+  }).formatToParts(new Date(value))
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value
+  return `${part('month')}/${part('day')}/${part('year')}`
+}
+
 export function formatSlotTime(time: string) {
   const [hours, minutes] = time.split(':').map(Number)
   const date = new Date(2000, 0, 1, hours, minutes)
