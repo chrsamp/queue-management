@@ -633,6 +633,7 @@
 </template>
 
 <script lang="ts">
+import { isPastOfficeTime } from '@/utils/office-time'
 /* eslint-disable */
 import { Action, Getter, Mutation, State, namespace } from 'vuex-class'
 import { Component, Prop, Vue } from 'vue-property-decorator'
@@ -1141,7 +1142,7 @@ export default class EditBooking extends Vue {
             return
           }
         }
-        if (moment().isAfter(this.start)) {
+        if (isPastOfficeTime(this.start, this.event.office || this.$store.state.user.office)) {
           this.message = 'Selected date/time is is in the past. Press Reschedule and pick a new time.'
           return
         }

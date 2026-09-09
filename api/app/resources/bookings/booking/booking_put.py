@@ -13,6 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 import logging
+from marshmallow import ValidationError
 from flask import request
 from flask_restx import Resource
 from qsystem import api, db
@@ -21,7 +22,7 @@ from app.models.theq import CSR
 from app.schemas.bookings import BookingSchema
 from app.utilities.auth_util import Role, get_username
 from app.auth.auth import jwt
-from app.utilities.timezone_utils import convert_local_fields_to_utc
+from app.utilities.timezone_utils import convert_local_fields_to_utc, validate_utc_interval
 
 
 @api.route("/bookings/<int:id>/", methods=["PUT"])
@@ -35,6 +36,8 @@ class BookingPut(Resource):
         csr = CSR.find_by_username(get_username())
 
         json_data = request.get_json()
+        if not isinstance(json_data, dict):
+            raise ValidationError({"_schema": ["Must be a JSON object."]})
         i_id_list = json_data.get('invigilator_id')
 
         if not json_data:
@@ -42,6 +45,7 @@ class BookingPut(Resource):
 
         booking = Booking.query.filter_by(booking_id=id).first_or_404()
         convert_local_fields_to_utc(json_data, booking.office.timezone.timezone_name)
+        validate_utc_interval(json_data, booking)
         booking = self.booking_schema.load(json_data, instance=booking, partial=True)
         warning = self.booking_schema.validate(json_data)
 

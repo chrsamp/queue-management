@@ -358,7 +358,7 @@
         <template #cell(start_time)="row">
           <span v-if="!row.item.booking">-</span>
           <span
-            v-else-if="checkStartDate(row.item.booking.local_start_time,row.item.exam_returned_date)"
+            v-else-if="checkStartDate(row.item.booking.local_start_time,row.item.exam_returned_date,row.item)"
             class="expired"
             >{{ formatDate(row.item.booking.local_start_time) }}</span
           >
@@ -371,19 +371,19 @@
           <span
             v-if="
               row.item.exam_type.exam_type_name === 'Monthly Session Exam' &&
-              !checkExpiryDate(row.item.expiry_date,row.item.exam_returned_date)
+              !checkExpiryDate(row.item.expiry_date,row.item.exam_returned_date,row.item)
             "
             >–</span
           >
           <span
             v-else-if="
               row.item.exam_type.group_exam_ind &&
-              !checkExpiryDate(row.item.expiry_date,row.item.exam_returned_date)
+              !checkExpiryDate(row.item.expiry_date,row.item.exam_returned_date,row.item)
             "
             >–</span
           >
           <span
-            v-else-if="checkExpiryDate(row.item.expiry_date,row.item.exam_returned_date)"
+            v-else-if="checkExpiryDate(row.item.expiry_date,row.item.exam_returned_date,row.item)"
             class="expired"
             >{{ formatDate(row.item.expiry_date) }}</span
           >
@@ -743,6 +743,7 @@
 </template>
 
 <script lang="ts">
+import { isPastOfficeTime } from '@/utils/office-time'
 
 import { Action, Getter, Mutation, State } from 'vuex-class'
 import { Component, Vue } from 'vue-property-decorator'
@@ -991,7 +992,7 @@ export default class ExamInventoryTable extends Vue {
   }
 
   checkExpiryDateAndAddCalendarBooking (item) {
-    if (moment(item.expiry_date).isValid() && moment(item.expiry_date).isBefore(moment(), 'day')) {
+    if (moment(item.expiry_date).isValid() && isPastOfficeTime(item.expiry_date, this.examOffice(item), 'day')) {
       this.examExpiryDateScheduling = moment(item.expiry_date).format('MMMM DD, YYYY')
       this.expiryNotificationDialog = true
     } else {
@@ -1092,7 +1093,7 @@ export default class ExamInventoryTable extends Vue {
 
   filterByExpiry (ex) {
     if (moment(ex.expiry_date).isValid()) {
-      if (moment(ex.expiry_date).isBefore(moment(), 'day')) {
+      if (isPastOfficeTime(ex.expiry_date, this.examOffice(ex), 'day')) {
         return true
       }
     }
@@ -1119,7 +1120,7 @@ export default class ExamInventoryTable extends Vue {
   checkExamIsPast (ex: any): boolean {
     if (this.inventoryFilters.expiryFilter === 'current') {
       if (ex.booking) {
-        if (moment(ex.booking.local_start_time).isBefore(moment(), 'day')) {
+        if (isPastOfficeTime(ex.booking.local_start_time, this.examOffice(ex), 'day')) {
           return true
         }
       }
@@ -1195,7 +1196,7 @@ export default class ExamInventoryTable extends Vue {
     }
     if (ex.booking) {
       if (moment(ex.booking.local_start_time).isValid()) {
-        if (moment(ex.booking.local_start_time).isBefore(moment(), 'day')) {
+        if (isPastOfficeTime(ex.booking.local_start_time, this.examOffice(ex), 'day')) {
           return true
         }
       }
@@ -1243,7 +1244,7 @@ export default class ExamInventoryTable extends Vue {
     }
     if (ex.booking) {
       if (moment(ex.booking.local_start_time).isValid()) {
-        if (moment(ex.booking.local_start_time).isBefore(moment(), 'day')) {
+        if (isPastOfficeTime(ex.booking.local_start_time, this.examOffice(ex), 'day')) {
           return true
         }
       }
@@ -1266,7 +1267,7 @@ export default class ExamInventoryTable extends Vue {
     }
     if (ex.booking) {
       if (moment(ex.booking.local_start_time).isValid()) {
-        if (moment(ex.booking.local_start_time).isBefore(moment(), 'day')) {
+        if (isPastOfficeTime(ex.booking.local_start_time, this.examOffice(ex), 'day')) {
           return true
         }
       }
@@ -1297,7 +1298,7 @@ export default class ExamInventoryTable extends Vue {
   checkExamStart (ex:any, checkInvig:boolean = false): boolean {
     if (ex.booking) {
       if (moment(ex.booking.local_start_time).isValid()) {
-        if (moment(ex.booking.local_start_time).isBefore(moment(), 'day')) {
+        if (isPastOfficeTime(ex.booking.local_start_time, this.examOffice(ex), 'day')) {
           return true
         }
       }
@@ -1308,19 +1309,23 @@ export default class ExamInventoryTable extends Vue {
     return false
   }
 
-  checkExpiryDate (date, exam_returned_date) {
+  examOffice (exam) {
+    return exam?.booking?.office || exam?.office || this.user.office
+  }
+
+  checkExpiryDate (date, exam_returned_date, exam) {
     if (exam_returned_date != null) {
       return false
     }
-    if (moment(date).isValid() && moment(date).isBefore(moment(), 'day')) {
+    if (moment(date).isValid() && isPastOfficeTime(date, this.examOffice(exam), 'day')) {
       return true
     }
     return false
   }
 
-  checkStartDate (date, exam_returned_date) {
+  checkStartDate (date, exam_returned_date, exam) {
     // duplicated code
-    return this.checkExpiryDate(date, exam_returned_date)
+    return this.checkExpiryDate(date, exam_returned_date, exam)
   }
 
   filteredExams () {
@@ -1334,7 +1339,7 @@ export default class ExamInventoryTable extends Vue {
     let filtered = []
     if (examInventory.length > 0) {
       if (this.showExamInventoryModal) {
-        filtered = examInventory.filter(ex => moment(ex.expiry_date).isSameOrAfter(moment(), 'day'))
+        filtered = examInventory.filter(ex => !!ex.expiry_date && !isPastOfficeTime(ex.expiry_date, this.examOffice(ex), 'day'))
         const moreFilteredConst: any = filtered.filter((ex: any) => !ex.booking)
         const evenMoreFilteredConst = moreFilteredConst.filter(ex => !ex.offsite_location)
         const { office_id } = this.user
@@ -1365,10 +1370,10 @@ export default class ExamInventoryTable extends Vue {
         filtered = exams
         break
       case 'expired':
-        filtered = exams.filter(ex => moment(ex.expiry_date).isBefore(moment(), 'day'))
+        filtered = exams.filter(ex => isPastOfficeTime(ex.expiry_date, this.examOffice(ex), 'day'))
         break
       case 'current':
-        const step1 = exams.filter(ex => moment(ex.expiry_date).isSameOrAfter(moment(), 'day'))
+        const step1 = exams.filter(ex => !!ex.expiry_date && !isPastOfficeTime(ex.expiry_date, this.examOffice(ex), 'day'))
         const step2 = exams.filter(ex => !ex.expiry_date)
         filtered = step1.concat(step2)
         break
@@ -1763,7 +1768,7 @@ export default class ExamInventoryTable extends Vue {
       }
       if (item.booking) {
         if (moment(item.booking.local_start_time).isValid()) {
-          if (moment(item.booking.local_start_time).isBefore(moment(), 'day')) {
+          if (isPastOfficeTime(item.booking.local_start_time, this.examOffice(item), 'day')) {
             return lifeRing
           }
         }
@@ -1788,7 +1793,7 @@ export default class ExamInventoryTable extends Vue {
       }
       if (item.booking) {
         if (moment(item.booking.local_start_time).isValid()) {
-          if (moment(item.booking.local_start_time).isBefore(moment(), 'day')) {
+          if (isPastOfficeTime(item.booking.local_start_time, this.examOffice(item), 'day')) {
             return lifeRing
           }
         }
@@ -1803,7 +1808,7 @@ export default class ExamInventoryTable extends Vue {
     }
     if (item.booking) {
       if (moment(item.booking.local_start_time).isValid()) {
-        if (moment(item.booking.local_start_time).isBefore(moment(), 'day')) {
+        if (isPastOfficeTime(item.booking.local_start_time, this.examOffice(item), 'day')) {
           return lifeRing
         }
       }

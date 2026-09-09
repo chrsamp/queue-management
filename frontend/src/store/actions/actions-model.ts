@@ -293,6 +293,7 @@ export const commonActions: any = {
               booking.invigilator = b.invigilator
               booking.invigilator_id = b.invigilator_id
             }
+            booking.office = b.office
             booking.start = new Date(b.local_start_time)
             booking.end = new Date(b.local_end_time)
             if ( b.stat_flag && b.blackout_notes) {

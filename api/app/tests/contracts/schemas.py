@@ -27,10 +27,16 @@ def object_schema(*, required, properties, additional_properties=False):
 
 
 TIMEZONE_SCHEMA = object_schema(
-    required=["timezone_id", "timezone_name"],
+    required=["timezone_id", "timezone_name", "clock_offsets"],
     properties={
         "timezone_id": {"type": "integer"},
         "timezone_name": {"type": "string"},
+        "clock_offsets": {"type": "array", "minItems": 1, "items": object_schema(
+            required=["start", "end", "offset_seconds"], properties={
+                "start": {"type": "string", "format": "date-time"},
+                "end": {"type": "string", "format": "date-time"},
+                "offset_seconds": {"type": "integer"},
+            })},
     },
 )
 

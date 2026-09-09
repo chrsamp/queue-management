@@ -354,6 +354,7 @@
 </template>
 
 <script lang="ts">
+import { isPastOfficeTime } from '@/utils/office-time'
 /* eslint-disable */
 import { Action, namespace } from 'vuex-class'
 import { Component, Prop, Vue } from 'vue-property-decorator'
@@ -800,7 +801,7 @@ export default class ApptBookingModal extends Vue {
         this.selectLength = this.clickedAppt.end.diff(this.clickedAppt.start, 'minutes')
       }
       this.allow_reschedule = true
-      if (this.clickedAppt.start < moment.now()) {
+      if (isPastOfficeTime(this.clickedAppt.start, this.$store.state.user.office)) {
           this.allow_reschedule = false
       }
       this.citizen_name = this.clickedAppt.title

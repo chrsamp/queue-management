@@ -16,6 +16,7 @@ import logging
 from datetime import datetime
 
 from dateutil.parser import parse
+from marshmallow import ValidationError
 from flask import request
 from flask_restx import Resource
 
@@ -58,6 +59,8 @@ class AppointmentPost(Resource):
     def post(self):
         my_print("==> In AppointmentPost, POST /appointments/")
         json_data = request.get_json()
+        if not isinstance(json_data, dict):
+            raise ValidationError({"_schema": ["Must be a JSON object."]})
         
         if not json_data:
             return {"message": "No input data received for creating an appointment"}, 400
@@ -99,7 +102,7 @@ class AppointmentPost(Resource):
             citizen.citizen_name = user.display_name
 
             office = Office.find_by_id(office_id)
-            convert_local_fields_to_utc(json_data, office.timezone.timezone_name)
+            convert_local_fields_to_utc(json_data, office.timezone.timezone_name, required=True)
             service = _get_valid_service(service_id)
             if service is None:
                 return {
@@ -127,13 +130,13 @@ class AppointmentPost(Resource):
             csr = CSR.find_by_username(get_username())
             office_id = json_data.get('office_id', csr.office_id)
             office = Office.find_by_id(office_id)
-            convert_local_fields_to_utc(json_data, office.timezone.timezone_name)
+            convert_local_fields_to_utc(json_data, office.timezone.timezone_name, required=True)
 
         else:
             csr = CSR.find_by_username(get_username())
             office_id = csr.office_id
             office = Office.find_by_id(office_id)
-            convert_local_fields_to_utc(json_data, office.timezone.timezone_name)
+            convert_local_fields_to_utc(json_data, office.timezone.timezone_name, required=True)
             service_id = json_data.get('service_id')
 
             # Preserve legacy Newman blackout payloads, which omit service_id for

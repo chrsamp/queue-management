@@ -96,6 +96,7 @@
 </template>
 
 <script lang="ts">
+import { officeNow, isPastOfficeTime } from '@/utils/office-time'
 /* eslint-disable */
 // /* eslint-disable sort-imports */
 import { Component, Vue } from 'vue-property-decorator'
@@ -172,8 +173,8 @@ export default class Appointments extends Vue {
   mode: any = 'stack'
   weekday: any = [1, 2, 3, 4, 5]
 
-  value: any = ''
-  currentDay: any = moment().format('YYYY-MM-DD')// new Date()
+  value: any = officeNow(this.$store.state.user.office).format('YYYY-MM-DD')
+  get currentDay () { return officeNow(this.$store.state.user.office).format('YYYY-MM-DD') }
 
   is_stat: boolean = false
   _keyListenerNewApp: any = null
@@ -346,7 +347,7 @@ export default class Appointments extends Vue {
 
   selectEvent (event) {
     const eventDate = moment(event.date + " " + event.time);
-    if (eventDate < moment(moment.now())) {
+    if (isPastOfficeTime(eventDate, this.$store.state.user.office)) {
       return
     }
     this.is_stat = false
@@ -387,7 +388,7 @@ export default class Appointments extends Vue {
   }
 
   today () {
-    this.value = ''
+    this.value = officeNow(this.$store.state.user.office).format('YYYY-MM-DD')
     this.calendarSetup()
   }
 
