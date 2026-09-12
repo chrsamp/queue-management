@@ -8,7 +8,7 @@ import prettierPlugin from 'eslint-plugin-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['build', '.react-router']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -26,6 +26,12 @@ export default defineConfig([
     },
     rules: {
       'prettier/prettier': 'error',
+    },
+  },
+  {
+    files: ['app/routes/**/*.{ts,tsx}', 'app/root.tsx', 'app/booking/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 ])

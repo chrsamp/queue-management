@@ -1,5 +1,4 @@
-# Stage 1: Builder
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -9,12 +8,16 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Stage 2: Runtime
-FROM nginx:1.25.3
+# Production image: prod deps + build output, served by react-router-serve.
+FROM node:24-alpine
 
-COPY nginx.conf /etc/nginx/nginx.conf
-RUN mkdir /app
-COPY --from=builder /app/dist /app
+WORKDIR /app
+ENV PORT=8080
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=builder /app/build ./build
 
 EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "run", "start"]

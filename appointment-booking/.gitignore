@@ -10,8 +10,13 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.vite
 *.local
 ci_output.txt
+
+# React Router build output
+build/
+.react-router/
 
 # Editor directories and files
 .vscode/*
